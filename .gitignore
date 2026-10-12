@@ -2,6 +2,9 @@
 
 # dependencies
 /node_modules
+/generated
+/dev.db
+/dev.db-journal
 /.pnp
 .pnp.*
 .yarn/*

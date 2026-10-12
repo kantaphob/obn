@@ -1,36 +1,35 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Datahaus
 
-## Getting Started
+ระบบหลังบ้าน CRUD สำหรับจัดการรายการข้อมูลทั่วไป พัฒนาด้วย Next.js 16, Prisma ORM 7 และ SQLite
 
-First, run the development server:
+## เริ่มใช้งาน
+
+ต้องใช้ Node.js 20.19 ขึ้นไป
 
 ```bash
+npm install
+cp .env.example .env
+npm run db:migrate
+npm run db:generate
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+เปิด [http://localhost:3000](http://localhost:3000) เพื่อใช้งานระบบ ฐานข้อมูล SQLite จะถูกสร้างเป็น `dev.db` ที่โฟลเดอร์โปรเจกต์
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## คำสั่งฐานข้อมูล
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- `npm run db:migrate -- --name ชื่อการเปลี่ยนแปลง` สร้างและใช้ migration
+- `npm run db:generate` สร้าง Prisma Client หลังแก้ schema
+- `npm run db:studio` เปิด Prisma Studio
 
-## Learn More
+## API
 
-To learn more about Next.js, take a look at the following resources:
+- `GET /api/entries` อ่านรายการ และกรองด้วย `q`, `category`, `status` ได้
+- `POST /api/entries` สร้างรายการ
+- `PATCH /api/entries/:id` แก้ไขรายการ
+- `DELETE /api/entries/:id` ลบรายการ
+- `GET /api/entries/export` ดาวน์โหลดข้อมูลเป็น CSV
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+โมเดลเริ่มต้นมีชื่อรายการ หมวดหมู่ รายละเอียด และสถานะ ปรับเพิ่มตารางและความสัมพันธ์ได้ที่ `prisma/schema.prisma`
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+> การตั้งค่านี้ใช้ SQLite ในเครื่องและยังไม่มีระบบเข้าสู่ระบบ ควรเพิ่มการยืนยันตัวตนและใช้ฐานข้อมูลที่รองรับงานจริงก่อนเปิดให้ผู้ใช้อื่นเข้าถึงหรือ deploy
