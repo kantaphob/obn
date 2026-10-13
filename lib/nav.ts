@@ -7,6 +7,7 @@ import {
   type LucideIcon,
   Building2,
   Building2Icon,
+  CreditCard,
 } from "lucide-react";
 
 export type NavItem = { label: string; href: string; icon: LucideIcon };
@@ -162,6 +163,8 @@ export const SYSTEMS: Record<SystemKey, System> = {
         ad("things", "ข้อมูลสิ่งของและสินค้า", ClipboardList),
         ad("material", "วัสดุก่อสร้าง", Boxes),
         ad("unit", "หน่วยนับ", Ruler),
+        ad("classifier", "ลักษณนาม", ScrollText),
+        ad("banking", "ข้อมูลธนาคาร", CreditCard),
         ad("postcode", "รหัสไปรษณีย์", Landmark),
       ] },
       { title: "ระบบ", items: [

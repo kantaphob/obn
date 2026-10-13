@@ -1,0 +1,1308 @@
+{
+  "sources": {
+    "units": {
+      "url": "https://docs.peppol.eu/poacc/billing/3.0/codelist/UNECERec20/",
+      "version": "UN/ECE Revision 11e, Peppol May 2026",
+      "retrievedAt": "2026-10-13"
+    },
+    "materials": {
+      "url": "https://docs.ted.europa.eu/eforms/latest/reference/code-lists/cpv.html",
+      "version": "CPV 2008",
+      "retrievedAt": "2026-10-13"
+    }
+  },
+  "notes": "Selected reference catalog. Thai translations, categories, display abbreviations and recommended material units are application annotations, not official standard requirements. No fixed package conversions.",
+  "units": [
+    {
+      "code": "MTR",
+      "nameTh": "เมตร",
+      "nameEn": "metre",
+      "symbol": "m",
+      "category": "ความยาว",
+      "standard": "UN/ECE Rec. 20"
+    },
+    {
+      "code": "CMT",
+      "nameTh": "เซนติเมตร",
+      "nameEn": "centimetre",
+      "symbol": "cm",
+      "category": "ความยาว",
+      "standard": "UN/ECE Rec. 20"
+    },
+    {
+      "code": "MMT",
+      "nameTh": "มิลลิเมตร",
+      "nameEn": "millimetre",
+      "symbol": "mm",
+      "category": "ความยาว",
+      "standard": "UN/ECE Rec. 20"
+    },
+    {
+      "code": "KMT",
+      "nameTh": "กิโลเมตร",
+      "nameEn": "kilometre",
+      "symbol": "km",
+      "category": "ความยาว",
+      "standard": "UN/ECE Rec. 20"
+    },
+    {
+      "code": "INH",
+      "nameTh": "นิ้ว",
+      "nameEn": "inch",
+      "symbol": "in",
+      "category": "ความยาว",
+      "standard": "UN/ECE Rec. 20"
+    },
+    {
+      "code": "FOT",
+      "nameTh": "ฟุต",
+      "nameEn": "foot",
+      "symbol": "ft",
+      "category": "ความยาว",
+      "standard": "UN/ECE Rec. 20"
+    },
+    {
+      "code": "YRD",
+      "nameTh": "หลา",
+      "nameEn": "yard",
+      "symbol": "yd",
+      "category": "ความยาว",
+      "standard": "UN/ECE Rec. 20"
+    },
+    {
+      "code": "MTK",
+      "nameTh": "ตารางเมตร",
+      "nameEn": "square metre",
+      "symbol": "m²",
+      "category": "พื้นที่",
+      "standard": "UN/ECE Rec. 20"
+    },
+    {
+      "code": "CMK",
+      "nameTh": "ตารางเซนติเมตร",
+      "nameEn": "square centimetre",
+      "symbol": "cm²",
+      "category": "พื้นที่",
+      "standard": "UN/ECE Rec. 20"
+    },
+    {
+      "code": "MMK",
+      "nameTh": "ตารางมิลลิเมตร",
+      "nameEn": "square millimetre",
+      "symbol": "mm²",
+      "category": "พื้นที่",
+      "standard": "UN/ECE Rec. 20"
+    },
+    {
+      "code": "KMK",
+      "nameTh": "ตารางกิโลเมตร",
+      "nameEn": "square kilometre",
+      "symbol": "km²",
+      "category": "พื้นที่",
+      "standard": "UN/ECE Rec. 20"
+    },
+    {
+      "code": "ACR",
+      "nameTh": "เอเคอร์",
+      "nameEn": "acre",
+      "symbol": "acre",
+      "category": "พื้นที่",
+      "standard": "UN/ECE Rec. 20"
+    },
+    {
+      "code": "MTQ",
+      "nameTh": "ลูกบาศก์เมตร",
+      "nameEn": "cubic metre",
+      "symbol": "m³",
+      "category": "ปริมาตร",
+      "standard": "UN/ECE Rec. 20"
+    },
+    {
+      "code": "CMQ",
+      "nameTh": "ลูกบาศก์เซนติเมตร",
+      "nameEn": "cubic centimetre",
+      "symbol": "cm³",
+      "category": "ปริมาตร",
+      "standard": "UN/ECE Rec. 20"
+    },
+    {
+      "code": "DMQ",
+      "nameTh": "ลูกบาศก์เดซิเมตร",
+      "nameEn": "cubic decimetre",
+      "symbol": "dm³",
+      "category": "ปริมาตร",
+      "standard": "UN/ECE Rec. 20"
+    },
+    {
+      "code": "LTR",
+      "nameTh": "ลิตร",
+      "nameEn": "litre",
+      "symbol": "L",
+      "category": "ปริมาตร",
+      "standard": "UN/ECE Rec. 20"
+    },
+    {
+      "code": "MLT",
+      "nameTh": "มิลลิลิตร",
+      "nameEn": "millilitre",
+      "symbol": "mL",
+      "category": "ปริมาตร",
+      "standard": "UN/ECE Rec. 20"
+    },
+    {
+      "code": "GLL",
+      "nameTh": "แกลลอนสหรัฐฯ",
+      "nameEn": "gallon (US)",
+      "symbol": "US gal",
+      "category": "ปริมาตร",
+      "standard": "UN/ECE Rec. 20"
+    },
+    {
+      "code": "GLI",
+      "nameTh": "แกลลอนอังกฤษ",
+      "nameEn": "gallon (UK)",
+      "symbol": "UK gal",
+      "category": "ปริมาตร",
+      "standard": "UN/ECE Rec. 20"
+    },
+    {
+      "code": "KGM",
+      "nameTh": "กิโลกรัม",
+      "nameEn": "kilogram",
+      "symbol": "kg",
+      "category": "มวล",
+      "standard": "UN/ECE Rec. 20"
+    },
+    {
+      "code": "GRM",
+      "nameTh": "กรัม",
+      "nameEn": "gram",
+      "symbol": "g",
+      "category": "มวล",
+      "standard": "UN/ECE Rec. 20"
+    },
+    {
+      "code": "MGM",
+      "nameTh": "มิลลิกรัม",
+      "nameEn": "milligram",
+      "symbol": "mg",
+      "category": "มวล",
+      "standard": "UN/ECE Rec. 20"
+    },
+    {
+      "code": "TNE",
+      "nameTh": "ตันเมตริก",
+      "nameEn": "tonne (metric ton)",
+      "symbol": "t",
+      "category": "มวล",
+      "standard": "UN/ECE Rec. 20"
+    },
+    {
+      "code": "LBR",
+      "nameTh": "ปอนด์",
+      "nameEn": "pound",
+      "symbol": "lb",
+      "category": "มวล",
+      "standard": "UN/ECE Rec. 20"
+    },
+    {
+      "code": "ONZ",
+      "nameTh": "ออนซ์",
+      "nameEn": "ounce (avoirdupois)",
+      "symbol": "oz",
+      "category": "มวล",
+      "standard": "UN/ECE Rec. 20"
+    },
+    {
+      "code": "C62",
+      "nameTh": "หน่วย",
+      "nameEn": "one",
+      "symbol": "unit",
+      "category": "จำนวน",
+      "standard": "UN/ECE Rec. 20"
+    },
+    {
+      "code": "H87",
+      "nameTh": "ชิ้น",
+      "nameEn": "piece",
+      "symbol": "pc",
+      "category": "จำนวน",
+      "standard": "UN/ECE Rec. 20"
+    },
+    {
+      "code": "PR",
+      "nameTh": "คู่",
+      "nameEn": "pair",
+      "symbol": "pair",
+      "category": "จำนวน",
+      "standard": "UN/ECE Rec. 20"
+    },
+    {
+      "code": "DZN",
+      "nameTh": "โหล",
+      "nameEn": "dozen",
+      "symbol": "doz",
+      "category": "จำนวน",
+      "standard": "UN/ECE Rec. 20"
+    },
+    {
+      "code": "SET",
+      "nameTh": "ชุด",
+      "nameEn": "set",
+      "symbol": "set",
+      "category": "จำนวน",
+      "standard": "UN/ECE Rec. 20"
+    },
+    {
+      "code": "NAR",
+      "nameTh": "จำนวนสิ่งของ",
+      "nameEn": "number of articles",
+      "symbol": "item",
+      "category": "จำนวน",
+      "standard": "UN/ECE Rec. 20"
+    },
+    {
+      "code": "XBG",
+      "nameTh": "ถุง",
+      "nameEn": "Bag",
+      "symbol": "bag",
+      "category": "บรรจุภัณฑ์",
+      "standard": "UN/ECE Rec. 21"
+    },
+    {
+      "code": "XBX",
+      "nameTh": "กล่อง",
+      "nameEn": "Box",
+      "symbol": "box",
+      "category": "บรรจุภัณฑ์",
+      "standard": "UN/ECE Rec. 21"
+    },
+    {
+      "code": "XPK",
+      "nameTh": "หีบห่อ",
+      "nameEn": "Package",
+      "symbol": "pack",
+      "category": "บรรจุภัณฑ์",
+      "standard": "UN/ECE Rec. 21"
+    },
+    {
+      "code": "XPL",
+      "nameTh": "ถังมีหูหิ้ว",
+      "nameEn": "Pail",
+      "symbol": "pail",
+      "category": "บรรจุภัณฑ์",
+      "standard": "UN/ECE Rec. 21"
+    },
+    {
+      "code": "XRO",
+      "nameTh": "ม้วน",
+      "nameEn": "Roll",
+      "symbol": "roll",
+      "category": "บรรจุภัณฑ์",
+      "standard": "UN/ECE Rec. 21"
+    },
+    {
+      "code": "XRL",
+      "nameTh": "ม้วนบนแกน",
+      "nameEn": "Reel",
+      "symbol": "reel",
+      "category": "บรรจุภัณฑ์",
+      "standard": "UN/ECE Rec. 21"
+    },
+    {
+      "code": "XDR",
+      "nameTh": "ถังดรัม",
+      "nameEn": "Drum",
+      "symbol": "drum",
+      "category": "บรรจุภัณฑ์",
+      "standard": "UN/ECE Rec. 21"
+    },
+    {
+      "code": "XSA",
+      "nameTh": "กระสอบ",
+      "nameEn": "Sack",
+      "symbol": "sack",
+      "category": "บรรจุภัณฑ์",
+      "standard": "UN/ECE Rec. 21"
+    },
+    {
+      "code": "XBE",
+      "nameTh": "มัด",
+      "nameEn": "Bundle",
+      "symbol": "bundle",
+      "category": "บรรจุภัณฑ์",
+      "standard": "UN/ECE Rec. 21"
+    },
+    {
+      "code": "XCT",
+      "nameTh": "กล่องกระดาษ",
+      "nameEn": "Carton",
+      "symbol": "carton",
+      "category": "บรรจุภัณฑ์",
+      "standard": "UN/ECE Rec. 21"
+    },
+    {
+      "code": "XPX",
+      "nameTh": "พาเลต",
+      "nameEn": "Pallet",
+      "symbol": "pallet",
+      "category": "บรรจุภัณฑ์",
+      "standard": "UN/ECE Rec. 21"
+    },
+    {
+      "code": "XST",
+      "nameTh": "แผ่น",
+      "nameEn": "Sheet",
+      "symbol": "sheet",
+      "category": "บรรจุภัณฑ์",
+      "standard": "UN/ECE Rec. 21"
+    },
+    {
+      "code": "HUR",
+      "nameTh": "ชั่วโมง",
+      "nameEn": "hour",
+      "symbol": "h",
+      "category": "เวลา",
+      "standard": "UN/ECE Rec. 20"
+    },
+    {
+      "code": "MIN",
+      "nameTh": "นาที",
+      "nameEn": "minute [unit of time]",
+      "symbol": "min",
+      "category": "เวลา",
+      "standard": "UN/ECE Rec. 20"
+    },
+    {
+      "code": "SEC",
+      "nameTh": "วินาที",
+      "nameEn": "second [unit of time]",
+      "symbol": "s",
+      "category": "เวลา",
+      "standard": "UN/ECE Rec. 20"
+    },
+    {
+      "code": "DAY",
+      "nameTh": "วัน",
+      "nameEn": "day",
+      "symbol": "d",
+      "category": "เวลา",
+      "standard": "UN/ECE Rec. 20"
+    },
+    {
+      "code": "WEE",
+      "nameTh": "สัปดาห์",
+      "nameEn": "week",
+      "symbol": "wk",
+      "category": "เวลา",
+      "standard": "UN/ECE Rec. 20"
+    },
+    {
+      "code": "MON",
+      "nameTh": "เดือน",
+      "nameEn": "month",
+      "symbol": "mo",
+      "category": "เวลา",
+      "standard": "UN/ECE Rec. 20"
+    },
+    {
+      "code": "ANN",
+      "nameTh": "ปี",
+      "nameEn": "year",
+      "symbol": "yr",
+      "category": "เวลา",
+      "standard": "UN/ECE Rec. 20"
+    },
+    {
+      "code": "AMP",
+      "nameTh": "แอมแปร์",
+      "nameEn": "ampere",
+      "symbol": "A",
+      "category": "ไฟฟ้าและพลังงาน",
+      "standard": "UN/ECE Rec. 20"
+    },
+    {
+      "code": "VLT",
+      "nameTh": "โวลต์",
+      "nameEn": "volt",
+      "symbol": "V",
+      "category": "ไฟฟ้าและพลังงาน",
+      "standard": "UN/ECE Rec. 20"
+    },
+    {
+      "code": "WTT",
+      "nameTh": "วัตต์",
+      "nameEn": "watt",
+      "symbol": "W",
+      "category": "ไฟฟ้าและพลังงาน",
+      "standard": "UN/ECE Rec. 20"
+    },
+    {
+      "code": "KWT",
+      "nameTh": "กิโลวัตต์",
+      "nameEn": "kilowatt",
+      "symbol": "kW",
+      "category": "ไฟฟ้าและพลังงาน",
+      "standard": "UN/ECE Rec. 20"
+    },
+    {
+      "code": "KWH",
+      "nameTh": "กิโลวัตต์ชั่วโมง",
+      "nameEn": "kilowatt hour",
+      "symbol": "kWh",
+      "category": "ไฟฟ้าและพลังงาน",
+      "standard": "UN/ECE Rec. 20"
+    },
+    {
+      "code": "JOU",
+      "nameTh": "จูล",
+      "nameEn": "joule",
+      "symbol": "J",
+      "category": "ไฟฟ้าและพลังงาน",
+      "standard": "UN/ECE Rec. 20"
+    },
+    {
+      "code": "KJO",
+      "nameTh": "กิโลจูล",
+      "nameEn": "kilojoule",
+      "symbol": "kJ",
+      "category": "ไฟฟ้าและพลังงาน",
+      "standard": "UN/ECE Rec. 20"
+    },
+    {
+      "code": "NEW",
+      "nameTh": "นิวตัน",
+      "nameEn": "newton",
+      "symbol": "N",
+      "category": "แรงและความดัน",
+      "standard": "UN/ECE Rec. 20"
+    },
+    {
+      "code": "PAL",
+      "nameTh": "พาสคัล",
+      "nameEn": "pascal",
+      "symbol": "Pa",
+      "category": "แรงและความดัน",
+      "standard": "UN/ECE Rec. 20"
+    },
+    {
+      "code": "KPA",
+      "nameTh": "กิโลพาสคัล",
+      "nameEn": "kilopascal",
+      "symbol": "kPa",
+      "category": "แรงและความดัน",
+      "standard": "UN/ECE Rec. 20"
+    },
+    {
+      "code": "MPA",
+      "nameTh": "เมกะพาสคัล",
+      "nameEn": "megapascal",
+      "symbol": "MPa",
+      "category": "แรงและความดัน",
+      "standard": "UN/ECE Rec. 20"
+    },
+    {
+      "code": "BAR",
+      "nameTh": "บาร์",
+      "nameEn": "bar [unit of pressure]",
+      "symbol": "bar",
+      "category": "แรงและความดัน",
+      "standard": "UN/ECE Rec. 20"
+    },
+    {
+      "code": "CEL",
+      "nameTh": "องศาเซลเซียส",
+      "nameEn": "degree Celsius",
+      "symbol": "°C",
+      "category": "อุณหภูมิ",
+      "standard": "UN/ECE Rec. 20"
+    },
+    {
+      "code": "KEL",
+      "nameTh": "เคลวิน",
+      "nameEn": "kelvin",
+      "symbol": "K",
+      "category": "อุณหภูมิ",
+      "standard": "UN/ECE Rec. 20"
+    }
+  ],
+  "materials": [
+    {
+      "code": "44111200",
+      "nameTh": "ปูนซีเมนต์",
+      "nameEn": "Cement",
+      "category": "ปูนและคอนกรีต",
+      "recommendedUnitCode": "KGM"
+    },
+    {
+      "code": "44111800",
+      "nameTh": "มอร์ตาร์สำหรับงานก่อสร้าง",
+      "nameEn": "Mortar (construction)",
+      "category": "ปูนและคอนกรีต",
+      "recommendedUnitCode": "KGM"
+    },
+    {
+      "code": "44114000",
+      "nameTh": "คอนกรีต",
+      "nameEn": "Concrete",
+      "category": "ปูนและคอนกรีต",
+      "recommendedUnitCode": "MTQ"
+    },
+    {
+      "code": "44114100",
+      "nameTh": "คอนกรีตผสมเสร็จ",
+      "nameEn": "Ready-mixed concrete",
+      "category": "ปูนและคอนกรีต",
+      "recommendedUnitCode": "MTQ"
+    },
+    {
+      "code": "44114200",
+      "nameTh": "ผลิตภัณฑ์คอนกรีต",
+      "nameEn": "Concrete products",
+      "category": "ปูนและคอนกรีต",
+      "recommendedUnitCode": null
+    },
+    {
+      "code": "44114210",
+      "nameTh": "เสาเข็มคอนกรีต",
+      "nameEn": "Concrete piles",
+      "category": "ปูนและคอนกรีต",
+      "recommendedUnitCode": "H87"
+    },
+    {
+      "code": "44114220",
+      "nameTh": "ท่อและข้อต่อคอนกรีต",
+      "nameEn": "Concrete pipes and fittings",
+      "category": "ปูนและคอนกรีต",
+      "recommendedUnitCode": null
+    },
+    {
+      "code": "44114250",
+      "nameTh": "แผ่นพื้นคอนกรีต",
+      "nameEn": "Concrete slabs",
+      "category": "ปูนและคอนกรีต",
+      "recommendedUnitCode": "MTK"
+    },
+    {
+      "code": "44831400",
+      "nameTh": "วัสดุยาแนว",
+      "nameEn": "Grout",
+      "category": "ปูนและคอนกรีต",
+      "recommendedUnitCode": "KGM"
+    },
+    {
+      "code": "14211000",
+      "nameTh": "ทราย",
+      "nameEn": "Sand",
+      "category": "หิน ทราย และดิน",
+      "recommendedUnitCode": "MTQ"
+    },
+    {
+      "code": "14211100",
+      "nameTh": "ทรายธรรมชาติ",
+      "nameEn": "Natural sand",
+      "category": "หิน ทราย และดิน",
+      "recommendedUnitCode": "MTQ"
+    },
+    {
+      "code": "14212110",
+      "nameTh": "กรวดมน",
+      "nameEn": "Pebbles",
+      "category": "หิน ทราย และดิน",
+      "recommendedUnitCode": "MTQ"
+    },
+    {
+      "code": "14212120",
+      "nameTh": "กรวด",
+      "nameEn": "Gravel",
+      "category": "หิน ทราย และดิน",
+      "recommendedUnitCode": "MTQ"
+    },
+    {
+      "code": "14212200",
+      "nameTh": "มวลรวม",
+      "nameEn": "Aggregates",
+      "category": "หิน ทราย และดิน",
+      "recommendedUnitCode": "MTQ"
+    },
+    {
+      "code": "14212210",
+      "nameTh": "ทรายผสมกรวด",
+      "nameEn": "Sand-gravel mix",
+      "category": "หิน ทราย และดิน",
+      "recommendedUnitCode": "MTQ"
+    },
+    {
+      "code": "14212300",
+      "nameTh": "หินแตกและหินบด",
+      "nameEn": "Broken and crushed stone",
+      "category": "หิน ทราย และดิน",
+      "recommendedUnitCode": "MTQ"
+    },
+    {
+      "code": "14212320",
+      "nameTh": "หินแกรนิตบด",
+      "nameEn": "Crushed granite",
+      "category": "หิน ทราย และดิน",
+      "recommendedUnitCode": "MTQ"
+    },
+    {
+      "code": "14212330",
+      "nameTh": "หินบะซอลต์บด",
+      "nameEn": "Crushed basalt",
+      "category": "หิน ทราย และดิน",
+      "recommendedUnitCode": "MTQ"
+    },
+    {
+      "code": "14212400",
+      "nameTh": "ดิน",
+      "nameEn": "Soil",
+      "category": "หิน ทราย และดิน",
+      "recommendedUnitCode": "MTQ"
+    },
+    {
+      "code": "14212410",
+      "nameTh": "หน้าดิน",
+      "nameEn": "Topsoil",
+      "category": "หิน ทราย และดิน",
+      "recommendedUnitCode": "MTQ"
+    },
+    {
+      "code": "14212420",
+      "nameTh": "ดินชั้นล่าง",
+      "nameEn": "Subsoil",
+      "category": "หิน ทราย และดิน",
+      "recommendedUnitCode": "MTQ"
+    },
+    {
+      "code": "44111100",
+      "nameTh": "อิฐ",
+      "nameEn": "Bricks",
+      "category": "อิฐ กระเบื้อง และพื้น",
+      "recommendedUnitCode": "H87"
+    },
+    {
+      "code": "44111300",
+      "nameTh": "เซรามิก",
+      "nameEn": "Ceramics",
+      "category": "อิฐ กระเบื้อง และพื้น",
+      "recommendedUnitCode": null
+    },
+    {
+      "code": "44111600",
+      "nameTh": "บล็อก",
+      "nameEn": "Blocks",
+      "category": "อิฐ กระเบื้อง และพื้น",
+      "recommendedUnitCode": "H87"
+    },
+    {
+      "code": "44111700",
+      "nameTh": "กระเบื้อง",
+      "nameEn": "Tiles",
+      "category": "อิฐ กระเบื้อง และพื้น",
+      "recommendedUnitCode": "MTK"
+    },
+    {
+      "code": "44111900",
+      "nameTh": "แผ่นปูพื้นเซรามิก",
+      "nameEn": "Ceramic flags",
+      "category": "อิฐ กระเบื้อง และพื้น",
+      "recommendedUnitCode": "MTK"
+    },
+    {
+      "code": "44112200",
+      "nameTh": "วัสดุปูพื้น",
+      "nameEn": "Floor coverings",
+      "category": "อิฐ กระเบื้อง และพื้น",
+      "recommendedUnitCode": "MTK"
+    },
+    {
+      "code": "44112210",
+      "nameTh": "พื้นชนิดตัน",
+      "nameEn": "Solid flooring",
+      "category": "อิฐ กระเบื้อง และพื้น",
+      "recommendedUnitCode": "MTK"
+    },
+    {
+      "code": "44112220",
+      "nameTh": "พื้นยก",
+      "nameEn": "False floors",
+      "category": "อิฐ กระเบื้อง และพื้น",
+      "recommendedUnitCode": "MTK"
+    },
+    {
+      "code": "44112230",
+      "nameTh": "เสื่อน้ำมันลิโนเลียม",
+      "nameEn": "Linoleum",
+      "category": "อิฐ กระเบื้อง และพื้น",
+      "recommendedUnitCode": "MTK"
+    },
+    {
+      "code": "44112240",
+      "nameTh": "พื้นปาร์เกต์",
+      "nameEn": "Parquet",
+      "category": "อิฐ กระเบื้อง และพื้น",
+      "recommendedUnitCode": "MTK"
+    },
+    {
+      "code": "44113120",
+      "nameTh": "แผ่นปูทาง",
+      "nameEn": "Paving slabs",
+      "category": "อิฐ กระเบื้อง และพื้น",
+      "recommendedUnitCode": "MTK"
+    },
+    {
+      "code": "44113130",
+      "nameTh": "หินปูทาง",
+      "nameEn": "Paving stones",
+      "category": "อิฐ กระเบื้อง และพื้น",
+      "recommendedUnitCode": "MTK"
+    },
+    {
+      "code": "03411000",
+      "nameTh": "ไม้สน",
+      "nameEn": "Coniferous wood",
+      "category": "ไม้และแผ่นไม้",
+      "recommendedUnitCode": "MTQ"
+    },
+    {
+      "code": "03412000",
+      "nameTh": "ไม้เขตร้อน",
+      "nameEn": "Tropical wood",
+      "category": "ไม้และแผ่นไม้",
+      "recommendedUnitCode": "MTQ"
+    },
+    {
+      "code": "03414000",
+      "nameTh": "ไม้ดิบ",
+      "nameEn": "Rough wood",
+      "category": "ไม้และแผ่นไม้",
+      "recommendedUnitCode": "MTQ"
+    },
+    {
+      "code": "03415000",
+      "nameTh": "ไม้เนื้ออ่อน",
+      "nameEn": "Softwood",
+      "category": "ไม้และแผ่นไม้",
+      "recommendedUnitCode": "MTQ"
+    },
+    {
+      "code": "03418000",
+      "nameTh": "ไม้ซุง",
+      "nameEn": "Logs",
+      "category": "ไม้และแผ่นไม้",
+      "recommendedUnitCode": "MTQ"
+    },
+    {
+      "code": "03418100",
+      "nameTh": "ไม้เนื้อแข็ง",
+      "nameEn": "Hardwood",
+      "category": "ไม้และแผ่นไม้",
+      "recommendedUnitCode": "MTQ"
+    },
+    {
+      "code": "03419000",
+      "nameTh": "ไม้แปรรูป",
+      "nameEn": "Timber",
+      "category": "ไม้และแผ่นไม้",
+      "recommendedUnitCode": "MTQ"
+    },
+    {
+      "code": "44191100",
+      "nameTh": "ไม้อัด",
+      "nameEn": "Plywood",
+      "category": "ไม้และแผ่นไม้",
+      "recommendedUnitCode": "XST"
+    },
+    {
+      "code": "44191200",
+      "nameTh": "ไม้ลามิเนต",
+      "nameEn": "Laminated wood",
+      "category": "ไม้และแผ่นไม้",
+      "recommendedUnitCode": null
+    },
+    {
+      "code": "44191300",
+      "nameTh": "แผ่นปาร์ติเคิลบอร์ด",
+      "nameEn": "Particle board",
+      "category": "ไม้และแผ่นไม้",
+      "recommendedUnitCode": "XST"
+    },
+    {
+      "code": "44191400",
+      "nameTh": "แผ่นใยไม้อัด",
+      "nameEn": "Fibreboard",
+      "category": "ไม้และแผ่นไม้",
+      "recommendedUnitCode": "XST"
+    },
+    {
+      "code": "44191500",
+      "nameTh": "ไม้อัดแน่น",
+      "nameEn": "Densified wood",
+      "category": "ไม้และแผ่นไม้",
+      "recommendedUnitCode": null
+    },
+    {
+      "code": "44191600",
+      "nameTh": "แผ่นปาร์เกต์",
+      "nameEn": "Parquet panels",
+      "category": "ไม้และแผ่นไม้",
+      "recommendedUnitCode": "MTK"
+    },
+    {
+      "code": "14620000",
+      "nameTh": "โลหะผสม",
+      "nameEn": "Alloys",
+      "category": "โลหะและลวด",
+      "recommendedUnitCode": "KGM"
+    },
+    {
+      "code": "14622000",
+      "nameTh": "เหล็กกล้า",
+      "nameEn": "Steel",
+      "category": "โลหะและลวด",
+      "recommendedUnitCode": "KGM"
+    },
+    {
+      "code": "44311000",
+      "nameTh": "ลวดตีเกลียว",
+      "nameEn": "Stranded wire",
+      "category": "โลหะและลวด",
+      "recommendedUnitCode": "MTR"
+    },
+    {
+      "code": "44312000",
+      "nameTh": "ลวดทำรั้ว",
+      "nameEn": "Fencing wire",
+      "category": "โลหะและลวด",
+      "recommendedUnitCode": "MTR"
+    },
+    {
+      "code": "44312300",
+      "nameTh": "ลวดหนาม",
+      "nameEn": "Barbed wire",
+      "category": "โลหะและลวด",
+      "recommendedUnitCode": "MTR"
+    },
+    {
+      "code": "44313000",
+      "nameTh": "ตาข่ายโลหะ",
+      "nameEn": "Metal netting",
+      "category": "โลหะและลวด",
+      "recommendedUnitCode": "MTK"
+    },
+    {
+      "code": "44313100",
+      "nameTh": "รั้วตาข่ายลวด",
+      "nameEn": "Wire-mesh fencing",
+      "category": "โลหะและลวด",
+      "recommendedUnitCode": "MTK"
+    },
+    {
+      "code": "44315000",
+      "nameTh": "เหล็กลวด",
+      "nameEn": "Wire rods",
+      "category": "โลหะและลวด",
+      "recommendedUnitCode": "KGM"
+    },
+    {
+      "code": "44315200",
+      "nameTh": "วัสดุเชื่อม",
+      "nameEn": "Welding materials",
+      "category": "โลหะและลวด",
+      "recommendedUnitCode": "KGM"
+    },
+    {
+      "code": "44331000",
+      "nameTh": "แท่งโลหะสำหรับก่อสร้าง",
+      "nameEn": "Bars",
+      "category": "โลหะและลวด",
+      "recommendedUnitCode": null
+    },
+    {
+      "code": "44332000",
+      "nameTh": "เส้นโลหะสำหรับก่อสร้าง",
+      "nameEn": "Rods (construction)",
+      "category": "โลหะและลวด",
+      "recommendedUnitCode": null
+    },
+    {
+      "code": "44333000",
+      "nameTh": "ลวด",
+      "nameEn": "Wire",
+      "category": "โลหะและลวด",
+      "recommendedUnitCode": "MTR"
+    },
+    {
+      "code": "44334000",
+      "nameTh": "วัสดุหน้าตัดสำหรับก่อสร้าง",
+      "nameEn": "Profiles",
+      "category": "โลหะและลวด",
+      "recommendedUnitCode": "MTR"
+    },
+    {
+      "code": "44192200",
+      "nameTh": "ตะปู",
+      "nameEn": "Nails",
+      "category": "โลหะและลวด",
+      "recommendedUnitCode": "KGM"
+    },
+    {
+      "code": "44111511",
+      "nameTh": "ฉนวนไฟฟ้า",
+      "nameEn": "Electrical insulators",
+      "category": "หลังคา ผนัง และฉนวน",
+      "recommendedUnitCode": null
+    },
+    {
+      "code": "44111520",
+      "nameTh": "วัสดุฉนวนกันความร้อน",
+      "nameEn": "Thermal insulating material",
+      "category": "หลังคา ผนัง และฉนวน",
+      "recommendedUnitCode": null
+    },
+    {
+      "code": "44111540",
+      "nameTh": "กระจกฉนวน",
+      "nameEn": "Insulating glass",
+      "category": "หลังคา ผนัง และฉนวน",
+      "recommendedUnitCode": "MTK"
+    },
+    {
+      "code": "44112300",
+      "nameTh": "ฉากกั้น",
+      "nameEn": "Partitions",
+      "category": "หลังคา ผนัง และฉนวน",
+      "recommendedUnitCode": "MTK"
+    },
+    {
+      "code": "44112310",
+      "nameTh": "ผนังกั้น",
+      "nameEn": "Partition walls",
+      "category": "หลังคา ผนัง และฉนวน",
+      "recommendedUnitCode": "MTK"
+    },
+    {
+      "code": "44112500",
+      "nameTh": "วัสดุมุงหลังคา",
+      "nameEn": "Roofing materials",
+      "category": "หลังคา ผนัง และฉนวน",
+      "recommendedUnitCode": "MTK"
+    },
+    {
+      "code": "44112510",
+      "nameTh": "แผ่นชิงเกิลมุงหลังคา",
+      "nameEn": "Shingles",
+      "category": "หลังคา ผนัง และฉนวน",
+      "recommendedUnitCode": "MTK"
+    },
+    {
+      "code": "44112600",
+      "nameTh": "ฉนวนกันเสียง",
+      "nameEn": "Sound insulation",
+      "category": "หลังคา ผนัง และฉนวน",
+      "recommendedUnitCode": null
+    },
+    {
+      "code": "44175000",
+      "nameTh": "แผ่นพาเนล",
+      "nameEn": "Panels",
+      "category": "หลังคา ผนัง และฉนวน",
+      "recommendedUnitCode": "XST"
+    },
+    {
+      "code": "44192100",
+      "nameTh": "โฟมพีวีซี",
+      "nameEn": "PVC foam",
+      "category": "หลังคา ผนัง และฉนวน",
+      "recommendedUnitCode": null
+    },
+    {
+      "code": "19521100",
+      "nameTh": "แผ่นโพลีสไตรีน",
+      "nameEn": "Polystyrene sheeting",
+      "category": "หลังคา ผนัง และฉนวน",
+      "recommendedUnitCode": "XST"
+    },
+    {
+      "code": "19521200",
+      "nameTh": "แผ่นโพลีสไตรีนชนิดหนา",
+      "nameEn": "Polystyrene slabs",
+      "category": "หลังคา ผนัง และฉนวน",
+      "recommendedUnitCode": "XST"
+    },
+    {
+      "code": "44163100",
+      "nameTh": "ท่อ",
+      "nameEn": "Pipes",
+      "category": "ท่อและอุปกรณ์ประปา",
+      "recommendedUnitCode": "MTR"
+    },
+    {
+      "code": "44163110",
+      "nameTh": "ท่อระบายน้ำ",
+      "nameEn": "Drainage pipes",
+      "category": "ท่อและอุปกรณ์ประปา",
+      "recommendedUnitCode": "MTR"
+    },
+    {
+      "code": "44163130",
+      "nameTh": "ท่อน้ำเสีย",
+      "nameEn": "Sewer pipes",
+      "category": "ท่อและอุปกรณ์ประปา",
+      "recommendedUnitCode": "MTR"
+    },
+    {
+      "code": "44163140",
+      "nameTh": "ท่อไอน้ำและน้ำ",
+      "nameEn": "Steam and water pipes",
+      "category": "ท่อและอุปกรณ์ประปา",
+      "recommendedUnitCode": "MTR"
+    },
+    {
+      "code": "44163210",
+      "nameTh": "แคลมป์รัดท่อ",
+      "nameEn": "Pipe clamps",
+      "category": "ท่อและอุปกรณ์ประปา",
+      "recommendedUnitCode": "H87"
+    },
+    {
+      "code": "44163230",
+      "nameTh": "ตัวเชื่อมต่อท่อ",
+      "nameEn": "Pipe connectors",
+      "category": "ท่อและอุปกรณ์ประปา",
+      "recommendedUnitCode": "H87"
+    },
+    {
+      "code": "44163240",
+      "nameTh": "ข้อต่อท่อ",
+      "nameEn": "Pipe joints",
+      "category": "ท่อและอุปกรณ์ประปา",
+      "recommendedUnitCode": "H87"
+    },
+    {
+      "code": "44165100",
+      "nameTh": "สายยาง",
+      "nameEn": "Hoses",
+      "category": "ท่อและอุปกรณ์ประปา",
+      "recommendedUnitCode": "MTR"
+    },
+    {
+      "code": "44167100",
+      "nameTh": "ข้อต่อตรง",
+      "nameEn": "Couplings",
+      "category": "ท่อและอุปกรณ์ประปา",
+      "recommendedUnitCode": "H87"
+    },
+    {
+      "code": "44167110",
+      "nameTh": "หน้าแปลน",
+      "nameEn": "Flanges",
+      "category": "ท่อและอุปกรณ์ประปา",
+      "recommendedUnitCode": "H87"
+    },
+    {
+      "code": "44167400",
+      "nameTh": "ข้องอ",
+      "nameEn": "Elbows",
+      "category": "ท่อและอุปกรณ์ประปา",
+      "recommendedUnitCode": "H87"
+    },
+    {
+      "code": "44810000",
+      "nameTh": "สี",
+      "nameEn": "Paints",
+      "category": "สี กาว และสารเคลือบ",
+      "recommendedUnitCode": "LTR"
+    },
+    {
+      "code": "44811000",
+      "nameTh": "สีทาถนน",
+      "nameEn": "Road paint",
+      "category": "สี กาว และสารเคลือบ",
+      "recommendedUnitCode": "LTR"
+    },
+    {
+      "code": "44812210",
+      "nameTh": "สีน้ำมัน",
+      "nameEn": "Oil paints",
+      "category": "สี กาว และสารเคลือบ",
+      "recommendedUnitCode": "LTR"
+    },
+    {
+      "code": "44812220",
+      "nameTh": "สีน้ำ",
+      "nameEn": "Water paints",
+      "category": "สี กาว และสารเคลือบ",
+      "recommendedUnitCode": "LTR"
+    },
+    {
+      "code": "44831100",
+      "nameTh": "วัสดุอุดรอยต่อ",
+      "nameEn": "Mastics",
+      "category": "สี กาว และสารเคลือบ",
+      "recommendedUnitCode": null
+    },
+    {
+      "code": "44831200",
+      "nameTh": "วัสดุเติมเต็ม",
+      "nameEn": "Fillers",
+      "category": "สี กาว และสารเคลือบ",
+      "recommendedUnitCode": null
+    },
+    {
+      "code": "44831300",
+      "nameTh": "สีโป๊วและวัสดุโป๊ว",
+      "nameEn": "Putty",
+      "category": "สี กาว และสารเคลือบ",
+      "recommendedUnitCode": null
+    },
+    {
+      "code": "44832000",
+      "nameTh": "ตัวทำละลาย",
+      "nameEn": "Solvents",
+      "category": "สี กาว และสารเคลือบ",
+      "recommendedUnitCode": "LTR"
+    },
+    {
+      "code": "44832100",
+      "nameTh": "น้ำยาลอกสี",
+      "nameEn": "Paint stripper",
+      "category": "สี กาว และสารเคลือบ",
+      "recommendedUnitCode": "LTR"
+    },
+    {
+      "code": "44832200",
+      "nameTh": "ทินเนอร์",
+      "nameEn": "Thinners",
+      "category": "สี กาว และสารเคลือบ",
+      "recommendedUnitCode": "LTR"
+    },
+    {
+      "code": "24910000",
+      "nameTh": "กาว",
+      "nameEn": "Glues",
+      "category": "สี กาว และสารเคลือบ",
+      "recommendedUnitCode": null
+    },
+    {
+      "code": "24911200",
+      "nameTh": "สารยึดติด",
+      "nameEn": "Adhesives",
+      "category": "สี กาว และสารเคลือบ",
+      "recommendedUnitCode": null
+    },
+    {
+      "code": "19522100",
+      "nameTh": "อีพ็อกซีเรซิน",
+      "nameEn": "Epoxy resin",
+      "category": "สี กาว และสารเคลือบ",
+      "recommendedUnitCode": "KGM"
+    },
+    {
+      "code": "44221100",
+      "nameTh": "หน้าต่าง",
+      "nameEn": "Windows",
+      "category": "ประตูและหน้าต่าง",
+      "recommendedUnitCode": "H87"
+    },
+    {
+      "code": "44221110",
+      "nameTh": "วงกบหน้าต่าง",
+      "nameEn": "Window frames",
+      "category": "ประตูและหน้าต่าง",
+      "recommendedUnitCode": "H87"
+    },
+    {
+      "code": "44221111",
+      "nameTh": "ชุดกระจกสองชั้น",
+      "nameEn": "Double-glazed units",
+      "category": "ประตูและหน้าต่าง",
+      "recommendedUnitCode": "H87"
+    },
+    {
+      "code": "44221200",
+      "nameTh": "ประตู",
+      "nameEn": "Doors",
+      "category": "ประตูและหน้าต่าง",
+      "recommendedUnitCode": "H87"
+    },
+    {
+      "code": "44221211",
+      "nameTh": "วงกบประตู",
+      "nameEn": "Door frames",
+      "category": "ประตูและหน้าต่าง",
+      "recommendedUnitCode": "H87"
+    },
+    {
+      "code": "44221213",
+      "nameTh": "ธรณีประตู",
+      "nameEn": "Door thresholds",
+      "category": "ประตูและหน้าต่าง",
+      "recommendedUnitCode": "H87"
+    },
+    {
+      "code": "44221220",
+      "nameTh": "ประตูกันไฟ",
+      "nameEn": "Fire doors",
+      "category": "ประตูและหน้าต่าง",
+      "recommendedUnitCode": "H87"
+    },
+    {
+      "code": "44221230",
+      "nameTh": "ประตูบานเลื่อน",
+      "nameEn": "Sliding doors",
+      "category": "ประตูและหน้าต่าง",
+      "recommendedUnitCode": "H87"
+    },
+    {
+      "code": "44221300",
+      "nameTh": "ประตูรั้ว",
+      "nameEn": "Gates",
+      "category": "ประตูและหน้าต่าง",
+      "recommendedUnitCode": "H87"
+    },
+    {
+      "code": "44221400",
+      "nameTh": "บานปิดช่องเปิด",
+      "nameEn": "Shutters",
+      "category": "ประตูและหน้าต่าง",
+      "recommendedUnitCode": "H87"
+    },
+    {
+      "code": "44113140",
+      "nameTh": "หินสำหรับงานถนน",
+      "nameEn": "Roadstone",
+      "category": "วัสดุงานถนน",
+      "recommendedUnitCode": "MTQ"
+    },
+    {
+      "code": "44113610",
+      "nameTh": "บิทูเมน",
+      "nameEn": "Bitumen",
+      "category": "วัสดุงานถนน",
+      "recommendedUnitCode": "KGM"
+    },
+    {
+      "code": "44113620",
+      "nameTh": "แอสฟัลต์",
+      "nameEn": "Asphalt",
+      "category": "วัสดุงานถนน",
+      "recommendedUnitCode": "TNE"
+    },
+    {
+      "code": "44113700",
+      "nameTh": "วัสดุซ่อมแซมถนน",
+      "nameEn": "Road-repair materials",
+      "category": "วัสดุงานถนน",
+      "recommendedUnitCode": null
+    },
+    {
+      "code": "44113800",
+      "nameTh": "วัสดุผิวทาง",
+      "nameEn": "Road-surfacing materials",
+      "category": "วัสดุงานถนน",
+      "recommendedUnitCode": null
+    }
+  ]
+}

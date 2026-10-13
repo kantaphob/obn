@@ -10,9 +10,7 @@ export default function AppFrame({ children, sidebar = true }: { children: React
     </Suspense>
     {sidebar && <Sidebar />}
     <main className={styles.main} id="workspace-content">
-      <div className={styles.topline}><span>OBNITHI / WORKSPACE</span><span className={styles.badge}>พื้นที่ทำงาน</span></div>
       {children}
-      <footer className={styles.footer}>OBNITHI GROUP <span>ทุกธุรกิจ ในพื้นที่เดียว</span></footer>
     </main>
   </div>;
 }

@@ -19,3 +19,310 @@ model Entry {
   @@index([category])
   @@index([status])
 }
+
+//---------------------------------------------------
+// master data
+//---------------------------------------------------
+enum MaterialCategory {
+  BUILDING_MATERIAL // วัสดุก่อสร้าง
+  ELECTRICAL_MATERIAL // วัสดุไฟฟ้า
+  PLUMBING_MATERIAL // วัสดุประปา
+  PAINT_MATERIAL // วัสดุทาสี
+  FURNITURE_MATERIAL // วัสดุเฟอร์นิเจอร์
+  OTHER_MATERIAL // วัสดุอื่นๆ
+}
+
+enum MaterialUnitCategory {
+  LENGTH // ความยาว
+  AREA // พื้นที่
+  VOLUME // ปริมาตร
+  WEIGHT // น้ำหนัก
+  QUANTITY // จำนวน
+  OTHER // อื่นๆ
+}
+
+enum MasterDataKind {
+  THING // สิ่งของและสินค้า
+  MATERIAL // วัสดุก่อสร้าง
+  UNIT // หน่วยนับ
+  CLASSIFIER // ลักษณนาม
+  POSTCODE // รหัสไปรษณีย์
+}
+
+model Province {
+  id        Int        @id @map("province_id")
+  nameTh    String     @map("name_th")
+  nameEn    String     @map("name_en")
+  districts District[]
+
+  @@map("province")
+}
+
+model District {
+  id           Int           @id @map("district_id")
+  provinceId   Int           @map("province_id")
+  nameTh       String        @map("name_th")
+  nameEn       String        @map("name_en")
+  province     Province      @relation(fields: [provinceId], references: [id])
+  subdistricts Subdistrict[]
+
+  @@index([provinceId])
+  @@map("district")
+}
+
+model Subdistrict {
+  id         Int      @id @map("subdistrict_id")
+  districtId Int      @map("district_id")
+  nameTh     String   @map("name_th")
+  nameEn     String   @map("name_en")
+  latitude   Float?   @map("lat")
+  longitude  Float?   @map("long")
+  postcode   String?  @map("zipcode")
+  district   District @relation(fields: [districtId], references: [id])
+
+  @@index([districtId])
+  @@index([postcode])
+  @@map("subdistrict")
+}
+
+model Unit {
+  code          String     @id
+  nameTh        String
+  nameEn        String
+  symbol        String
+  category      String
+  standard      String
+  sourceUrl     String
+  sourceVersion String
+  sourceDate    String
+  materials     Material[]
+
+  @@index([category])
+}
+
+model Material {
+  code                String  @id
+  nameTh              String
+  nameEn              String
+  category            String
+  recommendedUnitCode String?
+  recommendedUnit     Unit?   @relation(fields: [recommendedUnitCode], references: [code], onDelete: Restrict)
+  sourceUrl           String
+  sourceVersion       String
+  sourceDate          String
+
+  @@index([category])
+  @@index([recommendedUnitCode])
+}
+
+model Classifier {
+  code          String @id
+  nameTh        String @unique
+  nameEn        String
+  category      String
+  examples      String
+  sourceUrl     String
+  sourceVersion String
+  sourceDate    String
+
+  @@index([category])
+}
+
+model Banking {
+  id         String @id @default(cuid())
+  bankCode   String @unique
+  bankShort  String
+  bankFull   String
+  bankNameTH String
+  bankNameEN String
+
+  @@index([bankCode])
+}
+
+model Company {
+  id          String   @id @default(cuid())
+  companyCode String   @unique
+  name        String
+  taxId       String
+  address     String
+  postcode    String
+  phone       String
+  email       String
+  website     String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  branches Branch[]
+
+  @@index([taxId])
+  @@index([postcode])
+}
+
+model Branch {
+  id         String   @id @default(cuid())
+  companyId  String
+  branchCode String   @unique
+  name       String
+  address    String
+  postcode   String
+  phone      String
+  email      String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  company Company @relation(fields: [companyId], references: [id])
+
+  @@index([companyId])
+  @@index([postcode])
+}
+
+//---------------------------------------------------
+// Loan Management
+//---------------------------------------------------
+// ---------------------- Enums ----------------------
+
+enum RepayType {
+  INTEREST_ONLY // ผ่อน: จ่ายดอกเรื่อยๆ จนกว่าจะคืนต้น
+  LUMP_SUM // จ่ายครั้งเดียวตามวันที่ระบุในสัญญา
+}
+
+enum InterestMode {
+  UPFRONT // หักดอกล่วงหน้า (ยืม 5,000 ดอก 20% ได้รับ 4,000 คืน 5,000)
+  ON_SCHEDULE // เก็บตามสัญญา (ได้รับเต็ม แล้วจ่ายต้น + ดอก)
+}
+
+enum ContractType {
+  NONE // ไม่เกินเกณฑ์ ไม่ต้องทำสัญญา
+  WITNESS // สัญญากู้ยืม + พยาน
+  WITNESS_GUARANTOR // สัญญากู้ยืม + พยาน + ผู้ค้ำ
+}
+
+enum ContractStatus {
+  DRAFT // ร่าง
+  AWAITING_DOCUMENT // เกินเกณฑ์ รอสัญญาที่เซ็นแล้ว
+  READY // พร้อมจ่ายเงิน
+  ACTIVE // จ่ายเงินแล้ว กำลังดำเนินการ
+  OVERDUE // เกินกำหนด
+  CLOSED // ปิดสัญญา (หนี้สูญให้ปิดพร้อมหมายเหตุ)
+}
+
+enum ScheduleStatus {
+  PENDING // รอชำระ
+  PAID // ชำระแล้ว
+  OVERDUE // เกินกำหนด
+}
+
+enum PaymentType {
+  DISBURSEMENT // จ่ายเงินให้ลูกหนี้ (เงินออก)
+  INTEREST // รับดอกเบี้ย
+  PRINCIPAL // รับเงินต้น
+  PENALTY // ค่าปรับ
+  EXPENSE // ค่าใช้จ่าย (ไม่ผูกสัญญาได้)
+  CAPITAL_IN // ใส่ทุน
+  CAPITAL_OUT // ถอนทุน
+}
+
+enum PaymentMethod {
+  CASH
+  BANK_TRANSFER
+}
+
+// ---------------------- Models ----------------------
+
+model Debtor {
+  id        String  @id @default(cuid())
+  nickname  String?
+  phone     String
+  note      String?
+
+  // --- ข้อมูลจากบัตรประชาชน (ทุกช่องไม่บังคับ กรอกเองหรืออ่านจากบัตรก็ได้) ---
+  nationalId  String? @unique // เลข 13 หลัก
+  prefixTH    String? // คำนำหน้า (นาย/นาง/นางสาว)
+  firstName   String // ชื่อ (ไทย)
+  lastName    String? // นามสกุล (ไทย)
+  firstNameEN String?
+  lastNameEN  String?
+  gender      String?
+  birthDate   DateTime?
+  address     String? // ที่อยู่ตามบัตร (ข้อความเต็ม)
+  issueDate   DateTime? // วันออกบัตร
+  expiryDate  DateTime? // วันบัตรหมดอายุ
+  photoUrl    String? // รูปจากบัตร (เก็บเป็นไฟล์ ไม่เก็บในฐานข้อมูล)
+  idCardImageUrl String? // ภาพถ่ายบัตร (ถ้ามี)
+
+  contracts Contract[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model Contract {
+  id             String @id @default(cuid())
+  contractNumber String @unique
+  debtorId       String
+  debtor         Debtor @relation(fields: [debtorId], references: [id])
+
+  // ยอดเงิน (สตางค์)
+  principal      Int // เงินต้น
+  interestRate   Float // % ต่อสัญญา หรือ ต่อรอบ (ตามที่ตกลง)
+  interestAmount Int // ดอกเบี้ย (รวมทั้งสัญญา หรือ ต่อรอบ)
+  netDisbursed   Int // ยอดที่ลูกหนี้ได้รับจริง
+
+  // รูปแบบสัญญา
+  repayType    RepayType
+  interestMode InterestMode
+  periodDays   Int? // รอบจ่ายดอก (INTEREST_ONLY)
+  startDate    DateTime
+  dueDate      DateTime? // จำเป็นสำหรับ LUMP_SUM
+
+  // สัญญากู้ยืม (เกิน 2,000 บาท)
+  contractType ContractType @default(NONE)
+  documentUrl  String? // ไฟล์สัญญาที่เซ็นแล้ว
+  signedAt     DateTime?
+  witness1     String?
+  witness2     String?
+  guarantor    String?
+
+  status ContractStatus @default(DRAFT)
+  note   String?
+
+  schedules InterestSchedule[]
+  payments  Payment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([debtorId])
+  @@index([status, dueDate])
+}
+
+// ตารางงวดจ่ายดอก (ใช้กับสัญญาแบบ INTEREST_ONLY)
+model InterestSchedule {
+  id         String         @id @default(cuid())
+  contractId String
+  contract   Contract       @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  periodNo   Int
+  dueDate    DateTime
+  amount     Int // สตางค์
+  status     ScheduleStatus @default(PENDING)
+  payments   Payment[]
+
+  @@unique([contractId, periodNo])
+}
+
+// รายการเงินเข้า-ออกทั้งหมด (ยอดคงค้าง = รวมจากตารางนี้เสมอ)
+model Payment {
+  id         String            @id @default(cuid())
+  contractId String? // ว่างได้ สำหรับทุน/ค่าใช้จ่าย
+  contract   Contract?         @relation(fields: [contractId], references: [id])
+  scheduleId String?
+  schedule   InterestSchedule? @relation(fields: [scheduleId], references: [id])
+  type       PaymentType
+  amount     Int // สตางค์
+  paidAt     DateTime
+  method     PaymentMethod     @default(CASH)
+  note       String?
+  createdAt  DateTime          @default(now())
+
+  @@index([contractId])
+  @@index([paidAt])
+}

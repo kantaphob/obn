@@ -1,0 +1,325 @@
+{
+  "source": {
+    "url": "https://www.orst.go.th/iwfm_table.asp?a=36&i=0040002104011001%2F63ERK0729009",
+    "version": "ชุดเริ่มต้นลักษณนามภาษาไทย v1",
+    "retrievedAt": "2026-10-13"
+  },
+  "notes": "Application-curated common Thai classifiers. Internal CL codes, grouping, English glosses and example phrases are application annotations. Royal Society guidance is referenced for usage principles; this is not a complete official dictionary import.",
+  "items": [
+    {
+      "code": "CL001",
+      "nameTh": "ชิ้น",
+      "nameEn": "piece",
+      "category": "ทั่วไป",
+      "examples": "ขนม 2 ชิ้น; ชิ้นส่วนอะไหล่ 5 ชิ้น"
+    },
+    {
+      "code": "CL002",
+      "nameTh": "อัน",
+      "nameEn": "item",
+      "category": "ทั่วไป",
+      "examples": "ยางลบ 3 อัน; ช้อน 2 อัน"
+    },
+    {
+      "code": "CL003",
+      "nameTh": "ตัว",
+      "nameEn": "individual item",
+      "category": "ทั่วไป",
+      "examples": "เก้าอี้ 4 ตัว; เสื้อ 2 ตัว"
+    },
+    {
+      "code": "CL004",
+      "nameTh": "ใบ",
+      "nameEn": "leaf or container",
+      "category": "ทั่วไป",
+      "examples": "กระเป๋า 1 ใบ; จาน 6 ใบ"
+    },
+    {
+      "code": "CL005",
+      "nameTh": "แผ่น",
+      "nameEn": "sheet",
+      "category": "รูปทรงและวัสดุ",
+      "examples": "กระดาษ 10 แผ่น; ไม้อัด 3 แผ่น"
+    },
+    {
+      "code": "CL006",
+      "nameTh": "แท่ง",
+      "nameEn": "bar or stick",
+      "category": "รูปทรงและวัสดุ",
+      "examples": "ดินสอ 2 แท่ง; เหล็ก 5 แท่ง"
+    },
+    {
+      "code": "CL007",
+      "nameTh": "ก้อน",
+      "nameEn": "lump or block",
+      "category": "รูปทรงและวัสดุ",
+      "examples": "หิน 3 ก้อน; สบู่ 2 ก้อน"
+    },
+    {
+      "code": "CL008",
+      "nameTh": "เส้น",
+      "nameEn": "line or strand",
+      "category": "รูปทรงและวัสดุ",
+      "examples": "เชือก 2 เส้น; ด้าย 3 เส้น"
+    },
+    {
+      "code": "CL009",
+      "nameTh": "สาย",
+      "nameEn": "cord or route",
+      "category": "รูปทรงและวัสดุ",
+      "examples": "เข็มขัด 1 สาย; สายไฟ 2 สาย"
+    },
+    {
+      "code": "CL010",
+      "nameTh": "ท่อน",
+      "nameEn": "length or section",
+      "category": "รูปทรงและวัสดุ",
+      "examples": "ไม้ 4 ท่อน; ท่อ 3 ท่อน"
+    },
+    {
+      "code": "CL011",
+      "nameTh": "วง",
+      "nameEn": "ring",
+      "category": "รูปทรงและวัสดุ",
+      "examples": "แหวน 2 วง; กำไล 1 วง"
+    },
+    {
+      "code": "CL012",
+      "nameTh": "เม็ด",
+      "nameEn": "grain or bead",
+      "category": "รูปทรงและวัสดุ",
+      "examples": "ยา 2 เม็ด; ลูกปัด 10 เม็ด"
+    },
+    {
+      "code": "CL013",
+      "nameTh": "ลูก",
+      "nameEn": "round object",
+      "category": "รูปทรงและวัสดุ",
+      "examples": "ลูกบอล 3 ลูก; กุญแจ 2 ลูก"
+    },
+    {
+      "code": "CL014",
+      "nameTh": "ผืน",
+      "nameEn": "piece of fabric",
+      "category": "รูปทรงและวัสดุ",
+      "examples": "ผ้า 2 ผืน; พรม 1 ผืน"
+    },
+    {
+      "code": "CL015",
+      "nameTh": "หลัง",
+      "nameEn": "building",
+      "category": "อาคารและส่วนประกอบ",
+      "examples": "บ้าน 1 หลัง; อาคาร 2 หลัง"
+    },
+    {
+      "code": "CL016",
+      "nameTh": "บาน",
+      "nameEn": "panel or leaf",
+      "category": "อาคารและส่วนประกอบ",
+      "examples": "ประตู 2 บาน; หน้าต่าง 4 บาน"
+    },
+    {
+      "code": "CL017",
+      "nameTh": "ต้น",
+      "nameEn": "upright post",
+      "category": "อาคารและส่วนประกอบ",
+      "examples": "เสา 6 ต้น; เสาไฟ 2 ต้น"
+    },
+    {
+      "code": "CL018",
+      "nameTh": "ขั้น",
+      "nameEn": "step",
+      "category": "อาคารและส่วนประกอบ",
+      "examples": "บันได 5 ขั้น"
+    },
+    {
+      "code": "CL019",
+      "nameTh": "ช่อง",
+      "nameEn": "opening or compartment",
+      "category": "อาคารและส่วนประกอบ",
+      "examples": "ช่องระบายอากาศ 4 ช่อง"
+    },
+    {
+      "code": "CL020",
+      "nameTh": "แห่ง",
+      "nameEn": "place",
+      "category": "อาคารและส่วนประกอบ",
+      "examples": "สำนักงาน 2 แห่ง; โรงงาน 1 แห่ง"
+    },
+    {
+      "code": "CL021",
+      "nameTh": "เครื่อง",
+      "nameEn": "machine",
+      "category": "เครื่องมือและยานพาหนะ",
+      "examples": "เครื่องปรับอากาศ 2 เครื่อง; คอมพิวเตอร์ 3 เครื่อง"
+    },
+    {
+      "code": "CL022",
+      "nameTh": "คัน",
+      "nameEn": "vehicle or handled object",
+      "category": "เครื่องมือและยานพาหนะ",
+      "examples": "รถยนต์ 2 คัน; ร่ม 1 คัน"
+    },
+    {
+      "code": "CL023",
+      "nameTh": "เล่ม",
+      "nameEn": "book or blade",
+      "category": "เครื่องมือและยานพาหนะ",
+      "examples": "หนังสือ 3 เล่ม; มีด 2 เล่ม"
+    },
+    {
+      "code": "CL024",
+      "nameTh": "ลำ",
+      "nameEn": "vessel",
+      "category": "เครื่องมือและยานพาหนะ",
+      "examples": "เรือ 1 ลำ; เครื่องบิน 2 ลำ"
+    },
+    {
+      "code": "CL025",
+      "nameTh": "ชุด",
+      "nameEn": "set",
+      "category": "กลุ่มและชุด",
+      "examples": "เครื่องมือ 1 ชุด; ชุดเครื่องแบบ 2 ชุด"
+    },
+    {
+      "code": "CL026",
+      "nameTh": "คู่",
+      "nameEn": "pair",
+      "category": "กลุ่มและชุด",
+      "examples": "รองเท้า 1 คู่; ถุงมือ 2 คู่"
+    },
+    {
+      "code": "CL027",
+      "nameTh": "มัด",
+      "nameEn": "bundle",
+      "category": "กลุ่มและชุด",
+      "examples": "ไม้ 2 มัด; สายไฟ 1 มัด"
+    },
+    {
+      "code": "CL028",
+      "nameTh": "กลุ่ม",
+      "nameEn": "group",
+      "category": "กลุ่มและชุด",
+      "examples": "นักเรียน 2 กลุ่ม"
+    },
+    {
+      "code": "CL029",
+      "nameTh": "ฝูง",
+      "nameEn": "flock or herd",
+      "category": "กลุ่มและชุด",
+      "examples": "นก 1 ฝูง; วัว 2 ฝูง"
+    },
+    {
+      "code": "CL030",
+      "nameTh": "ถุง",
+      "nameEn": "bag",
+      "category": "บรรจุภัณฑ์",
+      "examples": "ปุ๋ย 3 ถุง; น้ำตาล 2 ถุง"
+    },
+    {
+      "code": "CL031",
+      "nameTh": "กล่อง",
+      "nameEn": "box",
+      "category": "บรรจุภัณฑ์",
+      "examples": "กระเบื้อง 4 กล่อง; ตะปู 2 กล่อง"
+    },
+    {
+      "code": "CL032",
+      "nameTh": "ขวด",
+      "nameEn": "bottle",
+      "category": "บรรจุภัณฑ์",
+      "examples": "น้ำดื่ม 6 ขวด"
+    },
+    {
+      "code": "CL033",
+      "nameTh": "กระป๋อง",
+      "nameEn": "can",
+      "category": "บรรจุภัณฑ์",
+      "examples": "สี 2 กระป๋อง"
+    },
+    {
+      "code": "CL034",
+      "nameTh": "กระสอบ",
+      "nameEn": "sack",
+      "category": "บรรจุภัณฑ์",
+      "examples": "ข้าวสาร 3 กระสอบ"
+    },
+    {
+      "code": "CL035",
+      "nameTh": "ถัง",
+      "nameEn": "pail or drum",
+      "category": "บรรจุภัณฑ์",
+      "examples": "สี 1 ถัง"
+    },
+    {
+      "code": "CL036",
+      "nameTh": "ห่อ",
+      "nameEn": "package",
+      "category": "บรรจุภัณฑ์",
+      "examples": "กระดาษ 2 ห่อ"
+    },
+    {
+      "code": "CL037",
+      "nameTh": "ม้วน",
+      "nameEn": "roll",
+      "category": "บรรจุภัณฑ์",
+      "examples": "เทป 3 ม้วน; สายไฟ 2 ม้วน"
+    },
+    {
+      "code": "CL038",
+      "nameTh": "คน",
+      "nameEn": "person",
+      "category": "คนและสิ่งมีชีวิต",
+      "examples": "พนักงาน 5 คน; ช่าง 2 คน"
+    },
+    {
+      "code": "CL039",
+      "nameTh": "ดอก",
+      "nameEn": "flower",
+      "category": "คนและสิ่งมีชีวิต",
+      "examples": "ดอกไม้ 5 ดอก"
+    },
+    {
+      "code": "CL040",
+      "nameTh": "ผล",
+      "nameEn": "fruit",
+      "category": "คนและสิ่งมีชีวิต",
+      "examples": "มะม่วง 3 ผล"
+    },
+    {
+      "code": "CL041",
+      "nameTh": "ฉบับ",
+      "nameEn": "document copy",
+      "category": "เอกสารและงาน",
+      "examples": "สัญญา 2 ฉบับ; จดหมาย 1 ฉบับ"
+    },
+    {
+      "code": "CL042",
+      "nameTh": "รายการ",
+      "nameEn": "entry",
+      "category": "เอกสารและงาน",
+      "examples": "รายการสินค้า 10 รายการ"
+    },
+    {
+      "code": "CL043",
+      "nameTh": "เรื่อง",
+      "nameEn": "matter or story",
+      "category": "เอกสารและงาน",
+      "examples": "คำร้อง 2 เรื่อง"
+    },
+    {
+      "code": "CL044",
+      "nameTh": "ครั้ง",
+      "nameEn": "occurrence",
+      "category": "เอกสารและงาน",
+      "examples": "การตรวจงาน 3 ครั้ง"
+    },
+    {
+      "code": "CL045",
+      "nameTh": "เที่ยว",
+      "nameEn": "trip",
+      "category": "เอกสารและงาน",
+      "examples": "รถขนส่ง 2 เที่ยว"
+    }
+  ]
+}
