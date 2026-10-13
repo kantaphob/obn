@@ -1,0 +1,77 @@
+"use client";
+
+import { useEffect, useState, type CSSProperties } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { ChevronDown, Menu, X, PanelLeft } from "lucide-react";
+import { getSystem } from "@/lib/nav";
+import { workspaceStyles as styles } from "./ui/workspace-styles";
+
+export default function Sidebar() {
+  const pathname = usePathname();
+  const system = getSystem(pathname);
+  const [closed, setClosed] = useState<Record<string, boolean>>({});
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [online, setOnline] = useState<boolean | null>(null);
+  useEffect(() => {
+    const update = () => setOnline(navigator.onLine);
+    update();
+    window.addEventListener("online", update);
+    window.addEventListener("offline", update);
+    return () => {
+      window.removeEventListener("online", update);
+      window.removeEventListener("offline", update);
+    };
+  }, []);
+  const connectionLabel = online === null ? "กำลังตรวจสอบเครือข่าย" : online ? "เครือข่ายออนไลน์" : "เครือข่ายออฟไลน์";
+  const lights = [
+    { label: "เครือข่ายออฟไลน์", active: online === false, color: "bg-[#ef7070] shadow-[0_0_9px_#ef7070]" },
+    { label: "กำลังตรวจสอบเครือข่าย", active: online === null, color: "bg-[#eac65e] shadow-[0_0_9px_#eac65e]" },
+    { label: "เครือข่ายออนไลน์", active: online === true, color: "bg-[#79d8a0] shadow-[0_0_9px_#79d8a0]" },
+  ];
+  const Icon = system.icon;
+  const admin = system.key === "admin";
+  const theme = admin
+    ? "[--surface:#272b2a] [--text:#f4f5f2] [--muted:#c1c6be]"
+    : system.key === "dashboard"
+      ? "[--surface:#f5f3ed] [--text:#272b29] [--muted:#626862]"
+      : "[--surface:color-mix(in_srgb,var(--accent)_12%,#d5d6d3)]";
+
+  return <aside style={{ "--accent": system.color } as CSSProperties} className={`${styles.sidebar} ${sidebarCollapsed ? "min-[761px]:w-[76px]! min-[761px]:px-3!" : ""} ${theme} text-[color:var(--text)] ${admin ? "backdrop-blur-xl [background:linear-gradient(135deg,#303735dd,#161a19ee)]" : ""}`} aria-label={`เมนู${system.label}`}>
+    <div className={`${styles.windowBar} ${sidebarCollapsed ? "min-[761px]:flex-col min-[761px]:gap-3" : ""}`}><span role="status" aria-label={connectionLabel} title={`${connectionLabel} (สถานะจากเบราว์เซอร์)`} className="flex shrink-0 items-center gap-1.5">{lights.map(light => <span key={light.label} aria-hidden="true" className={`size-2.5 rounded-full border border-white/35 ${light.active ? light.color : "bg-[#92988f]/30"}`} />)}</span><button type="button" onClick={() => setSidebarCollapsed(value => !value)} aria-expanded={!sidebarCollapsed} aria-controls="sidebar-content" aria-label={sidebarCollapsed ? "ขยาย Sidebar" : "ยุบ Sidebar"} title={sidebarCollapsed ? "ขยาย Sidebar" : "ยุบ Sidebar"} className="grid size-9 place-items-center rounded-lg border border-current/20 text-[color:var(--text)] hover:bg-white/15 focus-visible:outline-current"><PanelLeft size={20} aria-hidden="true" /></button></div>
+    {sidebarCollapsed && <nav aria-label={`ไอคอนเมนู${system.label}`} className="hidden min-[761px]:block">
+      {system.groups.map(group => <div key={group.title} className="mb-3 grid gap-2 border-b border-current/15 pb-3">
+        {group.items.map(({ href, label, icon: ItemIcon }) => {
+          const selected = pathname === href || (href !== system.href && pathname.startsWith(`${href}/`));
+          return <Link key={href} href={href} title={`${group.title} — ${label}`} aria-label={label} aria-current={selected ? "page" : undefined} className={`grid size-11 place-items-center rounded-xl border text-inherit! focus-visible:outline-current ${selected ? "border-white/50 bg-[color-mix(in_srgb,var(--accent)_25%,var(--surface))] shadow-[inset_1px_1px_3px_#fff4,3px_4px_8px_#0002]" : "border-transparent hover:bg-white/15"}`}><ItemIcon size={22} aria-hidden="true" /></Link>;
+        })}
+      </div>)}
+    </nav>}
+    <div id="sidebar-content" className={sidebarCollapsed ? "min-[761px]:hidden" : undefined}>
+    <div className={styles.profile}>
+      <span className="grid size-[45px] shrink-0 place-items-center rounded-full border-2 border-black/30 bg-[var(--accent)] text-[#272b29] shadow-[3px_4px_7px_#0003]"><Icon size={25} strokeWidth={1.6} aria-hidden="true" /></span>
+      <div><strong>{system.label}</strong><span>OBNITHI Group</span></div>
+      <button type="button" className={styles.mobileToggle} onClick={() => setMobileOpen(value => !value)} aria-expanded={mobileOpen} aria-controls="workspace-menu" aria-label={mobileOpen ? "ปิดเมนู" : "เปิดเมนู"}>{mobileOpen ? <X size={20} /> : <Menu size={20} />}</button>
+    </div>
+    <div id="workspace-menu" className={`${styles.menu} ${mobileOpen ? styles.menuOpen : "max-[760px]:hidden"}`}>
+      <nav aria-label="เมนูในระบบ">
+        {system.groups.map(group => {
+          const key = `${system.key}:${group.title}`;
+          const collapsed = !!closed[key];
+          return <section className={styles.navGroup} key={key}>
+            <button type="button" className={styles.groupTitle} aria-expanded={!collapsed} onClick={() => setClosed(previous => ({ ...previous, [key]: !previous[key] }))}>
+              <span className="flex items-center gap-2"><span className="size-2 rounded-full bg-[var(--accent)] ring-1 ring-black/15" aria-hidden="true" />{group.title}</span><ChevronDown size={14} className={collapsed ? "-rotate-90" : undefined} />
+            </button>
+            {!collapsed && <ul>{group.items.map(({ href, label, icon: ItemIcon }) => {
+              const selected = pathname === href || (href !== system.href && pathname.startsWith(`${href}/`));
+              return <li key={href}><Link className={`flex min-h-11 items-center gap-3 rounded-[11px] border px-3 py-[11px] text-[13px] transition-colors focus-visible:outline-current ${selected ? "border-white/50 bg-[color-mix(in_srgb,var(--accent)_25%,var(--surface))] font-semibold shadow-[inset_1px_1px_3px_#fff4,4px_5px_10px_#0002]" : "border-transparent hover:bg-white/10"}`} href={href} aria-current={selected ? "page" : undefined} onClick={() => setMobileOpen(false)}><ItemIcon size={20} strokeWidth={1.6} aria-hidden="true" className="shrink-0" /><span>{label}</span>{selected && <span className="ml-auto size-[7px] shrink-0 rounded-full bg-[var(--accent)] ring-4 ring-white/20" aria-hidden="true" />}</Link></li>;
+            })}</ul>}
+          </section>;
+        })}
+      </nav>
+      <div className={styles.sidebarNote}><span>WORKSPACE</span><strong>พื้นที่ทำงานของคุณ</strong><p>เลือกเมนูเพื่อจัดการแต่ละส่วนของธุรกิจ</p></div>
+    </div>
+    </div>
+  </aside>;
+}
