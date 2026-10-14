@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
+import { useToast, useTrackedFetch } from '@/components/ui/ToastProvider';
 import type { CatalogItem, CatalogKind, CatalogResult } from '@/lib/reference-catalog-types';
 
 export type CatalogEditState = { mode: 'create' | 'edit' | 'delete'; item?: CatalogItem };
@@ -15,12 +16,13 @@ export default function CatalogEditor({ kind, state, categories, onClose, onDone
   onClose: () => void;
   onDone: (mode: CatalogEditState['mode'], code: string) => void;
 }) {
+  const trackedFetch = useTrackedFetch();
   const dialog = useRef<HTMLDialogElement>(null);
   const id = useId();
   const item = state.item;
   const [form, setForm] = useState<Record<string, string>>({ code: item?.code ?? '', nameTh: item?.nameTh ?? '', nameEn: item?.nameEn ?? '', category: item?.category ?? '', symbol: item?.symbol ?? '', standard: item?.standard ?? 'กำหนดเอง', examples: item?.examples ?? '', recommendedUnitCode: item?.recommendedUnit?.code ?? '' });
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState('');
+  const notify = useToast();
   const [units, setUnits] = useState<CatalogItem[]>([]);
   const [unitsError, setUnitsError] = useState('');
   const [unitsReady, setUnitsReady] = useState(false);
@@ -38,7 +40,7 @@ export default function CatalogEditor({ kind, state, categories, onClose, onDone
         let page = 1;
         let totalPages = 1;
         do {
-          const response = await fetch(`/api/units?pageSize=100&page=${page}`, { signal: controller.signal, cache: 'no-store' });
+          const response = await trackedFetch(`/api/units?pageSize=100&page=${page}`, { signal: controller.signal, cache: 'no-store' });
           if (!response.ok) throw new Error('โหลดหน่วยนับไม่สำเร็จ');
           const result: CatalogResult = await response.json();
           options.push(...result.items);
@@ -52,26 +54,26 @@ export default function CatalogEditor({ kind, state, categories, onClose, onDone
     }
     void load();
     return () => controller.abort();
-  }, [kind, deleting, retry]);
+  }, [kind, deleting, retry, trackedFetch]);
 
   function change(key: string, value: string) { setForm((previous) => ({ ...previous, [key]: value })); }
   async function submit(event: FormEvent) {
     event.preventDefault();
     if (saving) return;
-    setSaving(true); setError('');
+    setSaving(true);
     try {
       const payload: Record<string, string | null> = { code: form.code.trim(), nameTh: form.nameTh, nameEn: form.nameEn, category: form.category };
       if (kind === 'units') { payload.symbol = form.symbol; payload.standard = form.standard; }
       if (kind === 'classifiers') payload.examples = form.examples;
       if (kind === 'materials') payload.recommendedUnitCode = form.recommendedUnitCode || null;
       const url = state.mode === 'create' ? `/api/${kind}` : `/api/${kind}/${encodeURIComponent(item!.code)}`;
-      const response = await fetch(url, { method: deleting ? 'DELETE' : state.mode === 'create' ? 'POST' : 'PATCH', headers: { 'Content-Type': 'application/json' }, ...(deleting ? {} : { body: JSON.stringify(payload) }) });
+      const response = await trackedFetch(url, { method: deleting ? 'DELETE' : state.mode === 'create' ? 'POST' : 'PATCH', headers: { 'Content-Type': 'application/json' }, ...(deleting ? {} : { body: JSON.stringify(payload) }) });
       if (!response.ok) {
         const data = await response.json().catch(() => null);
         throw new Error(data?.error ?? 'บันทึกไม่สำเร็จ กรุณาลองใหม่');
       }
       onDone(state.mode, deleting ? item!.code : form.code.trim());
-    } catch (err) { setError(err instanceof Error ? err.message : 'บันทึกไม่สำเร็จ'); setSaving(false); }
+    } catch (err) { notify({ status: 'error', message: err instanceof Error ? err.message : 'บันทึกไม่สำเร็จ' }); setSaving(false); }
   }
 
   const fields = [
@@ -97,7 +99,6 @@ export default function CatalogEditor({ kind, state, categories, onClose, onDone
         </label> : null}
       </fieldset>}
       {unitsError && !deleting ? <div role="alert" className="mt-4 text-sm text-red-700">{unitsError}<button type="button" className={`${buttonClass} ml-2`} onClick={() => setRetry((value) => value + 1)}>ลองใหม่</button></div> : null}
-      {error ? <p role="alert" className="mt-4 text-sm text-red-700">{error}</p> : null}
       <div className="mt-6 flex justify-end gap-3"><button type="button" className={`${buttonClass} w-32`} disabled={saving} onClick={onClose}>ยกเลิก</button><button type="submit" disabled={saving || (!deleting && kind === 'materials' && !unitsReady)} className={`${buttonClass} w-32 ${deleting ? 'bg-red-700 text-white' : 'bg-[#355a4b] text-white'}`}>{saving ? 'กำลังบันทึก…' : deleting ? 'ยืนยันลบ' : 'บันทึก'}</button></div>
     </form>
   </dialog>;

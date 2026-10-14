@@ -17,6 +17,7 @@ const nextConfig: NextConfig = {
   },
   cacheComponents: true,
   partialPrefetching: true,
+  serverExternalPackages: ["@pokusew/pcsclite"],
   turbopack: {
     rules: {
       "*.css": {

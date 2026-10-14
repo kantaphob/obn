@@ -79,6 +79,7 @@ model Subdistrict {
   longitude  Float?   @map("long")
   postcode   String?  @map("zipcode")
   district   District @relation(fields: [districtId], references: [id])
+  borrowers  borrowers[]
 
   @@index([districtId])
   @@index([postcode])
@@ -135,6 +136,7 @@ model Banking {
   bankFull   String
   bankNameTH String
   bankNameEN String
+  borrowers  borrowers[]
 
   @@index([bankCode])
 }
@@ -182,6 +184,7 @@ model Branch {
 // ---------------------- Enums ----------------------
 
 enum RepayType {
+  INSTALLMENT // ผ่อนชำระรายเดือน
   INTEREST_ONLY // ผ่อน: จ่ายดอกเรื่อยๆ จนกว่าจะคืนต้น
   LUMP_SUM // จ่ายครั้งเดียวตามวันที่ระบุในสัญญา
 }
@@ -189,6 +192,11 @@ enum RepayType {
 enum InterestMode {
   UPFRONT // หักดอกล่วงหน้า (ยืม 5,000 ดอก 20% ได้รับ 4,000 คืน 5,000)
   ON_SCHEDULE // เก็บตามสัญญา (ได้รับเต็ม แล้วจ่ายต้น + ดอก)
+}
+
+enum InterestRateBasis {
+  MONTHLY_FLAT // อัตราคงที่ต่อเดือน คูณจำนวนเดือน
+  CONTRACT_FLAT // อัตราครั้งเดียวตลอดสัญญา
 }
 
 enum ContractType {
@@ -204,6 +212,11 @@ enum ContractStatus {
   ACTIVE // จ่ายเงินแล้ว กำลังดำเนินการ
   OVERDUE // เกินกำหนด
   CLOSED // ปิดสัญญา (หนี้สูญให้ปิดพร้อมหมายเหตุ)
+}
+
+enum SignatureMode {
+  PRINT
+  DIGITAL
 }
 
 enum ScheduleStatus {
@@ -229,11 +242,57 @@ enum PaymentMethod {
 
 // ---------------------- Models ----------------------
 
-model Debtor {
+enum BorrowerStatus {
+  PENDING_REPAYMENT
+  UNDER_REVIEW
+  CLOSED
+}
+
+enum BorrowerPayoutChannel {
+  PROMPTPAY
+  BANK_TRANSFER
+}
+
+enum BorrowerRiskRating {
+  SS
+  S
+  A
+  B
+  C
+  D
+}
+
+model BorrowerCodeSequence {
+  id Int @id
+  value Int
+}
+
+model borrowers {
+  borrowersCode String @unique
   id        String  @id @default(cuid())
   nickname  String?
   phone     String
   note      String?
+
+  workplace String?
+  status BorrowerStatus?
+  bankAccountNumber String?
+  payoutChannel BorrowerPayoutChannel?
+  payoutBankCode String?
+  payoutBank Banking? @relation(fields: [payoutBankCode], references: [bankCode], onDelete: Restrict)
+  registeredAt DateTime?
+  facebook String?
+  instagram String?
+  line String?
+  // สถานะจากข้อมูลนำเข้าเดิม
+  hasFacebook Boolean?
+  hasInstagram Boolean?
+  hasLine Boolean?
+  riskRating BorrowerRiskRating?
+  approvedLimit Int? // สตางค์
+  usedLimit Int? // สตางค์
+  availableLimit Int? // สตางค์ ตามข้อมูลนำเข้า
+  referrer String?
 
   // --- ข้อมูลจากบัตรประชาชน (ทุกช่องไม่บังคับ กรอกเองหรืออ่านจากบัตรก็ได้) ---
   nationalId  String? @unique // เลข 13 หลัก
@@ -245,6 +304,12 @@ model Debtor {
   gender      String?
   birthDate   DateTime?
   address     String? // ที่อยู่ตามบัตร (ข้อความเต็ม)
+  houseNumber String?
+  buildingName String?
+  alley       String?
+  road        String?
+  subdistrictId Int?
+  subdistrict Subdistrict? @relation(fields: [subdistrictId], references: [id], onDelete: SetNull)
   issueDate   DateTime? // วันออกบัตร
   expiryDate  DateTime? // วันบัตรหมดอายุ
   photoUrl    String? // รูปจากบัตร (เก็บเป็นไฟล์ ไม่เก็บในฐานข้อมูล)
@@ -253,13 +318,15 @@ model Debtor {
   contracts Contract[]
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
+
+  @@index([payoutBankCode])
 }
 
 model Contract {
   id             String @id @default(cuid())
   contractNumber String @unique
   debtorId       String
-  debtor         Debtor @relation(fields: [debtorId], references: [id])
+  debtor         borrowers @relation(fields: [debtorId], references: [id])
 
   // ยอดเงิน (สตางค์)
   principal      Int // เงินต้น
@@ -270,6 +337,8 @@ model Contract {
   // รูปแบบสัญญา
   repayType    RepayType
   interestMode InterestMode
+  interestRateBasis InterestRateBasis @default(CONTRACT_FLAT)
+  installmentMonths Int? // จำนวนเดือนสำหรับแผนผ่อน
   periodDays   Int? // รอบจ่ายดอก (INTEREST_ONLY)
   startDate    DateTime
   dueDate      DateTime? // จำเป็นสำหรับ LUMP_SUM
@@ -278,14 +347,22 @@ model Contract {
   contractType ContractType @default(NONE)
   documentUrl  String? // ไฟล์สัญญาที่เซ็นแล้ว
   signedAt     DateTime?
+  signatureMode SignatureMode @default(PRINT)
+  signatureUrl String?
+  consentAccepted Boolean @default(false)
+  consentedAt DateTime?
+  consentText String?
   witness1     String?
   witness2     String?
   guarantor    String?
 
   status ContractStatus @default(DRAFT)
   note   String?
+  lateFeePerDay Int @default(5000) // สตางค์ต่อวัน
+  lateFeeWaived Boolean @default(false)
 
   schedules InterestSchedule[]
+  repayments Repayment[]
   payments  Payment[]
 
   createdAt DateTime @default(now())
@@ -303,10 +380,18 @@ model InterestSchedule {
   periodNo   Int
   dueDate    DateTime
   amount     Int // สตางค์
+  principalAmount Int @default(0) // สตางค์
+  interestAmount Int @default(0) // สตางค์
   status     ScheduleStatus @default(PENDING)
   payments   Payment[]
 
   @@unique([contractId, periodNo])
+}
+
+model ContractNumberSequence {
+  year       Int      @id
+  lastNumber Int      @default(0)
+  updatedAt  DateTime @updatedAt
 }
 
 // รายการเงินเข้า-ออกทั้งหมด (ยอดคงค้าง = รวมจากตารางนี้เสมอ)
@@ -325,4 +410,29 @@ model Payment {
 
   @@index([contractId])
   @@index([paidAt])
+}
+
+model Repayment {
+  id String @id @default(cuid())
+  requestKey String @unique
+  receiptNumber String @unique
+  contractId String
+  contract Contract @relation(fields: [contractId], references: [id], onDelete: Restrict)
+  paidAt DateTime
+  amount Int
+  interestPaid Int
+  penaltyPaid Int
+  principalPaid Int
+  principalBefore Int
+  interestBefore Int
+  penaltyBefore Int
+  principalRemaining Int
+  interestRemaining Int
+  penaltyRemaining Int
+  totalRemaining Int
+  method PaymentMethod
+  evidenceUrl String?
+  note String?
+  createdAt DateTime @default(now())
+  @@index([contractId, paidAt])
 }

@@ -65,7 +65,7 @@ export default function Sidebar() {
             </button>
             {!collapsed && <ul>{group.items.map(({ href, label, icon: ItemIcon }) => {
               const selected = pathname === href || (href !== system.href && pathname.startsWith(`${href}/`));
-              return <li key={href}><Link className={`flex min-h-11 items-center gap-3 rounded-[11px] border px-3 py-[11px] text-[13px] transition-colors focus-visible:outline-current ${selected ? "border-white/50 bg-[color-mix(in_srgb,var(--accent)_25%,var(--surface))] font-semibold shadow-[inset_1px_1px_3px_#fff4,4px_5px_10px_#0002]" : "border-transparent hover:bg-white/10"}`} href={href} aria-current={selected ? "page" : undefined} onClick={() => setMobileOpen(false)}><ItemIcon size={20} strokeWidth={1.6} aria-hidden="true" className="shrink-0" /><span>{label}</span>{selected && <span className="ml-auto size-[7px] shrink-0 rounded-full bg-[var(--accent)] ring-4 ring-white/20" aria-hidden="true" />}</Link></li>;
+              return <li key={`${href}:${label}`}><Link className={`flex min-h-11 items-center gap-3 rounded-[11px] border px-3 py-[11px] text-[13px] transition-colors focus-visible:outline-current ${selected ? "border-white/50 bg-[color-mix(in_srgb,var(--accent)_25%,var(--surface))] font-semibold shadow-[inset_1px_1px_3px_#fff4,4px_5px_10px_#0002]" : "border-transparent hover:bg-white/10"}`} href={href} aria-current={selected ? "page" : undefined} onClick={() => setMobileOpen(false)}><ItemIcon size={20} strokeWidth={1.6} aria-hidden="true" className="shrink-0" /><span>{label}</span>{selected && <span className="ml-auto size-[7px] shrink-0 rounded-full bg-[var(--accent)] ring-4 ring-white/20" aria-hidden="true" />}</Link></li>;
             })}</ul>}
           </section>;
         })}

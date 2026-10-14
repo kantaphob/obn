@@ -1,0 +1,110 @@
+[
+  {
+    "bankCode": "002",
+    "bankShort": "BBL",
+    "bankNameTH": "ธนาคารกรุงเทพ",
+    "bankNameEN": "Bangkok Bank"
+  },
+  {
+    "bankCode": "004",
+    "bankShort": "KBANK",
+    "bankNameTH": "ธนาคารกสิกรไทย",
+    "bankNameEN": "Kasikornbank"
+  },
+  {
+    "bankCode": "006",
+    "bankShort": "KTB",
+    "bankNameTH": "ธนาคารกรุงไทย",
+    "bankNameEN": "Krungthai Bank"
+  },
+  {
+    "bankCode": "011",
+    "bankShort": "TTB",
+    "bankNameTH": "ธนาคารทหารไทยธนชาต",
+    "bankNameEN": "TMBThanachart Bank"
+  },
+  {
+    "bankCode": "014",
+    "bankShort": "SCB",
+    "bankNameTH": "ธนาคารไทยพาณิชย์",
+    "bankNameEN": "Siam Commercial Bank"
+  },
+  {
+    "bankCode": "025",
+    "bankShort": "BAY",
+    "bankNameTH": "ธนาคารกรุงศรีอยุธยา",
+    "bankNameEN": "Bank of Ayudhya"
+  },
+  {
+    "bankCode": "024",
+    "bankShort": "UOBT",
+    "bankNameTH": "ธนาคารยูโอบี",
+    "bankNameEN": "United Overseas Bank (Thai)"
+  },
+  {
+    "bankCode": "022",
+    "bankShort": "CIMBT",
+    "bankNameTH": "ธนาคารซีไอเอ็มบีไทย",
+    "bankNameEN": "CIMB Thai Bank"
+  },
+  {
+    "bankCode": "030",
+    "bankShort": "GSB",
+    "bankNameTH": "ธนาคารออมสิน",
+    "bankNameEN": "Government Savings Bank"
+  },
+  {
+    "bankCode": "034",
+    "bankShort": "BAAC",
+    "bankNameTH": "ธนาคารเพื่อการเกษตรและสหกรณ์การเกษตร (ธ.ก.ส.)",
+    "bankNameEN": "Bank for Agriculture and Agricultural Cooperatives"
+  },
+  {
+    "bankCode": "033",
+    "bankShort": "GHB",
+    "bankNameTH": "ธนาคารอาคารสงเคราะห์ (ธอส.)",
+    "bankNameEN": "Government Housing Bank"
+  },
+  {
+    "bankCode": "069",
+    "bankShort": "KKP",
+    "bankNameTH": "ธนาคารเกียรตินาคินภัทร",
+    "bankNameEN": "Kiatnakin Phatra Bank"
+  },
+  {
+    "bankCode": "067",
+    "bankShort": "TISCO",
+    "bankNameTH": "ธนาคารทิสโก้",
+    "bankNameEN": "Tisco Bank"
+  },
+  {
+    "bankCode": "073",
+    "bankShort": "LHFG",
+    "bankNameTH": "ธนาคารแลนด์ แอนด์ เฮ้าส์ (LH Bank)",
+    "bankNameEN": "Land and Houses Bank"
+  },
+  {
+    "bankCode": "071",
+    "bankShort": "TCD",
+    "bankNameTH": "ธนาคารไทยเครดิต",
+    "bankNameEN": "Thai Credit Bank"
+  },
+  {
+    "bankCode": "070",
+    "bankShort": "ICBCT",
+    "bankNameTH": "ธนาคารไอซีบีซี (ไทย)",
+    "bankNameEN": "ICBC (Thailand)"
+  },
+  {
+    "bankCode": "098",
+    "bankShort": "SME",
+    "bankNameTH": "ธนาคารพัฒนาวิสาหกิจขนาดกลางและขนาดย่อมฯ",
+    "bankNameEN": "SME Development Bank"
+  },
+  {
+    "bankCode": "035",
+    "bankShort": "EXIM",
+    "bankNameTH": "ธนาคารเพื่อการส่งออกและนำเข้าแห่งประเทศไทย",
+    "bankNameEN": "Export-Import Bank of Thailand"
+  }
+]

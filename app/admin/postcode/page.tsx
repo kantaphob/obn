@@ -1,5 +1,7 @@
 'use client';
 
+import { useTrackedFetch } from "@/components/ui/ToastProvider";
+
 import { useEffect, useState } from 'react';
 import { MapPin, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import { workspaceStyles as styles } from '@/components/ui/workspace-styles';
@@ -9,6 +11,7 @@ const fieldClass = 'mt-2 w-full rounded-xl border border-[#d7d9d0] bg-[#faf9f5] 
 const buttonClass = 'rounded-lg border border-[#d7d9d0] bg-[#faf9f5] px-3 py-2 text-sm disabled:opacity-40 disabled:cursor-not-allowed';
 
 export default function Postcode() {
+  const trackedFetch = useTrackedFetch();
   const [q, setQ] = useState('');
   const [provinceId, setProvinceId] = useState('');
   const [districtId, setDistrictId] = useState('');
@@ -24,7 +27,7 @@ export default function Postcode() {
     const timeout = setTimeout(async () => {
       try {
         const params = new URLSearchParams({ q, provinceId, districtId, page: String(page), pageSize: String(pageSize) });
-        const response = await fetch(`/api/postcodes?${params}`, { signal: controller.signal });
+        const response = await trackedFetch(`/api/postcodes?${params}`, { signal: controller.signal });
         const data = await response.json();
         if (!response.ok) throw new Error(data.error ?? 'โหลดข้อมูลไม่สำเร็จ');
         setResult(data);
@@ -36,7 +39,7 @@ export default function Postcode() {
       }
     }, 250);
     return () => { clearTimeout(timeout); controller.abort(); };
-  }, [q, provinceId, districtId, page, pageSize, retry]);
+  }, [q, provinceId, districtId, page, pageSize, retry, trackedFetch]);
 
   function changing() { setLoading(true); setError(''); setPage(1); }
   function reset() { changing(); setQ(''); setProvinceId(''); setDistrictId(''); setRetry((value) => value + 1); }

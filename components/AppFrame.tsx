@@ -8,7 +8,7 @@ export default function AppFrame({ children, sidebar = true }: { children: React
     <Suspense fallback={<div aria-hidden="true" className="sticky top-5 h-[calc(100dvh-40px)] w-[76px] shrink-0 rounded-[27px] bg-[#d5d6d3] shadow-[inset_1px_1px_2px_#ffffff70,7px_8px_20px_#62665e23] max-[1100px]:top-3.5 max-[1100px]:h-[calc(100dvh-28px)] max-[760px]:static max-[760px]:h-14 max-[760px]:w-full max-[760px]:rounded-[20px]" />}>
       <AppShortcuts />
     </Suspense>
-    {sidebar && <Sidebar />}
+    {sidebar && <Suspense fallback={<div aria-hidden="true" className={`${styles.sidebar} animate-pulse`} />}><Sidebar /></Suspense>}
     <main className={styles.main} id="workspace-content">
       {children}
     </main>

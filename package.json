@@ -13,9 +13,11 @@
     "db:deploy": "prisma migrate deploy --config prisma7.config.ts",
     "db:import-postcodes": "node scripts/import-postcodes.mjs",
     "db:import-catalogs": "node scripts/import-reference-catalogs.mjs",
-    "db:import-classifiers": "node scripts/import-classifiers.mjs"
+    "db:import-classifiers": "node scripts/import-classifiers.mjs",
+    "db:import-banks": "node scripts/import-banks.mjs"
   },
   "dependencies": {
+    "@pokusew/pcsclite": "^0.6.0",
     "@prisma/adapter-better-sqlite3": "^7.10.0",
     "@prisma/client": "^7.10.0",
     "better-sqlite3": "^13.0.3",
@@ -24,7 +26,8 @@
     "lucide-react": "^1.55.0",
     "next": "16.4.0",
     "react": "19.3.0",
-    "react-dom": "19.3.0"
+    "react-dom": "19.3.0",
+    "tesseract.js": "^7.0.0"
   },
   "devDependencies": {
     "@tailwindcss/turbopack": "^4",

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useTransition, type CSSProperties } from "
 import Link, { useLinkStatus } from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Asterisk, ShieldUser, LoaderCircle } from "lucide-react";
+import { useWorkspaceStatus } from "./ToastProvider";
 import { SYSTEMS, TOOLS, type SystemKey } from "@/lib/nav";
 
 const mainKeys: SystemKey[] = ["dashboard", "construction", "buildin", "agricultures", "loan"];
@@ -23,6 +24,7 @@ function NavigationStatus({ delayed = false }: { delayed?: boolean }) {
 export default function AppShortcuts() {
   const pathname = usePathname();
   const router = useRouter();
+  const { status: dataStatus } = useWorkspaceStatus();
   const [pendingHref, setPendingHref] = useState<string | null>(null);
   const [transitionPending, startTransition] = useTransition();
   const requestId = useRef(0);
@@ -42,11 +44,12 @@ export default function AppShortcuts() {
       });
     });
   };
+  const loadStatus = failed ? "error" : transitionPending ? "loading" : dataStatus;
   const isActive = (href: string) => pathname === href || (href !== "/dashboard" && pathname.startsWith(`${href}/`));
 
   return (
-    <div data-app-shortcuts data-load-status={failed ? "error" : transitionPending ? "loading" : "success"} role="group" aria-label="AppShortcuts" className="ring-2 ring-[#79d8a0] data-[load-status=error]:ring-[#ef7070] data-[load-status=error]:shadow-[0_0_18px_#ef707080] has-[[data-navigation-pending=true]]:ring-2 has-[[data-navigation-pending=true]]:ring-[#f2a93b] has-[[data-navigation-pending=true]]:shadow-[0_0_18px_#f2a93b80] sticky top-5 flex h-[calc(100dvh-40px)] w-[76px] shrink-0 flex-col items-center gap-2 overflow-y-auto rounded-[27px] bg-[#d5d6d3] px-2 py-3 shadow-[inset_1px_1px_2px_#ffffff70,7px_8px_20px_#62665e23] [scrollbar-width:thin] max-[1100px]:top-3.5 max-[1100px]:h-[calc(100dvh-28px)] max-[760px]:static max-[760px]:h-auto max-[760px]:w-full max-[760px]:flex-row max-[760px]:items-center max-[760px]:gap-3 max-[760px]:overflow-x-auto max-[760px]:rounded-[20px] max-[760px]:p-2">
-      <span role="status" aria-live="polite" className="sr-only">{failed ? "โหลดไม่สำเร็จ" : transitionPending ? "กำลังเรียกข้อมูล" : "โหลดหน้าสำเร็จ"}</span>
+    <div data-app-shortcuts data-load-status={loadStatus} role="group" aria-label="AppShortcuts" className="ring-2 ring-[#79d8a0] data-[load-status=loading]:ring-[#f2a93b] data-[load-status=loading]:shadow-[0_0_18px_#f2a93b80] data-[load-status=error]:ring-[#ef7070] data-[load-status=error]:shadow-[0_0_18px_#ef707080] has-[[data-navigation-pending=true]]:ring-2 has-[[data-navigation-pending=true]]:ring-[#f2a93b] has-[[data-navigation-pending=true]]:shadow-[0_0_18px_#f2a93b80] sticky top-5 flex h-[calc(100dvh-40px)] w-[76px] shrink-0 flex-col items-center gap-2 overflow-y-auto rounded-[27px] bg-[#d5d6d3] px-2 py-3 shadow-[inset_1px_1px_2px_#ffffff70,7px_8px_20px_#62665e23] [scrollbar-width:thin] max-[1100px]:top-3.5 max-[1100px]:h-[calc(100dvh-28px)] max-[760px]:static max-[760px]:h-auto max-[760px]:w-full max-[760px]:flex-row max-[760px]:items-center max-[760px]:gap-3 max-[760px]:overflow-x-auto max-[760px]:rounded-[20px] max-[760px]:p-2">
+      <span role="status" aria-live="polite" className="sr-only">{loadStatus === "error" ? "โหลดข้อมูลหรือทำรายการไม่สำเร็จ" : loadStatus === "loading" ? "กำลังเรียกข้อมูล" : "โหลดข้อมูลสำเร็จ"}</span>
       <nav aria-label="Admin" className={`${group} bg-white/5 backdrop-blur-xl`}>
         <Link onNavigate={event => navigate(event, "/admin")} href="/admin" title="Admin — จัดการระบบ" aria-label="Admin — จัดการระบบ" aria-current={isActive("/admin") ? "page" : undefined} style={accent(SYSTEMS.admin.color)} className={button}>
           <NavigationStatus delayed={transitionPending && pendingHref === "/admin"} />

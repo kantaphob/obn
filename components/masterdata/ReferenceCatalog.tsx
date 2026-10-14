@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useToast, useTrackedFetch } from '@/components/ui/ToastProvider';
 import { useEffect, useState } from 'react';
 import { ArrowUpRight, Boxes, ChevronLeft, ChevronRight, ExternalLink, Ruler, ScrollText, Search, Plus, Pencil, Trash2 } from 'lucide-react';
 import { workspaceStyles as styles } from '@/components/ui/workspace-styles';
@@ -41,6 +42,7 @@ const fieldClass = 'mt-2 w-full rounded-xl border border-[#d7d9d0] bg-[#faf9f5] 
 const buttonClass = 'inline-flex h-10 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-[#d7d9d0] bg-[#faf9f5] px-3 text-xs leading-none [&_svg]:shrink-0 transition-colors hover:bg-[#e9ede3] disabled:opacity-40 disabled:cursor-not-allowed';
 
 export default function ReferenceCatalog({ kind }: { kind: CatalogKind }) {
+  const trackedFetch = useTrackedFetch();
   const definition = definitions[kind];
   const isUnits = kind === 'units';
   const isClassifiers = kind === 'classifiers';
@@ -50,7 +52,7 @@ export default function ReferenceCatalog({ kind }: { kind: CatalogKind }) {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
   const [editor, setEditor] = useState<CatalogEditState | null>(null);
-  const [notice, setNotice] = useState('');
+  const notify = useToast();
   const [revision, setRevision] = useState(0);
   const [response, setResponse] = useState<{ key: string; data: CatalogResult } | null>(null);
   const [failure, setFailure] = useState<{ key: string; message: string } | null>(null);
@@ -63,7 +65,7 @@ export default function ReferenceCatalog({ kind }: { kind: CatalogKind }) {
     const controller = new AbortController();
     const timeout = setTimeout(async () => {
       try {
-        const res = await fetch(requestKey, { signal: controller.signal, cache: 'no-store' });
+        const res = await trackedFetch(requestKey, { signal: controller.signal, cache: 'no-store' });
         if (!res.ok) {
           const body = await res.json().catch(() => null);
           throw new Error(body?.error ?? 'โหลดข้อมูลไม่สำเร็จ กรุณาลองใหม่');
@@ -75,7 +77,7 @@ export default function ReferenceCatalog({ kind }: { kind: CatalogKind }) {
       }
     }, 250);
     return () => { clearTimeout(timeout); controller.abort(); };
-  }, [requestKey]);
+  }, [requestKey, trackedFetch]);
 
   function reset() { setQ(''); setCategory(''); setPage(1); setRevision((value) => value + 1); }
   const current = result?.page ?? 1;
@@ -84,7 +86,7 @@ export default function ReferenceCatalog({ kind }: { kind: CatalogKind }) {
 
   function saved(mode: CatalogEditState['mode'], code: string) {
     setEditor(null); setRevision((value) => value + 1);
-    setNotice(mode === 'delete' ? 'ลบข้อมูลแล้ว' : mode === 'create' ? 'เพิ่มข้อมูลแล้ว' : 'บันทึกการแก้ไขแล้ว');
+    notify({ status: 'success', message: mode === 'delete' ? 'ลบข้อมูลแล้ว' : mode === 'create' ? 'เพิ่มข้อมูลแล้ว' : 'บันทึกการแก้ไขแล้ว' });
     if (mode !== 'delete') { setQ(code); setCategory(''); setPage(1); }
   }
 
@@ -95,11 +97,10 @@ export default function ReferenceCatalog({ kind }: { kind: CatalogKind }) {
         <h1 className="flex items-center gap-3"><Icon size={28} aria-hidden="true" />{definition.title}</h1>
         <p className="max-w-xl text-[13px] text-[#626862]">{definition.description}</p>
       </div>
-      <div className="flex flex-wrap gap-2"><button className={`${buttonClass} w-36 bg-[#355a4b]! text-white`} onClick={() => { setNotice(''); setEditor({ mode: 'create' }); }}><Plus size={16} aria-hidden="true" />เพิ่ม{definition.title}</button>
+      <div className="flex flex-wrap gap-2"><button className={`${buttonClass} w-36 bg-[#355a4b]! text-white`} onClick={() => { setEditor({ mode: 'create' }); }}><Plus size={16} aria-hidden="true" />เพิ่ม{definition.title}</button>
       <Link href={definition.otherHref} className={`${buttonClass} w-36`}>{definition.otherLabel}<ArrowUpRight size={15} aria-hidden="true" /></Link></div>
     </header>
 
-    {notice ? <p role="status" className="mb-4! rounded-lg bg-[#e5ece3] p-3 text-sm text-[#355a4b]">{notice}</p> : null}
     <div className="mb-6 grid grid-cols-3 gap-3 max-[440px]:grid-cols-1">
       <div className={styles.stat}><span>รายการในฐานข้อมูล</span><strong>{result?.totalRecords.toLocaleString('th-TH') ?? '—'}</strong><small>{isClassifiers ? 'ลักษณนามพร้อมตัวอย่าง' : isUnits ? 'หน่วยที่พร้อมเรียกใช้' : 'รายการวัสดุอ้างอิง'}</small></div>
       <div className={styles.stat}><span>หมวดหมู่</span><strong>{result?.categories.length ?? '—'}</strong><small>จัดกลุ่มเพื่อค้นหาได้ง่าย</small></div>
@@ -143,8 +144,8 @@ export default function ReferenceCatalog({ kind }: { kind: CatalogKind }) {
               <td className="px-5 py-4">{isClassifiers ? <span className="text-xs leading-relaxed text-[#626862]">{item.examples}</span> : isUnits ? <span className="font-mono">{item.symbol}</span> : item.recommendedUnit ? <><span>{item.recommendedUnit.nameTh}</span><span className="mt-1 block font-mono text-xs text-[#73796f]">{item.recommendedUnit.code}</span></> : <span className="text-xs text-[#73796f]">เลือกตามสินค้า</span>}</td>
               {isUnits ? <td className="px-5 py-4 text-xs text-[#73796f] whitespace-nowrap">{item.standard}</td> : null}
               <td className="px-5 py-4"><div className="flex gap-2">
-                <button className={`${buttonClass} w-24`} aria-label={`แก้ไข ${item.nameTh}`} onClick={() => { setNotice(''); setEditor({ mode: 'edit', item }); }}><Pencil size={14} aria-hidden="true" />แก้ไข</button>
-                <button className={`${buttonClass} w-24 text-red-700`} aria-label={`ลบ ${item.nameTh}`} onClick={() => { setNotice(''); setEditor({ mode: 'delete', item }); }}><Trash2 size={14} aria-hidden="true" />ลบ</button>
+                <button className={`${buttonClass} w-24`} aria-label={`แก้ไข ${item.nameTh}`} onClick={() => { setEditor({ mode: 'edit', item }); }}><Pencil size={14} aria-hidden="true" />แก้ไข</button>
+                <button className={`${buttonClass} w-24 text-red-700`} aria-label={`ลบ ${item.nameTh}`} onClick={() => { setEditor({ mode: 'delete', item }); }}><Trash2 size={14} aria-hidden="true" />ลบ</button>
               </div></td>
             </tr>)}
           </tbody>

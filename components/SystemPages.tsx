@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, FolderOpen } from "lucide-react";
+import { ArrowRight, ArrowUpRight, FolderOpen } from "lucide-react";
 import { SYSTEMS, type System } from "@/lib/nav";
 import { workspaceStyles as styles } from "./ui/workspace-styles";
 import CompanyDirectory from "./CompanyDirectory";

@@ -5,7 +5,6 @@ import {
   Settings, ShieldCheck, ShieldUser, ShoppingCart, Sprout, Truck,
   UserRound, Users, Wallet, AlarmClock, KeyRound, Calculator, Store,
   type LucideIcon,
-  Building2,
   Building2Icon,
   CreditCard,
 } from "lucide-react";
@@ -133,9 +132,13 @@ export const SYSTEMS: Record<SystemKey, System> = {
     groups: [
       { title: "ภาพรวม", items: [l("", "ภาพรวมสินเชื่อ", LayoutDashboard)] },
       { title: "สินเชื่อ", items: [
-        l("applications", "ใบสมัคร", FileText),
+        l("contract", "ใบสมัคร", FileText),
         l("approvals", "พิจารณาอนุมัติ", FileCheck2),
         l("contracts", "สัญญากู้", ScrollText),
+      ] },
+      { title: "ชำระเงิน", items: [
+        l("cashierpayments", "cashierpayments", CalendarDays),
+        l("payments", "รับชำระและประวัติ", CalendarDays),
       ] },
       { title: "ติดตามหนี้", items: [
         l("schedules", "ตารางชำระ", CalendarDays),
@@ -169,7 +172,6 @@ export const SYSTEMS: Record<SystemKey, System> = {
       ] },
       { title: "ระบบ", items: [
         ad("companies", "ข้อมูลบริษัท", Settings),
-        ad("companies", "บริษัท", Building2),
         ad("branches", "สาขา", Building2Icon),
         ad("audit-log", "บันทึกกิจกรรม", ShieldCheck),
       ] },

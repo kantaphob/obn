@@ -14,7 +14,8 @@ import {
   UsersRound,
   type LucideIcon,
 } from "lucide-react";
-import AppShortcuts from "./AppShortcuts";
+import { Suspense } from "react";
+import AppShortcuts from "../ui/AppShortcuts";
 
 type AdminChildId = "postcode" | "unit" | "material" | "loglogin" | "logactivity";
 type AdminTopLevelId = "overview" | "masterdata" | "logs" | "RBAC" | "documents" | "settings";
@@ -106,7 +107,7 @@ export default function AdminSidebar() {
   return (
     <div className="sticky top-0 grid h-screen grid-cols-[76px_minmax(210px,252px)] gap-3 p-3 max-[1050px]:grid-cols-[66px_minmax(190px,220px)] max-[700px]:static max-[700px]:h-auto max-[700px]:grid-cols-1 max-[700px]:gap-2 max-[700px]:p-3 max-[700px]:pb-2">
       <aside className="flex h-full flex-col items-center rounded-[24px] border border-white/70 bg-white/35 px-2 py-3 shadow-[0_12px_35px_#263d3212,inset_0_1px_0_#ffffffd9] backdrop-blur-2xl max-[700px]:h-auto max-[700px]:flex-row max-[700px]:flex-wrap max-[700px]:justify-center max-[700px]:gap-2 max-[700px]:rounded-2xl max-[700px]:px-3 max-[700px]:py-2">
-        <AppShortcuts />
+        <Suspense fallback={<div aria-hidden="true" className="size-11" />}><AppShortcuts /></Suspense>
 
         <span className="my-5 h-px w-8 bg-slate-500/15 max-[700px]:my-0 max-[700px]:mx-1 max-[700px]:h-7 max-[700px]:w-px" />
         <span className="mt-auto select-none text-[8px] font-medium tracking-[.2em] text-slate-500/45 [writing-mode:vertical-rl] max-[700px]:hidden">OBNITHI · ADMIN</span>

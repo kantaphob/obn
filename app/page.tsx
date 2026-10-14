@@ -12,6 +12,7 @@ import {
 import {
   ArrowDown,
   ArrowUpRight,
+  Check,
   ChevronDown,
   Eye,
   Home,

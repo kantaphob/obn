@@ -1,0 +1,13 @@
+ALTER TABLE "borrowers" ADD COLUMN "workplace" TEXT;
+ALTER TABLE "borrowers" ADD COLUMN "status" TEXT;
+ALTER TABLE "borrowers" ADD COLUMN "bankAccountNumber" TEXT;
+ALTER TABLE "borrowers" ADD COLUMN "payoutChannel" TEXT;
+ALTER TABLE "borrowers" ADD COLUMN "registeredAt" DATETIME;
+ALTER TABLE "borrowers" ADD COLUMN "hasFacebook" BOOLEAN;
+ALTER TABLE "borrowers" ADD COLUMN "hasInstagram" BOOLEAN;
+ALTER TABLE "borrowers" ADD COLUMN "hasLine" BOOLEAN;
+ALTER TABLE "borrowers" ADD COLUMN "riskRating" TEXT;
+ALTER TABLE "borrowers" ADD COLUMN "approvedLimit" INTEGER;
+ALTER TABLE "borrowers" ADD COLUMN "usedLimit" INTEGER;
+ALTER TABLE "borrowers" ADD COLUMN "availableLimit" INTEGER;
+ALTER TABLE "borrowers" ADD COLUMN "referrer" TEXT;
