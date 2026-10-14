@@ -1,9 +1,11 @@
 "use client";
 
 import "../lending-ui.css";
+import ContractDocumentPreview from "@/components/loan/ContractDocumentPreview";
+import { emptyDocumentSettings, makeLoanDocument, makeGuaranteeDocument, type ContractDocumentSettings } from "@/lib/contract-document";
 
 import { useEffect, useRef, useState, type FormEvent, type PointerEvent } from "react";
-import { BadgeCheck, Check, ChevronDown, ChevronRight, FileText, LoaderCircle, Search, UserRound, X } from "lucide-react";
+import { BadgeCheck, Check, ChevronDown, ChevronRight, FileText, LoaderCircle, Search, Upload, UserRound, X } from "lucide-react";
 
 type Borrower = {
   id: string;
@@ -18,6 +20,14 @@ type Borrower = {
   approvedLimit: number | null;
   availableLimit: number | null;
 };
+
+type BorrowerLimits = {
+  status: string | null;
+  approvedLimit: number | null;
+  usedLimit: number;
+  availableLimit: number | null;
+};
+type BorrowerLimitsState = { borrowerId: string; data?: BorrowerLimits; error?: string };
 
 function borrowerName(borrower: Borrower) {
   const name = [borrower.prefixTH, borrower.firstName, borrower.lastName]
@@ -42,6 +52,13 @@ function formatBaht(satang: number | null) {
   }).format(satang / 100);
 }
 
+function borrowerStatusLabel(status: string | null | undefined) {
+  if (status === "PENDING_REPAYMENT") return "รอชำระคืน";
+  if (status === "UNDER_REVIEW") return "อยู่ระหว่างตรวจสอบ";
+  if (status === "CLOSED") return "ปิดบัญชี";
+  return status || "ยังไม่ระบุสถานะ";
+}
+
 function satangFromBaht(value: string) {
   if (!/^\d+(\.\d{1,2})?$/.test(value.trim())) return null;
   const amount = Number(value);
@@ -50,7 +67,7 @@ function satangFromBaht(value: string) {
     : null;
 }
 
-function SignatureCanvas({ value, onChange }: { value: string; onChange: (signature: string) => void }) {
+function SignatureCanvas({ value, onChange, label = "ผู้กู้" }: { value: string; onChange: (signature: string) => void; label?: string }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const drawingRef = useRef(false);
   const hasDrawnRef = useRef(false);
@@ -69,7 +86,9 @@ function SignatureCanvas({ value, onChange }: { value: string; onChange: (signat
     context.lineCap = "round";
     context.lineJoin = "round";
     context.strokeStyle = "#263c2f";
-  }, []);
+    hasDrawnRef.current = !!value;
+    if (value) { const image = new window.Image(); image.onload = () => context.drawImage(image, 0, 0, bounds.width, bounds.height); image.src = value; return () => {image.onload = null;}; }
+  }, [value]);
 
   function point(event: PointerEvent<HTMLCanvasElement>) {
     const bounds = event.currentTarget.getBoundingClientRect();
@@ -113,7 +132,7 @@ function SignatureCanvas({ value, onChange }: { value: string; onChange: (signat
   }
 
   return <div className="contract-signature-pad lx-sign">
-    <canvas ref={canvasRef} aria-label="พื้นที่เขียนลายเซ็นดิจิทัล" onPointerDown={startDrawing} onPointerMove={draw} onPointerUp={stopDrawing} onPointerCancel={stopDrawing} />
+    <canvas ref={canvasRef} aria-label={`พื้นที่เขียนลายเซ็น${label}`} onPointerDown={startDrawing} onPointerMove={draw} onPointerUp={stopDrawing} onPointerCancel={stopDrawing} />
     <div className="contract-signature-pad-footer lx-sign-foot"><span>ลงลายเซ็นในกรอบนี้</span><button type="button" onClick={clear} disabled={!value}>ล้างลายเซ็น</button></div>
   </div>;
 }
@@ -134,7 +153,6 @@ type ContractDraft = {
   witness1: string;
   witness2: string;
   guarantor: string;
-  status: "DRAFT" | "AWAITING_DOCUMENT" | "READY" | "ACTIVE" | "OVERDUE" | "CLOSED";
   lateFeeWaived: boolean;
   signatureMode: "PRINT" | "DIGITAL";
   consentAccepted: boolean;
@@ -157,7 +175,6 @@ const emptyContract: ContractDraft = {
   witness1: "",
   witness2: "",
   guarantor: "",
-  status: "DRAFT",
   lateFeeWaived: false,
   signatureMode: "PRINT",
   consentAccepted: false,
@@ -169,8 +186,10 @@ export default function Contract() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [activeBorrower, setActiveBorrower] = useState(-1);
   const borrowerSearchRef = useRef<HTMLInputElement>(null);
+  const attachmentInputRef = useRef<HTMLInputElement>(null);
   const [borrowers, setBorrowers] = useState<Borrower[]>([]);
   const [selected, setSelected] = useState<Borrower | null>(null);
+  const [borrowerLimits, setBorrowerLimits] = useState<BorrowerLimitsState | null>(null);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
   const [error, setError] = useState("");
@@ -180,6 +199,100 @@ export default function Contract() {
   const [savedContractNumber, setSavedContractNumber] = useState("");
   const [digitalSignature, setDigitalSignature] = useState("");
   const [nextNumberLoading, setNextNumberLoading] = useState(false);
+  const [documents, setDocuments] = useState<ContractDocumentSettings>(emptyDocumentSettings);
+  const [companyLookupBusy, setCompanyLookupBusy] = useState(false);
+  const [companyLookupError, setCompanyLookupError] = useState("");
+  const [contractTypeOpen, setContractTypeOpen] = useState(false);
+  const [showDocument, setShowDocument] = useState(false);
+  const [stage, setStage] = useState<"FORM"|"BORROWER"|"WITNESSES"|"REVIEW">("FORM");
+  const [confirmed, setConfirmed] = useState(false);
+  const [savedContractId, setSavedContractId] = useState("");
+  const [signedDocumentUploaded, setSignedDocumentUploaded] = useState(false);
+  const [attachmentBusy, setAttachmentBusy] = useState(false);
+  const draftIdRef = useRef("");
+  const draftSavingRef = useRef<Promise<void>>(Promise.resolve());
+  const draftQueueRef = useRef<Promise<void>>(Promise.resolve());
+  const latestDraftRef = useRef<{id:string;borrowerId:string;data:{contract:ContractDraft;digitalSignature:string;documents:ContractDocumentSettings}} | null>(null);
+  const savedDraftJsonRef = useRef("");
+
+  useEffect(() => {
+    const requestedId = new URLSearchParams(window.location.search).get("draft");
+    let recovery: {id:string;borrowerId:string;data:{contract:ContractDraft;digitalSignature:string;documents:ContractDocumentSettings}} | null = null;
+    try {const stored=sessionStorage.getItem("loan-contract-draft-recovery");if(stored)recovery=JSON.parse(stored);}catch{}
+    const id = requestedId || recovery?.id;
+    if (!id) return;
+    let active = true;
+    void (async () => { try {
+      let data;
+      if (!requestedId && recovery) data=recovery;
+      else { const response = await fetch(`/api/contracts/drafts?id=${encodeURIComponent(id)}`, {cache:"no-store"});data=await response.json();if(!response.ok)throw new Error(data.error); }
+      // A finalized draft must never be restored from stale local recovery.
+      const verification=await fetch(`/api/contracts/drafts?id=${encodeURIComponent(id)}`,{cache:"no-store"});
+      if(verification.ok){const current=await verification.json();if(current.finalizedContractId){sessionStorage.removeItem("loan-contract-draft-recovery");throw new Error("ร่างนี้บันทึกเป็นสัญญาแล้ว");}}
+      if (data.finalizedContractId) throw new Error("ร่างนี้บันทึกเป็นสัญญาแล้ว กรุณาดูในหน้าสัญญากู้");
+      const borrowerResponse = await fetch(`/api/borrowers/${data.borrowerId}`, {cache:"no-store"});
+      if (!borrowerResponse.ok) throw new Error("ไม่พบผู้กู้ของร่างนี้");
+      const borrower = await borrowerResponse.json(); if (!active) return;
+      draftIdRef.current = id;
+      setSelected(borrower); setContract({...emptyContract,...data.data.contract});
+      setDigitalSignature(data.data.digitalSignature || ""); setDocuments({...emptyDocumentSettings,...data.data.documents});
+    } catch(error) { if(active) setSaveError(error instanceof Error ? error.message : "เปิดร่างไม่สำเร็จ"); }})();
+    return () => {active=false;};
+  }, []);
+
+  useEffect(() => {
+    if (!selected || saving || savedContractNumber) return;
+    if (!draftIdRef.current) draftIdRef.current = crypto.randomUUID();
+    const payload = {id:draftIdRef.current,borrowerId:selected.id,data:{contract,digitalSignature,documents}};
+    latestDraftRef.current=payload;
+    try {sessionStorage.setItem("loan-contract-draft-recovery",JSON.stringify(payload));}catch{}
+    const timer = window.setTimeout(() => {
+      if (!draftIdRef.current) draftIdRef.current = crypto.randomUUID();
+      const work = draftQueueRef.current.catch(() => {}).then(async () => {
+        const response = await fetch("/api/contracts/drafts", {method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || "เก็บร่างไม่สำเร็จ");
+        savedDraftJsonRef.current=JSON.stringify(payload);
+      });
+      draftQueueRef.current = work;
+      draftSavingRef.current = work.catch(error => {setSaveError(error instanceof Error ? error.message : "เก็บร่างไม่สำเร็จ");});
+    }, 700);
+    return () => window.clearTimeout(timer);
+  }, [selected,contract,digitalSignature,documents,saving,savedContractNumber]);
+
+  useEffect(() => {
+    if (!selected || savedContractNumber) return;
+    const guard = (event:BeforeUnloadEvent) => {if(latestDraftRef.current && JSON.stringify(latestDraftRef.current)!==savedDraftJsonRef.current){event.preventDefault();event.returnValue="";}};
+    const toList = (event:MouseEvent) => {
+      const link=event.target instanceof Element ? event.target.closest("a[href]") as HTMLAnchorElement | null : null;
+      if(!link || event.ctrlKey || event.metaKey || link.target==="_blank" || new URL(link.href).pathname!=="/dashboard/loan/contracts")return;
+      const payload=latestDraftRef.current;
+      if(!payload || JSON.stringify(payload)===savedDraftJsonRef.current)return;
+      event.preventDefault();event.stopImmediatePropagation();
+      void(async()=>{try{await draftSavingRef.current;const response=await fetch("/api/contracts/drafts",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});if(!response.ok)throw new Error("เก็บร่างก่อนออกไม่สำเร็จ");savedDraftJsonRef.current=JSON.stringify(payload);window.location.assign(link.href);}catch(error){setSaveError(error instanceof Error ? error.message : "เก็บร่างไม่สำเร็จ");}})();
+    };
+    window.addEventListener("beforeunload",guard);document.addEventListener("click",toList,true);
+    return()=>{window.removeEventListener("beforeunload",guard);document.removeEventListener("click",toList,true);};
+  },[selected,savedContractNumber]);
+
+  async function uploadAttachment(file?:File) {
+    if (!file) return;
+    setAttachmentBusy(true);setSaveError("");
+    try { const body=new FormData();body.append("file",file);const response=await fetch("/api/contracts/attachments",{method:"POST",body});const data=await response.json();if(!response.ok)throw new Error(data.error);setDocuments(current=>({...current,attachments:[...current.attachments,{url:data.url,name:file.name}]})); }
+    catch(error){setSaveError(error instanceof Error ? error.message : "แนบเอกสารไม่สำเร็จ");}finally{setAttachmentBusy(false);}
+  }
+
+  async function uploadDelivery(file?:File){
+    if(!file||!savedContractId)return;
+    setAttachmentBusy(true);setSaveError("");
+    try{const body=new FormData();body.append("file",file);const response=await fetch(`/api/contracts/${savedContractId}/delivery-evidence`,{method:"POST",body});const data=await response.json();if(!response.ok)throw new Error(data.error);setDocuments(current=>({...current,attachments:[...current.attachments,data.attachment]}));}catch(error){setSaveError(error instanceof Error?error.message:"แนบสลิปไม่สำเร็จ");}finally{setAttachmentBusy(false);}
+  }
+
+  async function uploadSignedDocument(file?:File){
+    if(!file||!savedContractId)return;
+    setAttachmentBusy(true);setSaveError("");
+    try{const body=new FormData();body.append("file",file);const response=await fetch(`/api/contracts/${savedContractId}/signed-document`,{method:"POST",body});const data=await response.json();if(!response.ok)throw new Error(data.error);setSignedDocumentUploaded(true);setDocuments(current=>({...current,attachments:[...current.attachments,data.attachment]}));}catch(error){setSaveError(error instanceof Error?error.message:"แนบสัญญาที่ลงนามแล้วไม่สำเร็จ");}finally{setAttachmentBusy(false);}
+  }
 
   const isInstallment = contract.paymentOption === "INSTALLMENT";
   const interestRate = contract.interestRateChoice === "CUSTOM"
@@ -191,9 +304,9 @@ export default function Contract() {
   const calculatedInterest = principalSatang !== null && Number.isFinite(interestRate) && interestRate >= 0 && interestFactor > 0
     ? Math.round(principalSatang * interestRate / 100 * interestFactor)
     : null;
-  const calculatedNetDisbursed = principalSatang !== null && calculatedInterest !== null
-    ? contract.paymentOption === "UPFRONT" ? principalSatang - calculatedInterest : principalSatang
-    : null;
+  const calculatedNetDisbursed = principalSatang === null ? null
+    : contract.paymentOption === "UPFRONT" ? calculatedInterest === null ? null : principalSatang - calculatedInterest
+    : principalSatang;
   const monthlyInstallment = isInstallment && calculatedInterest !== null && principalSatang !== null && installmentMonths > 0
     ? Math.round((principalSatang + calculatedInterest) / installmentMonths)
     : null;
@@ -203,9 +316,46 @@ export default function Contract() {
     setSaveError("");
   }
 
+  async function lookupLenderCompany() {
+    const companyCode = documents.companyCode.trim();
+    if (!companyCode) {
+      setCompanyLookupError("กรุณากรอกรหัสบริษัท");
+      return;
+    }
+    setCompanyLookupBusy(true);
+    setCompanyLookupError("");
+    try {
+      const response = await fetch(`/api/companies?code=${encodeURIComponent(companyCode)}`, { cache: "no-store" });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "ค้นหาข้อมูลบริษัทไม่สำเร็จ");
+      const company = result as { companyCode: string; name: string; taxId: string; address: string; postcode: string; phone: string };
+      setDocuments(current => ({
+        ...current,
+        companyCode: company.companyCode,
+        lenderName: company.name,
+        lenderId: company.taxId,
+        lenderAddress: [company.address, company.postcode].filter(Boolean).join(" "),
+        lenderPhone: company.phone,
+        lenderSignature: "",
+        loanText: "",
+        guaranteeText: "",
+      }));
+    } catch (cause) {
+      setCompanyLookupError(cause instanceof Error ? cause.message : "ค้นหาข้อมูลบริษัทไม่สำเร็จ");
+    } finally {
+      setCompanyLookupBusy(false);
+    }
+  }
+
   async function saveContract(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!selected) return;
+    if (stage === "FORM" && (principalSatang === null || principalSatang <= 0 || calculatedInterest === null || !contract.startDate || !contract.dueDate || contract.dueDate < contract.startDate || calculatedNetDisbursed === null || calculatedNetDisbursed < 0)){setSaveError("กรุณาตรวจเงินต้น ระยะเวลา และยอดจ่ายสุทธิให้ถูกต้อง");return;}
+    if (stage === "FORM") {
+      if (contract.contractType !== "NONE" && (!documents.companyCode.trim() || !documents.lenderName.trim())) {setSaveError("กรุณากรอก Companycode และเรียกข้อมูลผู้ให้กู้ก่อน");return;}
+      setStage(contract.contractType === "NONE" ? "REVIEW" : "BORROWER");setConfirmed(false);return;
+    }
+    if(stage !== "REVIEW" || !confirmed){setSaveError("กรุณาตรวจข้อมูลและยืนยันก่อนบันทึก");return;}
     if (principalSatang === null || calculatedInterest === null || calculatedNetDisbursed === null) {
       setSaveError("กรุณากรอกเงินต้น จำนวนเดือน และอัตราดอกเบี้ยให้ถูกต้อง");
       return;
@@ -214,42 +364,55 @@ export default function Contract() {
       setSaveError("กรุณาระบุอัตราดอกเบี้ย");
       return;
     }
-    if (contract.signatureMode === "DIGITAL" && (!contract.consentAccepted || !digitalSignature)) {
+    if (contract.contractType !== "NONE" && contract.signatureMode === "DIGITAL" && (!contract.consentAccepted || !digitalSignature)) {
       setSaveError("กรุณาเขียนลายเซ็นและยอมรับคำยินยอมก่อนบันทึก");
       return;
     }
 
+    if (contract.signatureMode === "DIGITAL" && contract.contractType !== "NONE" && (!contract.witness1.trim() || !contract.witness2.trim() || !documents.witness1Signature || !documents.witness2Signature)) {setSaveError("กรุณาระบุชื่อและลายเซ็นพยานทั้งสองคน");return;}
+    if (contract.signatureMode === "DIGITAL" && contract.contractType === "WITNESS_GUARANTOR" && (!contract.guarantor.trim() || !documents.guarantorSignature)) {setSaveError("กรุณาระบุชื่อและลายเซ็นผู้ค้ำประกัน");return;}
     setSaving(true);
     setSaveError("");
     try {
+      await draftSavingRef.current;
+      // Ensure a just-typed draft is persisted before final creation, even before the debounce fires.
+      if(!draftIdRef.current)draftIdRef.current=crypto.randomUUID();
+      const draftResponse=await fetch("/api/contracts/drafts",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:draftIdRef.current,borrowerId:selected.id,data:{contract,digitalSignature,documents}})});
+      if(!draftResponse.ok){const failed=await draftResponse.json();throw new Error(failed.error || "เก็บร่างก่อนบันทึกไม่สำเร็จ");}
       const response = await fetch("/api/contracts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...contract,
+          draftId: draftIdRef.current || null,
+          documentData: {...documents, loanText: contract.contractType === "NONE" ? "" : documents.loanText || makeLoanDocument(documents, documentLoan), guaranteeText: contract.contractType === "WITNESS_GUARANTOR" ? documents.guaranteeText || makeGuaranteeDocument(documents,documentLoan,contract.guarantor) : ""},
           debtorId: selected.id,
           principal: principalSatang,
           interestRate,
           interestAmount: calculatedInterest,
           netDisbursed: calculatedNetDisbursed,
-          periodDays: contract.periodDays ? Number(contract.periodDays) : null,
+          periodDays: contract.paymentOption === "AT_DUE" && contract.periodDays ? Number(contract.periodDays) : null,
           installmentMonths: isInstallment ? Number(contract.installmentMonths) : null,
           repayType: isInstallment ? "INSTALLMENT" : "LUMP_SUM",
           interestMode: contract.paymentOption === "UPFRONT" ? "UPFRONT" : "ON_SCHEDULE",
           interestRateBasis: isInstallment ? "MONTHLY_FLAT" : "CONTRACT_FLAT",
           lateFeePerDay: 5000,
           lateFeeWaived: contract.lateFeeWaived,
-          signatureMode: contract.signatureMode,
+          signatureMode: contract.contractType === "NONE" ? "PRINT" : contract.signatureMode,
           signatureData: contract.signatureMode === "DIGITAL" ? digitalSignature : null,
           consentAccepted: contract.signatureMode === "DIGITAL" ? contract.consentAccepted : false,
           consentText: contract.signatureMode === "DIGITAL" ? "ข้าพเจ้ายืนยันว่าลายเซ็นดิจิทัลที่บันทึกเป็นลายเซ็นจริงของข้าพเจ้า และยินยอมใช้ลายเซ็นนี้ประกอบสัญญา" : null,
           dueDate: contract.dueDate || null,
-          signedAt: contract.signedAt || null,
+          signedAt: contract.signedAt ? `${contract.signedAt}:00+07:00` : null,
         }),
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "บันทึกสัญญาไม่สำเร็จ");
       setSavedContractNumber(result.contractNumber as string);
+      setSavedContractId(result.id);
+      if(result.documentData)setDocuments({...emptyDocumentSettings,...JSON.parse(result.documentData)});
+      latestDraftRef.current=null;savedDraftJsonRef.current="";
+      sessionStorage.removeItem("loan-contract-draft-recovery");
     } catch (cause) {
       setSaveError(cause instanceof Error ? cause.message : "บันทึกสัญญาไม่สำเร็จ กรุณาลองอีกครั้ง");
     } finally {
@@ -266,6 +429,8 @@ export default function Contract() {
   }
 
   function chooseBorrower(borrower: Borrower) {
+    setStage("FORM");setConfirmed(false);setSavedContractId("");
+    if (selected?.id !== borrower.id) {draftIdRef.current="";setDocuments(emptyDocumentSettings);setDigitalSignature("");}
     setSelected(borrower);
     setDropdownOpen(false);
     setQuery("");
@@ -274,6 +439,26 @@ export default function Contract() {
     setNextNumberLoading(true);
     setSavedContractNumber("");
   }
+
+  useEffect(() => {
+    if (!selected) return;
+    const borrowerId = selected.id;
+    const controller = new AbortController();
+    void (async () => {
+      try {
+        const response = await fetch(`/api/borrowers/${encodeURIComponent(borrowerId)}/limits`, {
+          cache: "no-store",
+          signal: controller.signal,
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || "โหลดวงเงินผู้กู้ไม่สำเร็จ");
+        setBorrowerLimits({ borrowerId, data: result as BorrowerLimits });
+      } catch (cause) {
+        if (!controller.signal.aborted) setBorrowerLimits({ borrowerId, error: cause instanceof Error ? cause.message : "โหลดวงเงินผู้กู้ไม่สำเร็จ" });
+      }
+    })();
+    return () => controller.abort();
+  }, [selected]);
 
   useEffect(() => {
     const term = query.trim();
@@ -327,8 +512,15 @@ export default function Contract() {
     return () => controller.abort();
   }, [selected, contract.contractNumber]);
 
+  const documentLoan = {number:savedContractNumber || contract.contractNumber,borrowerName:selected?borrowerName(selected):"",borrowerId:selected?.nationalId||"",borrowerAddress:selected?.address||"",borrowerPhone:selected?.phone||"",principal:principalSatang,rate:interestRate,monthly:isInstallment,months:isInstallment?contract.installmentMonths:"",startDate:contract.startDate,dueDate:contract.dueDate,paymentOption:contract.paymentOption};
+  const signers = [{role:"ผู้ให้กู้",name:documents.lenderName,signature:contract.signatureMode==="DIGITAL"?documents.lenderSignature:""},{role:"ผู้กู้",name:selected?borrowerName(selected):"",signature:contract.signatureMode === "DIGITAL" ? digitalSignature : ""},...(contract.contractType!=="NONE"?[{role:"พยานคนที่ 1",name:contract.witness1,signature:contract.signatureMode === "DIGITAL" ? documents.witness1Signature : ""},{role:"พยานคนที่ 2",name:contract.witness2,signature:contract.signatureMode === "DIGITAL" ? documents.witness2Signature : ""}]:[]),...(contract.contractType==="WITNESS_GUARANTOR"?[{role:"ผู้ค้ำประกัน",name:contract.guarantor,signature:contract.signatureMode === "DIGITAL" ? documents.guarantorSignature : ""}]:[])];
+
+  const limitsForSelected = selected && borrowerLimits?.borrowerId === selected.id ? borrowerLimits : null;
+  const limitsLoading = !!selected && !limitsForSelected;
+
   return (
     <main className="page-wrap contract-page lx-page"><div className="lx-wrap">
+      {showDocument && <ContractDocumentPreview loanText={documents.loanText || makeLoanDocument(documents,documentLoan)} guaranteeText={contract.contractType==="WITNESS_GUARANTOR" ? documents.guaranteeText || makeGuaranteeDocument(documents,documentLoan,contract.guarantor) : undefined} signers={signers} attachments={documents.attachments} draft={!savedContractNumber} onClose={()=>setShowDocument(false)}/>}
       <div className="contract-heading lx-head">
         <div>
           <div className="eyebrow"><span className="eyebrow-dot" /> LOAN MANAGEMENT</div>
@@ -339,15 +531,12 @@ export default function Contract() {
       </div>
 
       <div className="lx-contract" style={!selected ? { gridTemplateColumns: "minmax(0,1fr)" } : undefined}><div className="lx-contract-main">
-      <ol className="contract-steps contract-six-steps" aria-label="ขั้นตอนบันทึกสัญญา">
-        {["ผู้กู้", "รายละเอียดสัญญา", "ยอดกู้", "เอกสาร", "ลงนาม", "หมายเหตุ"].map((title, index) => <li key={title} className={`contract-step ${index === 0 ? selected ? "is-ready" : "is-current" : selected ? "is-ready" : "is-locked"}`}><span className="contract-step-number">{index + 1}</span><strong>{title}</strong></li>)}
-      </ol>
+
 
       <section className="contract-panel lx-panel" aria-labelledby="borrower-search-title">
         <div className="contract-panel-heading">
-          <div className="contract-panel-icon"><UserRound size={18} /></div>
           <div>
-            <h2 id="borrower-search-title"><span className="contract-section-number">01</span> ค้นหาและเลือกผู้กู้</h2>
+            <h2 id="borrower-search-title">ค้นหาและเลือกผู้กู้</h2>
             <p>ค้นหาด้วยชื่อ เลขบัตรประชาชน หรือรหัสผู้กู้</p>
           </div>
         </div>
@@ -460,17 +649,24 @@ export default function Contract() {
               <div className="contract-selected-name"><strong>{borrowerName(selected)}</strong><span>รหัสผู้กู้ {selected.borrowersCode}</span></div>
               <div className="contract-selected-detail"><small>เลขบัตรประชาชน</small><strong>{formatNationalId(selected.nationalId)}</strong></div>
               <div className="contract-selected-detail"><small>เบอร์โทรศัพท์</small><strong>{selected.phone || "—"}</strong></div>
-              <div className="contract-selected-detail"><small>วงเงินคงเหลือ</small><strong>{formatBaht(selected.availableLimit ?? selected.approvedLimit)}</strong></div>
+            </div>
+            <div className="contract-borrower-limit-panel" aria-live="polite">
+              <div className="contract-borrower-limit-heading"><strong>สถานะ / วงเงินคงเหลือของผู้กู้</strong><span>สถานะ: {limitsLoading ? "กำลังโหลด…" : borrowerStatusLabel(limitsForSelected?.data?.status)}</span></div>
+              <div className="contract-borrower-limits">
+                <div><small>Approved Limit (บาท)</small><strong>{limitsLoading ? "…" : formatBaht(limitsForSelected?.data?.approvedLimit ?? null)}</strong></div>
+                <div><small>Used Limit (บาท)</small><strong>{limitsLoading ? "…" : formatBaht(limitsForSelected?.data?.usedLimit ?? 0)}</strong></div>
+                <div><small>Available Limit (บาท)</small><strong>{limitsLoading ? "…" : formatBaht(limitsForSelected?.data?.availableLimit ?? null)}</strong></div>
+              </div>
+              {limitsForSelected?.error && <small className="contract-borrower-limit-error" role="alert">{limitsForSelected.error}</small>}
             </div>
             <div className="contract-selected-foot">สัญญาที่บันทึกจะเชื่อมกับผู้กู้รายนี้</div>
           </section>
 
           <section className="contract-form-panel" aria-labelledby="contract-details-title">
             <div className="contract-panel-heading">
-              <div className="contract-panel-icon"><FileText size={18} /></div>
               <div>
-                <h2 id="contract-details-title">รายละเอียดสัญญา</h2>
-                <p>กรอกข้อมูลให้ตรงตามเงื่อนไขและตัวแปรของฐานข้อมูล</p>
+                <h2 id="contract-details-title">ข้อมูลการทำสัญญา</h2>
+                <p>กำหนดเงื่อนไข ยอดเงิน และเอกสารที่จะใช้</p>
               </div>
             </div>
 
@@ -491,37 +687,42 @@ export default function Contract() {
                   {contract.note && <p>หมายเหตุ: {contract.note}</p>}
                   <footer><span>ลงชื่อผู้กู้ __________________________</span><span>ลงชื่อพยาน __________________________</span><span>ลงชื่อพยาน __________________________</span>{contract.contractType === "WITNESS_GUARANTOR" && <span>ลงชื่อผู้ค้ำประกัน __________________________</span>}</footer>
                 </article>
-                <div className="contract-print-actions"><button type="button" className="secondary-button lx-btn" onClick={() => window.print()}>พิมพ์เอกสารเพื่อลงนาม</button><button type="button" className="secondary-button lx-btn" onClick={() => window.print()}>ส่งออก PDF</button></div>
+                {contract.contractType!=="NONE" && <div className="contract-print-actions"><button type="button" className="secondary-button lx-btn" onClick={() => setShowDocument(true)}>พิมพ์เอกสารเพื่อลงนาม</button><button type="button" className="secondary-button lx-btn" onClick={() => setShowDocument(true)}>ส่งออก PDF</button></div>}
+                {contract.contractType!=="NONE" && contract.signatureMode==="PRINT" && !contract.signedAt && !signedDocumentUploaded && <section className="contract-review-card"><h3>สำเนาสัญญาที่ลงนามแล้ว</h3><p>เมื่อลงนามบนเอกสารแล้ว แนบสำเนาที่นี่เพื่อเปลี่ยนสถานะเป็นพร้อมจ่ายเงิน</p><input type="file" accept="image/jpeg,image/png,image/webp,application/pdf" disabled={attachmentBusy} onChange={event=>{void uploadSignedDocument(event.target.files?.[0]);event.target.value="";}}/></section>}
+                {signedDocumentUploaded && <p className="contract-signed-document-note" role="status">รับสำเนาสัญญาที่ลงนามแล้ว สถานะพร้อมจ่ายเงิน</p>}
+                <section className="contract-review-card"><h3>หลักฐานส่งมอบเงิน</h3><p>แนบสลิปหลังทำสัญญาสำเร็จ เพื่อเก็บเป็นหลักฐานการจ่ายเงินจริง</p><input type="file" accept="image/jpeg,image/png,image/webp,application/pdf" disabled={attachmentBusy} onChange={event=>{void uploadDelivery(event.target.files?.[0]);event.target.value="";}}/>{documents.attachments.map(file=><p key={file.url}><a href={file.url} target="_blank" rel="noreferrer">{file.name}</a></p>)}{saveError && <p role="alert">{saveError}</p>}</section>
               </>
             ) : (
               <form className="contract-form" onSubmit={saveContract}>
-                <div className="contract-form-section">
-                  <h3><span className="contract-section-number">02</span> รายละเอียดสัญญา</h3>
+                <div hidden={stage !== "FORM"}><div className="contract-form-section">
+                  <h3>รายละเอียดสัญญา</h3>
                   <p className="contract-section-caption">เลือกรูปแบบการชำระและกำหนดระยะเวลาก่อนคำนวณยอดกู้</p>
                   <div className="contract-form-grid">
-                    <label className="contract-field lx-field"><span>เลขที่สัญญา (รันอัตโนมัติ) <b>*</b></span><input readOnly maxLength={80} value={contract.contractNumber} placeholder={nextNumberLoading ? "กำลังสร้างเลขที่..." : "รอเลขที่สัญญา"} /></label>
-                    <label className="contract-field lx-field"><span>สถานะ</span><select value={contract.status} onChange={(e) => updateContract("status", e.target.value as ContractDraft["status"])}><option value="DRAFT">ร่าง</option><option value="AWAITING_DOCUMENT">รอเอกสารสัญญา</option><option value="READY">พร้อมจ่ายเงิน</option><option value="ACTIVE">กำลังดำเนินการ</option><option value="OVERDUE">เกินกำหนด</option><option value="CLOSED">ปิดสัญญา</option></select></label>
+                    <label className="contract-field lx-field contract-number-field"><span>เลขที่สัญญา (รันอัตโนมัติ) <b>*</b></span><input readOnly maxLength={80} value={contract.contractNumber} placeholder={nextNumberLoading ? "กำลังสร้างเลขที่..." : "รอเลขที่สัญญา"} /></label>
                   </div>
                   <fieldset className="contract-payment-options"><legend>เลือกรูปแบบการชำระ <b>*</b></legend>
-                    <label className={contract.paymentOption === "INSTALLMENT" ? "is-active" : ""}><input type="radio" name="payment-option" checked={contract.paymentOption === "INSTALLMENT"} onChange={() => updateContract("paymentOption", "INSTALLMENT")} /><span><strong>ผ่อนชำระรายเดือน</strong><small>กำหนดจำนวนเดือน ระบบคำนวณเงินต้น ดอกเบี้ย และยอดผ่อน</small></span></label>
-                    <label className={contract.paymentOption === "UPFRONT" ? "is-active" : ""}><input type="radio" name="payment-option" checked={contract.paymentOption === "UPFRONT"} onChange={() => updateContract("paymentOption", "UPFRONT")} /><span><strong>ชำระตามสัญญา — หักดอกเบี้ยก่อน</strong><small>หักดอกเบี้ยจากเงินที่จ่ายให้ผู้กู้ แล้วคืนเงินต้นตามวันครบกำหนด</small></span></label>
-                    <label className={contract.paymentOption === "AT_DUE" ? "is-active" : ""}><input type="radio" name="payment-option" checked={contract.paymentOption === "AT_DUE"} onChange={() => updateContract("paymentOption", "AT_DUE")} /><span><strong>ชำระตามสัญญา — ไม่หักดอกเบี้ยก่อน</strong><small>จ่ายเงินต้นเต็มจำนวน และชำระเงินต้นพร้อมดอกเบี้ยตามวันครบกำหนด</small></span></label>
+                    <label className={isInstallment ? "is-active" : ""}><input type="radio" name="payment-category" checked={isInstallment} onChange={() => {updateContract("paymentOption", "INSTALLMENT");updateContract("periodDays", "");}} /><span><strong>ผ่อนชำระรายเดือน</strong><small>กำหนดจำนวนเดือน ระบบคำนวณเงินต้น ดอกเบี้ย และยอดผ่อน</small></span></label>
+                    <label className={!isInstallment ? "is-active" : ""}><input type="radio" name="payment-category" checked={!isInstallment} onChange={() => {if(isInstallment)updateContract("paymentOption", "AT_DUE");}} /><span><strong>ชำระตามสัญญา</strong><small>เลือกว่าจะหักดอกเบี้ยก่อน หรือชำระเงินต้นและดอกเบี้ยตามกำหนด</small></span></label>
                   </fieldset>
+                  {!isInstallment && <fieldset className="contract-payment-options contract-payment-suboptions"><legend>วิธีชำระตามสัญญา</legend>
+                    <label className={contract.paymentOption === "UPFRONT" ? "is-active" : ""}><input type="radio" name="payment-option" checked={contract.paymentOption === "UPFRONT"} onChange={() => {updateContract("paymentOption", "UPFRONT");updateContract("periodDays", "");}} /><span><strong>หักดอกเบี้ยก่อน</strong><small>หักดอกเบี้ยจากเงินที่จ่ายให้ผู้กู้ แล้วคืนเงินต้นตามวันครบกำหนด</small></span></label>
+                    <label className={contract.paymentOption === "AT_DUE" ? "is-active" : ""}><input type="radio" name="payment-option" checked={contract.paymentOption === "AT_DUE"} onChange={() => updateContract("paymentOption", "AT_DUE")} /><span><strong>ไม่หักดอกเบี้ยก่อน</strong><small>จ่ายเงินต้นเต็มจำนวน และชำระเงินต้นพร้อมดอกเบี้ยตามวันครบกำหนด</small></span></label>
+                  </fieldset>}
                   <div className="contract-form-grid contract-payment-fields">
                     {isInstallment && <label className="contract-field lx-field"><span>จำนวนเดือน <b>*</b></span><input required type="number" min="1" max="360" step="1" value={contract.installmentMonths} onChange={(e) => updateContract("installmentMonths", e.target.value)} placeholder="เช่น 6" /></label>}
-                    {!isInstallment && <label className="contract-field lx-field"><span>รอบชำระดอกเบี้ย (วัน) <small>ถ้ามี</small></span><input type="number" min="1" max="3650" step="1" value={contract.periodDays} onChange={(e) => updateContract("periodDays", e.target.value)} placeholder="เว้นว่างหากจ่ายครั้งเดียว" /></label>}
+                    {contract.paymentOption === "AT_DUE" && <label className="contract-field lx-field"><span>รอบชำระดอกเบี้ย (วัน) <small>ถ้ามี</small></span><input type="number" min="1" max="3650" step="1" value={contract.periodDays} onChange={(e) => updateContract("periodDays", e.target.value)} placeholder="เช่น 30 วัน" /><small className="contract-cycle-help">แนวทางอ้างอิง: รอบบัญชีประมาณ 30 วัน และกำหนดชำระหลังสรุปยอด 15–20 วัน (บางแห่งอาจ 15–25 วัน) รวมช่วงประมาณ 45–50 วัน วันจริงให้ยึดเงื่อนไขในสัญญา</small></label>}
                     <label className="contract-field lx-field"><span>วันที่เริ่มสัญญา <b>*</b></span><input required type="date" value={contract.startDate} onChange={(e) => updateContract("startDate", e.target.value)} /></label>
                     <label className="contract-field lx-field"><span>วันครบกำหนด <b>*</b></span><input required type="date" value={contract.dueDate} onChange={(e) => updateContract("dueDate", e.target.value)} /></label>
                   </div>
 
-                  <div className="contract-late-fee"><span><strong>ค่าปรับเกินกำหนด</strong><small>คิดวันละ 50 บาท</small></span><label><input type="checkbox" checked={contract.lateFeeWaived} onChange={(e) => updateContract("lateFeeWaived", e.target.checked)} /><span>ละเว้นค่าปรับ</span></label></div>
+
                 </div>
 
                 <div className="contract-form-section">
-                  <h3><span className="contract-section-number">03</span> ยอดกู้และการคำนวณ</h3>
+                  <h3>ยอดกู้และการคำนวณ</h3>
                   <p className="contract-section-caption">กรอกเงินต้นและอัตราดอกเบี้ย ระบบสรุปยอดให้โดยอัตโนมัติ</p>
-                  <div className="contract-form-grid">                    <label className="contract-field lx-field"><span>เงินต้น (บาท) <b>*</b></span><input required inputMode="decimal" value={contract.principal} onChange={(e) => updateContract("principal", e.target.value)} placeholder="0.00" /></label>
-                    <fieldset className="contract-field contract-rate-field"><legend>อัตราดอกเบี้ย (%) {isInstallment ? "ต่อเดือน" : "ตามสัญญา"} <b>*</b></legend><div className="contract-rate-options">{["0", "5", "10", "15", "20", "25", "CUSTOM"].map((rate) => <label key={rate} className={contract.interestRateChoice === rate ? "is-active" : ""}><input type="radio" name="interest-rate" value={rate} checked={contract.interestRateChoice === rate} onChange={() => updateContract("interestRateChoice", rate as ContractDraft["interestRateChoice"])} /><span>{rate === "CUSTOM" ? "กำหนดเอง" : `${rate}%`}</span></label>)}</div>{contract.interestRateChoice === "CUSTOM" && <input className="contract-custom-rate" required type="number" min="0" max="1000" step="0.01" value={contract.customInterestRate} onChange={(e) => updateContract("customInterestRate", e.target.value)} placeholder="ระบุอัตราดอกเบี้ย (%)" />}</fieldset>
+                  <div className="contract-form-grid">                    <label className="contract-field lx-field"><span>เงินต้น (บาท) <b>*</b></span><input required inputMode="decimal" value={contract.principal} onChange={(e) => { const numeric=e.target.value.replace(/[^0-9.]/g, ""); const parts=numeric.split("."); updateContract("principal",parts[0]+(parts.length>1?"."+parts.slice(1).join("").slice(0,2):"")); }} placeholder="0.00" /></label>
+                    <label className="contract-field lx-field"><span>อัตราดอกเบี้ย (%) {isInstallment ? "ต่อเดือน" : "ตามสัญญา"} <b>*</b></span><select value={contract.interestRateChoice} onChange={event=>updateContract("interestRateChoice",event.target.value as ContractDraft["interestRateChoice"])}>{["0","5","10","15","20","25","CUSTOM"].map(rate=><option key={rate} value={rate}>{rate==="CUSTOM"?"กำหนดเอง":`${rate}%`}</option>)}</select>{contract.interestRateChoice==="CUSTOM" && <input required type="number" min="0" max="1000" step="0.01" value={contract.customInterestRate} onChange={event=>updateContract("customInterestRate",event.target.value)} placeholder="ระบุอัตราดอกเบี้ย"/>}</label>
 
 
                   </div>
@@ -530,47 +731,42 @@ export default function Contract() {
                     <article><span>{isInstallment ? "ดอกเบี้ยรวมตามแผน (ประมาณการ)" : "ดอกเบี้ยรวมตามสัญญา"}</span><strong>{formatBaht(calculatedInterest)}</strong></article>
                     <article className="is-net"><span>ยอดจ่ายสุทธิให้ผู้กู้</span><strong>{formatBaht(calculatedNetDisbursed)}</strong></article>
                   </div>
-                  {isInstallment && principalSatang !== null && <p className="contract-section-caption">ดอกเบี้ยคงที่ {formatBaht(Math.round(principalSatang * interestRate / 100))} ต่อเดือน จากเงินต้นเริ่มต้น · รับชำระหักดอกก่อน แล้วตัดเงินต้น</p>}
+
                   {isInstallment && monthlyInstallment !== null && <div className="contract-installment-preview"><strong>ประมาณ {formatBaht(monthlyInstallment)} / เดือน</strong><span>เงินต้นรวม {formatBaht(principalSatang)} + ดอกเบี้ยรวม {formatBaht(calculatedInterest)} ÷ {installmentMonths} เดือน</span></div>}
                 </div>
                 <div className="contract-form-section">
-                  <h3><span className="contract-section-number">04</span> เอกสารสัญญา</h3>
-                  <p className="contract-section-caption">เลือกรูปแบบเอกสารและข้อมูลผู้ค้ำตามสัญญา</p>
-                  <div className="contract-form-grid">
-                    <fieldset className="contract-field contract-document-field"><legend>รูปแบบเอกสาร <b>*</b></legend><div className="contract-document-options">
-                      <label className={contract.contractType === "NONE" ? "is-active" : ""}><input type="radio" name="contract-type" checked={contract.contractType === "NONE"} onChange={() => updateContract("contractType", "NONE")} /><span>ไม่ใช้เอกสารสัญญา</span></label>
-                      <label className={contract.contractType === "WITNESS" ? "is-active" : ""}><input type="radio" name="contract-type" checked={contract.contractType === "WITNESS"} onChange={() => updateContract("contractType", "WITNESS")} /><span>สัญญากู้ยืมพร้อมพยาน 2 คน</span></label>
-                      <label className={contract.contractType === "WITNESS_GUARANTOR" ? "is-active" : ""}><input type="radio" name="contract-type" checked={contract.contractType === "WITNESS_GUARANTOR"} onChange={() => updateContract("contractType", "WITNESS_GUARANTOR")} /><span>สัญญากู้ยืมและสัญญาค้ำ พร้อมพยาน 2 คน</span></label>
-                    </div></fieldset>
+                  <h3>เอกสารสัญญา</h3>
+                  <p className="contract-section-caption">เลือกรูปแบบเอกสาร แนบไฟล์ประกอบ และเพิ่มลิงก์สัญญาถ้ามี</p>
+                  <div className="contract-document-stack">
+                    <div className="contract-field lx-field contract-document-type"><span id="contract-type-label">รูปแบบเอกสาร <b>*</b></span><button type="button" className="contract-type-dropdown-toggle" aria-expanded={contractTypeOpen} aria-controls="contract-type-options" aria-labelledby="contract-type-label" onClick={()=>setContractTypeOpen(open=>!open)}><span>{contract.contractType==="NONE"?"ไม่ใช้เอกสารสัญญา":contract.contractType==="WITNESS"?"สัญญากู้ยืมพร้อมพยาน 2 คน":"สัญญากู้ยืมและสัญญาค้ำ พร้อมพยาน 2 คน"}</span><ChevronDown size={17} aria-hidden="true"/></button>{contractTypeOpen && <div id="contract-type-options" className="contract-type-dropdown-options contract-document-options" role="radiogroup" aria-labelledby="contract-type-label">{([{value:"NONE",label:"ไม่ใช้เอกสารสัญญา"},{value:"WITNESS",label:"สัญญากู้ยืมพร้อมพยาน 2 คน"},{value:"WITNESS_GUARANTOR",label:"สัญญากู้ยืมและสัญญาค้ำ พร้อมพยาน 2 คน"}] as const).map(option=><label key={option.value} className={contract.contractType===option.value?"is-active":""}><input type="radio" name="contract-type" checked={contract.contractType===option.value} onChange={()=>{updateContract("contractType",option.value);setContractTypeOpen(false);}}/><span>{option.label}</span></label>)}</div>}</div>
+                    <div className="contract-upload-field"><span>เอกสารประกอบ (JPG/PNG/WebP/PDF)</span><input ref={attachmentInputRef} className="contract-file-input" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" disabled={attachmentBusy || documents.attachments.length>=20} aria-label="เลือกเอกสารประกอบสัญญา" onChange={event=>{void uploadAttachment(event.target.files?.[0]);event.target.value="";}}/><button type="button" className="lx-btn" disabled={attachmentBusy || documents.attachments.length>=20} onClick={()=>attachmentInputRef.current?.click()}><Upload size={16}/>{attachmentBusy?"กำลังอัปโหลด…":"อัปโหลดเอกสาร"}</button>{documents.attachments.map(file=><div key={file.url} className="contract-attachment-row"><a href={file.url} target="_blank" rel="noreferrer">{file.name}</a><button type="button" className="lx-link" onClick={()=>setDocuments(current=>({...current,attachments:current.attachments.filter(item=>item.url!==file.url)}))}>นำออกจากร่าง</button></div>)}</div>
+                    <label className="contract-field lx-field contract-document-url"><span>ลิงก์เอกสารสัญญา (ถ้ามี)</span><input type="url" maxLength={500} value={contract.documentUrl} onChange={(e) => updateContract("documentUrl", e.target.value)} placeholder="https://..." /></label>
                     {contract.contractType === "WITNESS_GUARANTOR" && <label className="contract-field lx-field"><span>ผู้ค้ำประกัน</span><input maxLength={160} value={contract.guarantor} onChange={(e) => updateContract("guarantor", e.target.value)} /></label>}
-                    <label className="contract-field lx-field"><span>ลิงก์เอกสารสัญญา</span><input type="url" maxLength={500} value={contract.documentUrl} onChange={(e) => updateContract("documentUrl", e.target.value)} placeholder="https://..." /></label>
+                    {contract.contractType!=="NONE" && <label className="contract-field lx-field contract-signature-mode"><span>วิธีลงนาม</span><select value={contract.signatureMode} onChange={event=>{updateContract("signatureMode",event.target.value as ContractDraft["signatureMode"]);updateContract("consentAccepted",false);}}><option value="PRINT">พิมพ์เอกสารเพื่อลงนาม</option><option value="DIGITAL">เขียนลายเซ็นดิจิทัล</option></select></label>}
                   </div>
                 </div>
-                <div className="contract-form-section">
-                  <h3><span className="contract-section-number">05</span> วิธีลงนามและพยาน</h3>
-                  <p className="contract-section-caption">กำหนดวิธีลงนาม วันที่ลงนาม และพยานทั้งสองคน</p>
-                  <div className="contract-form-grid">                    <fieldset className="contract-field contract-signature-field"><legend>วิธีลงนาม <b>*</b></legend><div className="contract-document-options">
-                      <label className={contract.signatureMode === "PRINT" ? "is-active" : ""}><input type="radio" name="signature-mode" checked={contract.signatureMode === "PRINT"} onChange={() => { updateContract("signatureMode", "PRINT"); updateContract("consentAccepted", false); setDigitalSignature(""); }} /><span>พิมพ์เอกสารเพื่อลงนาม</span></label>
-                      <label className={contract.signatureMode === "DIGITAL" ? "is-active" : ""}><input type="radio" name="signature-mode" checked={contract.signatureMode === "DIGITAL"} onChange={() => updateContract("signatureMode", "DIGITAL")} /><span>เขียนลายเซ็นดิจิทัล</span></label>
-                    </div></fieldset>
-                    <label className="contract-field lx-field"><span>วันที่ลงนาม</span><input type="datetime-local" value={contract.signedAt} onChange={(e) => updateContract("signedAt", e.target.value)} /></label>
-                    <label className="contract-field lx-field"><span>พยานคนที่ 1</span><input maxLength={160} value={contract.witness1} onChange={(e) => updateContract("witness1", e.target.value)} /></label>
-                    <label className="contract-field lx-field"><span>พยานคนที่ 2</span><input maxLength={160} value={contract.witness2} onChange={(e) => updateContract("witness2", e.target.value)} /></label>
-
-
+                {contract.contractType!=="NONE" && <div className="contract-form-section">
+                  <h3>เอกสารและสถานที่ทำสัญญา</h3>
+                  <label className="contract-field lx-field"><span>แบบเอกสาร</span><select value={documents.kind} onChange={event=>setDocuments(current=>({...current,kind:event.target.value as ContractDocumentSettings["kind"],loanText:"",guaranteeText:""}))}><option value="NEW_LOAN">สัญญากู้ยืมเงินใหม่</option><option value="AMENDMENT">เอกสารแนบท้ายแก้ไขสัญญาเดิม</option></select></label>
+                  <p className="contract-section-caption">แบบแนบท้ายใช้แก้ไขหนี้เดิม ไม่ยืนยันการจ่ายเงินกู้ใหม่ อัตราต่อปีในเอกสารไม่ถูกนำไปเปลี่ยนสูตรรับชำระโดยอัตโนมัติ</p>
+                  <div className="contract-form-grid">{([{key:"place",label:"สถานที่ทำสัญญา"},{key:"collateral",label:"ทรัพย์สินที่ใช้เป็นประกัน (ถ้ามี)"},...(documents.kind==="AMENDMENT"?[{key:"originalNumber",label:"เลขที่สัญญาเดิม"},{key:"originalDate",label:"วันที่สัญญาเดิม"},{key:"annualRate",label:"อัตราดอกเบี้ยในแบบแนบท้าย (% ต่อปี)"},{key:"principalPaid",label:"เงินต้นชำระแล้ว (บาท)"},{key:"lawfulInterest",label:"ดอกเบี้ยที่ชอบด้วยกฎหมายค้าง (บาท)"}]:[]),...(contract.contractType==="WITNESS_GUARANTOR"?[{key:"guarantorId",label:"เลขบัตรผู้ค้ำ"},{key:"guarantorAddress",label:"ที่อยู่ผู้ค้ำ"},{key:"guarantorPhone",label:"โทรศัพท์ผู้ค้ำ"},{key:"guarantorAge",label:"อายุผู้ค้ำ"},{key:"guaranteeLimit",label:"วงเงินรับผิดรวมสูงสุด (บาท)"}]:[])] as {key:keyof ContractDocumentSettings;label:string}[]).map(field=><label key={field.key} className="contract-field lx-field"><span>{field.label}</span><input value={typeof documents[field.key]==="string"?documents[field.key] as string:""} onChange={event=>setDocuments(current=>({...current,[field.key]:event.target.value}))}/></label>)}</div>
+                  <div className="contract-lender-lookup">
+                    <label className="contract-field lx-field"><span>Companycode</span><input value={documents.companyCode} maxLength={80} onChange={event=>{const companyCode=event.target.value;setDocuments(current=>({...current,companyCode,lenderName:"",lenderId:"",lenderAddress:"",lenderPhone:"",lenderSignature:"",loanText:"",guaranteeText:""}));setCompanyLookupError("");}} onKeyDown={event=>{if(event.key==="Enter"){event.preventDefault();void lookupLenderCompany();}}} placeholder="กรอกรหัสบริษัท"/></label>
+                    <button type="button" className="lx-btn" disabled={companyLookupBusy || !documents.companyCode.trim()} onClick={()=>void lookupLenderCompany()}>{companyLookupBusy?<LoaderCircle size={16} className="animate-spin"/>:<Search size={16}/>}เรียกข้อมูลบริษัท</button>
                   </div>
-                  {contract.signatureMode === "DIGITAL" && <div className="contract-digital-signature"><h4>ลายเซ็นดิจิทัลและคำยินยอม</h4><SignatureCanvas value={digitalSignature} onChange={setDigitalSignature} /><label className="contract-consent"><input type="checkbox" checked={contract.consentAccepted} onChange={(e) => updateContract("consentAccepted", e.target.checked)} /><span>ข้าพเจ้ายืนยันว่าลายเซ็นดิจิทัลที่เขียนข้างต้นเป็นลายเซ็นจริงของข้าพเจ้า และยินยอมใช้ลายเซ็นนี้ประกอบสัญญาฉบับนี้</span></label></div>}
+                  {companyLookupError && <p className="contract-company-error" role="alert">{companyLookupError}</p>}
+                  {(documents.lenderName || documents.lenderId || documents.lenderAddress || documents.lenderPhone) && <section className="contract-company-card" aria-label="ข้อมูลผู้ให้กู้"><h4>ข้อมูลผู้ให้กู้</h4><dl><div><dt>ชื่อ</dt><dd>{documents.lenderName || "—"}</dd></div><div><dt>เลขที่บัตร / เลขประจำตัวผู้เสียภาษี</dt><dd>{documents.lenderId || "—"}</dd></div><div><dt>ที่อยู่</dt><dd>{documents.lenderAddress || "—"}</dd></div><div><dt>เบอร์โทร</dt><dd>{documents.lenderPhone || "—"}</dd></div></dl></section>}
+                  <details className="contract-document-editor"><summary>ตรวจและแก้ไขข้อความเอกสาร</summary><p>เมื่อแก้ข้อความแล้ว ระบบจะใช้ข้อความนี้เป็นฉบับพิมพ์ ควรตรวจยอดและชื่อทุกครั้ง</p><label className="contract-field lx-field"><span>สัญญากู้ / แบบแนบท้าย</span><textarea rows={16} value={documents.loanText || makeLoanDocument(documents,documentLoan)} onChange={event=>setDocuments(current=>({...current,loanText:event.target.value}))}/></label>{contract.contractType==="WITNESS_GUARANTOR" && <label className="contract-field lx-field"><span>สัญญาค้ำประกัน</span><textarea rows={12} value={documents.guaranteeText || makeGuaranteeDocument(documents,documentLoan,contract.guarantor)} onChange={event=>setDocuments(current=>({...current,guaranteeText:event.target.value}))}/></label>}<button type="button" className="lx-btn" onClick={()=>setDocuments(current=>({...current,loanText:"",guaranteeText:""}))}>สร้างข้อความใหม่จากข้อมูลปัจจุบัน</button></details>
+                </div>}
+                <div className="contract-form-section"><h3>หมายเหตุอื่น ๆ</h3><label className="contract-field lx-field"><textarea rows={3} maxLength={2000} value={contract.note} onChange={e=>updateContract("note",e.target.value)} placeholder="เงื่อนไขเพิ่มเติม"/></label></div>
                 </div>
-                <div className="contract-form-section">
-                  <h3><span className="contract-section-number">06</span> หมายเหตุอื่น ๆ</h3>
-                  <p className="contract-section-caption">เงื่อนไขเพิ่มเติมและข้อมูลประกอบสัญญา</p>
-                    <label className="contract-field contract-field-wide"><span>หมายเหตุ</span><textarea rows={3} maxLength={2000} value={contract.note} onChange={(e) => updateContract("note", e.target.value)} placeholder="ระบุเงื่อนไขหรือหมายเหตุเพิ่มเติม" /></label>
-                </div>
-
+                {contract.contractType!=="NONE" && stage==="BORROWER" && <div className="contract-form-section"><h3>ผู้กู้ยืมและการลงนาม</h3><div className="contract-review-card"><strong>{borrowerName(selected)}</strong><p>{selected.borrowersCode} · {formatNationalId(selected.nationalId)} · {selected.phone||"—"}</p><p>{selected.address||"ยังไม่มีที่อยู่"}</p><p>เงินต้น {formatBaht(principalSatang)} · ดอกเบี้ยรวม {formatBaht(calculatedInterest)} · ยอดจ่ายสุทธิ {formatBaht(calculatedNetDisbursed)}</p><p>เริ่ม {contract.startDate} · ครบกำหนด {contract.dueDate}</p></div><label className="contract-field lx-field"><span>วันที่ลงนาม</span><input type="datetime-local" value={contract.signedAt} onChange={e=>updateContract("signedAt",e.target.value)}/></label>{contract.signatureMode==="DIGITAL" && <><SignatureCanvas value={digitalSignature} onChange={setDigitalSignature}/><label className="contract-consent"><input type="checkbox" checked={contract.consentAccepted} onChange={e=>updateContract("consentAccepted",e.target.checked)}/><span>ผู้กู้ยืนยันว่าเป็นลายเซ็นของตนและยินยอมใช้ประกอบสัญญา</span></label></>}<div className="contract-document-actions"><button type="button" className="lx-btn" onClick={()=>setStage("FORM")}>ย้อนกลับแก้ไขสัญญา</button><button type="button" className="lx-btn primary" onClick={()=>{if(contract.signatureMode==="DIGITAL" && (!digitalSignature||!contract.consentAccepted)){setSaveError("กรุณาลงนามและยืนยันคำยินยอมผู้กู้");return;}setSaveError("");setStage("WITNESSES");}}>ถัดไป · ข้อมูลพยาน</button></div></div>}
+                {contract.contractType!=="NONE" && stage==="WITNESSES" && <div className="contract-form-section"><h3>ข้อมูลและลายเซ็นพยาน</h3><p className="contract-section-caption">กรอกข้อมูลแต่ละคน แล้วลงนามในช่องของคนนั้น</p><div className="contract-witness-grid">{([1,2] as const).map(n=><section className="contract-review-card" key={n}><h4>พยานคนที่ {n}</h4><label className="contract-field lx-field"><span>ชื่อ–นามสกุล *</span><input value={contract[n===1?"witness1":"witness2"]} maxLength={160} onChange={e=>updateContract(n===1?"witness1":"witness2",e.target.value)}/></label>{(["Id","Phone","Address"] as const).map(suffix=>{const key=`witness${n}${suffix}` as keyof ContractDocumentSettings;return <label className="contract-field lx-field" key={key}><span>{suffix==="Id"?"เลขบัตรประชาชน":suffix==="Phone"?"โทรศัพท์":"ที่อยู่"}</span><input value={documents[key] as string} onChange={e=>setDocuments(current=>({...current,[key]:e.target.value}))}/></label>;})}{contract.signatureMode==="DIGITAL" && <SignatureCanvas label={`พยานคนที่ ${n}`} value={documents[n===1?"witness1Signature":"witness2Signature"]} onChange={value=>setDocuments(current=>({...current,[n===1?"witness1Signature":"witness2Signature"]:value}))}/>}</section>)}</div>{contract.contractType==="WITNESS_GUARANTOR" && <section className="contract-review-card"><h4>ผู้ค้ำประกัน · {contract.guarantor||"ยังไม่ระบุชื่อ"}</h4><p>{documents.guarantorId} · {documents.guarantorAddress}</p>{contract.signatureMode==="DIGITAL" && <SignatureCanvas label="ผู้ค้ำประกัน" value={documents.guarantorSignature} onChange={value=>setDocuments(current=>({...current,guarantorSignature:value}))}/>}</section>}<div className="contract-document-actions"><button type="button" className="lx-btn" onClick={()=>setStage("BORROWER")}>ย้อนกลับ · ผู้กู้</button><button type="button" className="lx-btn primary" onClick={()=>{if(!contract.witness1.trim()||!contract.witness2.trim()||(contract.signatureMode==="DIGITAL" && (!documents.witness1Signature||!documents.witness2Signature))||(contract.contractType==="WITNESS_GUARANTOR" && (!contract.guarantor.trim()||(contract.signatureMode==="DIGITAL"&&!documents.guarantorSignature)))){setSaveError("กรอกชื่อและลงนามพยาน / ผู้ค้ำให้ครบตามวิธีลงนาม");return;}setSaveError("");setConfirmed(false);setStage("REVIEW");}}>ถัดไป · สรุปข้อมูล</button></div></div>}
+                {stage==="REVIEW" && <div className="contract-form-section"><h3>สรุปข้อมูลก่อนบันทึก</h3><div className="contract-review-card"><h4>{contract.contractNumber} · {borrowerName(selected)}</h4><p>เงินต้น {formatBaht(principalSatang)} · อัตราดอกเบี้ย {interestRate}% {isInstallment?"ต่อเดือน":"ตามสัญญา"}</p><p>ดอกเบี้ยรวม {formatBaht(calculatedInterest)} · จ่ายสุทธิ {formatBaht(calculatedNetDisbursed)}</p><p>เริ่ม {contract.startDate} · ครบกำหนด {contract.dueDate}</p><p>{contract.contractType==="NONE"?"ไม่ใช้เอกสารสัญญา":`พยาน: ${contract.witness1} และ ${contract.witness2}`}</p>{contract.guarantor && <p>ผู้ค้ำ: {contract.guarantor}</p>}<p>วิธีลงนาม: {contract.contractType==="NONE"?"ไม่ใช้เอกสาร":contract.signatureMode==="DIGITAL"?"ลายเซ็นดิจิทัล":"พิมพ์เพื่อลงนาม"}</p><p>สถานที่: {documents.place||"เว้นว่าง"}</p><p>หมายเหตุ: {contract.note||"—"}</p></div>{contract.contractType!=="NONE" && <div className="contract-document-actions"><button type="button" className="lx-btn" onClick={()=>setShowDocument(true)}>ตรวจเอกสาร / พิมพ์</button><button type="button" className="lx-btn" onClick={()=>setShowDocument(true)}>บันทึก PDF</button></div>}<label className="contract-consent"><input type="checkbox" checked={confirmed} onChange={e=>setConfirmed(e.target.checked)}/><span>ตรวจสอบข้อมูลและเอกสารแล้ว ขอยืนยันว่าข้อมูลเป็นความจริง</span></label><button type="button" className="lx-btn" onClick={()=>{setConfirmed(false);setStage("FORM");}}>ย้อนกลับแก้ไขข้อมูล</button></div>}
                 {saveError && <div className="contract-error" role="alert">{saveError}</div>}
                 <div className="contract-form-actions">
-                  <button type="button" className="secondary-button lx-btn" disabled={saving} onClick={() => { setContract(emptyContract); setSaveError(""); }}>ล้างข้อมูล</button>
-                  <button type="submit" className="primary-button lx-btn primary" disabled={saving}>{saving ? <><LoaderCircle className="contract-spinner" size={15} /> กำลังบันทึก...</> : <><Check size={15} /> บันทึกสัญญา</>}</button>
+                  <button type="button" className="secondary-button lx-btn" disabled={saving} onClick={() => { draftIdRef.current="";setStage("FORM");setConfirmed(false);setContract(emptyContract);setDigitalSignature("");setDocuments(emptyDocumentSettings);setSaveError(""); }}>ล้างข้อมูล</button>
+                  <button type="submit" className="primary-button lx-btn primary" disabled={saving || attachmentBusy || (stage==="REVIEW"&&!confirmed)} hidden={stage!=="FORM"&&stage!=="REVIEW"}>{saving ? <><LoaderCircle className="contract-spinner" size={15} /> กำลังบันทึก...</> : <><Check size={15} /> {stage==="FORM"?"ถัดไป": "ยืนยันและบันทึกสัญญา"}</>}</button>
                 </div>
               </form>
             )}

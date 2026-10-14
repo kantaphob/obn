@@ -11,8 +11,19 @@ export async function GET(request: Request) {
     if (!Number.isFinite(asOf.getTime()))
         return Response.json({ error: 'วันที่ไม่ถูกต้อง' }, { status: 400 });
     const contractId = params.get('contractId');
-    const contracts = await prisma.contract.findMany({ where: contractId ? { id: contractId } : undefined, include: { debtor: { select: { borrowersCode: true, firstName: true, lastName: true, nickname: true } }, payments: true, repayments: { orderBy: [{ paidAt: 'desc' }, { createdAt: 'desc' }] } }, orderBy: { createdAt: 'desc' } });
-    return Response.json(contracts.map(({ payments, ...contract }) => ({ ...contract, balance: loanBalance({ ...contract, payments }, asOf) })), { headers: { 'Cache-Control': 'no-store' } });
+    const [contracts, legacyEntries] = await Promise.all([
+        prisma.contract.findMany({ where: contractId ? { id: contractId } : undefined, include: { debtor: { select: { borrowersCode: true, firstName: true, lastName: true, nickname: true } }, payments: true, repayments: { orderBy: [{ paidAt: 'desc' }, { createdAt: 'desc' }] } }, orderBy: { createdAt: 'desc' } }),
+        prisma.companyLedgerEntry.findMany({
+            where: { type: 'INCOME', title: { in: ['รับดอกเบี้ย', 'รับชำระเงินต้น', 'รับชำระเงินต้นพร้อมดอกเบี้ย'] }, note: { contains: 'นำเข้าจากบัญชีเดิม' } },
+            select: { id: true, title: true, amount: true, transactionDate: true, party: true, reference: true, note: true, method: true },
+            orderBy: { transactionDate: 'desc' },
+        }),
+    ]);
+    return Response.json(contracts.map(({ payments, ...contract }) => ({
+        ...contract,
+        balance: loanBalance({ ...contract, payments }, asOf),
+        legacyPayments: legacyEntries.filter(entry => entry.party.startsWith(`${contract.contractNumber} · `)),
+    })), { headers: { 'Cache-Control': 'no-store' } });
 }
 export async function POST(request: Request) {
     const origin = request.headers.get('origin');
@@ -23,6 +34,9 @@ export async function POST(request: Request) {
         return Response.json({ error: 'ข้อมูลไม่ถูกต้อง' }, { status: 400 });
     const { contractId, requestKey, paidAt, method, evidenceUrl, note } = raw;
     const amount = raw.amount;
+    const waivePenalty = raw.waivePenalty;
+    if (waivePenalty !== undefined && typeof waivePenalty !== 'boolean')
+        return Response.json({ error: 'ตัวเลือกยกเว้นค่าปรับไม่ถูกต้อง' }, { status: 400 });
     const date = typeof paidAt === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(paidAt) ? new Date(`${paidAt}T12:00:00+07:00`) : new Date(NaN);
     if (typeof contractId !== 'string' || typeof requestKey !== 'string' || !/^[a-zA-Z0-9-]{16,80}$/.test(requestKey) || !Number.isSafeInteger(amount) || amount <= 0 || amount > 2147483647 || !Number.isFinite(date.getTime()) || thaiDay(date) > thaiDay(new Date()) || !['CASH', 'BANK_TRANSFER'].includes(method))
         return Response.json({ error: 'ตรวจยอดเงิน วันที่ ช่องรับชำระ และรหัสรายการ' }, { status: 400 });
@@ -53,7 +67,7 @@ export async function POST(request: Request) {
                     throw new Error('รหัสรายการนี้ใช้กับข้อมูลอื่นแล้ว');
                 return existing;
             }
-            await tx.contract.update({ where: { id: contractId }, data: { updatedAt: new Date() } });
+            await tx.contract.update({ where: { id: contractId }, data: { updatedAt: new Date(), ...(typeof waivePenalty === 'boolean' ? { lateFeeWaived: waivePenalty } : {}) } });
             const contract = await tx.contract.findUniqueOrThrow({ where: { id: contractId }, include: { payments: true } });
             if (!['ACTIVE', 'OVERDUE'].includes(contract.status))
                 throw new Error('รับชำระได้เฉพาะสัญญาที่จ่ายเงินแล้วและยังไม่ปิดยอด');

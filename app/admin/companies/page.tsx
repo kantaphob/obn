@@ -1,7 +1,5 @@
-import React from 'react'
+import CompanySequenceManager from '@/components/admin/CompanySequenceManager';
 
-export default function Companies() {
-  return (
-    <div>companies</div>
-  )
+export default function CompaniesPage() {
+  return <CompanySequenceManager kind="companies" />;
 }

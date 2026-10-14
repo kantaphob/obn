@@ -1,0 +1,11 @@
+'use client';
+import {useEffect,useRef} from 'react';
+import Image from 'next/image';
+import {createPortal} from 'react-dom';
+export type DocumentSigner={role:string;name:string;signature?:string};
+export default function ContractDocumentPreview({loanText,guaranteeText,signers,attachments=[],draft=true,onClose}:{loanText:string;guaranteeText?:string;signers:DocumentSigner[];attachments?:{url:string;name:string}[];draft?:boolean;onClose:()=>void}){
+ const ref=useRef<HTMLDialogElement>(null);
+ useEffect(()=>{const dialog=ref.current;dialog?.showModal();return()=>dialog?.close();},[]);
+ function page(text:string,key:string){const [title,...lines]=text.split('\n');return <article className="contract-a4-document" key={key}><h1>{title}</h1><div className="contract-a4-content">{lines.join('\n').split(/\n\n+/).map((part,i)=>{const [heading,...content]=part.split("\n");return /^(ข้อ \d|ฝ่ายที่|ผู้ให้กู้ \(|ผู้ค้ำประกัน$)/.test(heading)?<section className="contract-a4-clause" key={i}><h2>{heading}</h2><p>{content.join("\n")}</p></section>:<p key={i}>{part}</p>;})}</div><footer className="contract-a4-signers">{signers.map(person=><div key={person.role}>{person.signature && <Image src={person.signature} width={220} height={75} unoptimized alt={`ลายเซ็น${person.role}`} />}<p>ลงชื่อ ……………………………… {person.role}</p><p>({person.name||'………………………………'})</p></div>)}</footer>{draft && <p className="contract-a4-footnote">ร่างเพื่อการตรวจสอบข้อมูลและข้อตกลงก่อนลงนาม</p>}</article>;}
+ return createPortal(<dialog ref={ref} className="contract-document-dialog" aria-label="ตัวอย่างเอกสาร A4" onCancel={e=>{e.preventDefault();onClose();}}><header><div><h2>ตัวอย่างเอกสาร A4</h2><p>ตรวจข้อความก่อนลงนาม · ส่งออก PDF ผ่านหน้าต่างพิมพ์</p></div><div><button type="button" onClick={()=>window.print()}>พิมพ์ / ส่งออก PDF</button><button type="button" onClick={onClose}>ปิด</button></div></header><div className="contract-a4-pack">{page(loanText,'loan')}{guaranteeText && page(guaranteeText,'guarantee')}</div>{attachments.length>0 && <section className="contract-preview-attachments"><h3>เอกสารแนบ</h3>{attachments.filter(file=>file.url.startsWith("/api/contracts/attachments/")).map(file=><p key={file.url}><a href={file.url} target="_blank" rel="noreferrer">{file.name}</a></p>)}</section>}</dialog>,document.body);
+}

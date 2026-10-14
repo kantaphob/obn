@@ -1,0 +1,81 @@
+.finance-categories-page { min-height: 100vh; padding: 30px 24px 64px; background: #f5f7f5; color: #18271f; font-family: "IBM Plex Sans Thai", "Noto Sans Thai", system-ui, sans-serif; }
+.fc-wrap { max-width: 1120px; margin: 0 auto; }
+.finance-categories-page *, .finance-categories-page *::before, .finance-categories-page *::after { box-sizing: border-box; }
+.finance-categories-page button, .finance-categories-page input { font: inherit; }
+.finance-categories-page :focus-visible { outline: 2px solid #347451; outline-offset: 2px; }
+.fc-breadcrumb { display: flex; gap: 9px; margin-bottom: 13px; color: #758178; font-size: 13px; }
+.fc-breadcrumb strong { color: #26372c; font-weight: 500; }
+.fc-header { display: flex; align-items: flex-end; justify-content: space-between; gap: 18px; flex-wrap: wrap; margin-bottom: 24px; }
+.fc-header h1 { margin: 6px 0 3px; font-size: 28px; font-weight: 650; letter-spacing: -.025em; }
+.fc-header p { margin: 0; color: #77847b; font-size: 14px; }
+.fc-eyebrow { display: inline-flex; align-items: center; gap: 7px; color: #52745f; font-size: 11px; letter-spacing: .08em; font-weight: 650; }
+.fc-button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 41px; padding: 0 14px; border: 1px solid #d4ded7; border-radius: 10px; background: #fff; color: #26372c; font-size: 13px; font-weight: 550; cursor: pointer; }
+.fc-button:hover:not(:disabled) { background: #f3f7f4; }
+.fc-button.primary { border-color: #22603f; background: #22603f; color: #fff; }
+.fc-button.primary:hover:not(:disabled) { background: #194e32; }
+.fc-button:disabled, .fc-icon-button:disabled { opacity: .55; cursor: not-allowed; }
+.fc-alert { display: flex; align-items: center; gap: 9px; min-height: 42px; margin-bottom: 12px; padding: 9px 12px; border-radius: 9px; font-size: 13px; }
+.fc-alert button { display: grid; place-items: center; margin-left: auto; padding: 3px; border: 0; background: transparent; color: inherit; cursor: pointer; }
+.fc-alert.error { background: #fff0ee; color: #963f34; }
+.fc-alert.success { background: #edf7ef; color: #2c7048; }
+.fc-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 13px; margin-bottom: 17px; }
+.fc-stats article { display: flex; align-items: center; gap: 12px; min-height: 84px; padding: 15px 18px; border: 1px solid #e2e9e3; border-radius: 13px; background: #fff; box-shadow: 0 2px 7px #283c300a; }
+.fc-stat-icon { display: grid; flex: none; place-items: center; width: 35px; height: 35px; border-radius: 10px; }
+.fc-stat-icon.all { color: #587564; background: #eef3ef; }
+.fc-stat-icon.income { color: #28734d; background: #e8f4ec; }
+.fc-stat-icon.expense { color: #b35848; background: #fbefeb; }
+.fc-stats small { display: block; color: #78857c; font-size: 12px; }
+.fc-stats strong { display: block; margin-top: 1px; color: #26372c; font-size: 21px; font-weight: 650; }
+.fc-panel { overflow: hidden; border: 1px solid #e0e7e1; border-radius: 14px; background: #fff; box-shadow: 0 2px 7px #283c300a; }
+.fc-toolbar { display: flex; align-items: center; justify-content: space-between; min-height: 60px; gap: 14px; padding: 11px 16px; border-bottom: 1px solid #e9eeea; color: #87938a; font-size: 12px; }
+.fc-tabs { display: inline-flex; gap: 3px; padding: 3px; border-radius: 9px; background: #f0f3f0; }
+.fc-tabs button { min-width: 64px; height: 33px; padding: 0 12px; border: 0; border-radius: 7px; background: transparent; color: #78847c; font-size: 12.5px; cursor: pointer; }
+.fc-tabs button.active { background: #fff; color: #25372b; box-shadow: 0 1px 3px #102b1a1a; font-weight: 600; }
+.fc-table-wrap { overflow-x: auto; }
+.fc-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; }
+.fc-table th { height: 43px; padding: 0 15px; border-bottom: 1px solid #e8ede9; background: #fafbfa; color: #758178; font-size: 11.5px; font-weight: 550; white-space: nowrap; }
+.fc-table td { height: 62px; padding: 9px 15px; border-bottom: 1px solid #edf0ed; color: #47564c; white-space: nowrap; }
+.fc-table tbody tr:last-child td { border-bottom: 0; }
+.fc-table tbody tr:hover { background: #fcfdfc; }
+.fc-table tr.inactive td { color: #909b92; }
+.fc-action-head { text-align: right; }
+.fc-name { display: flex; align-items: center; gap: 10px; }
+.fc-name strong { display: block; color: #29382e; font-weight: 550; }
+.fc-name small { display: block; margin-top: 2px; color: #9aa49c; font-family: ui-monospace, monospace; font-size: 10px; }
+.fc-type-icon { display: grid; flex: none; place-items: center; width: 32px; height: 32px; border-radius: 9px; }
+.fc-type-icon.income { color: #28734d; background: #eaf5ed; }
+.fc-type-icon.expense { color: #b35848; background: #fbefeb; }
+.fc-direction { display: inline-flex; align-items: center; min-height: 24px; padding: 1px 9px; border-radius: 7px; font-size: 11.5px; }
+.fc-direction.income { color: #28734d; background: #eaf5ed; }
+.fc-direction.expense { color: #a64f42; background: #fbefeb; }
+.fc-status { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; }
+.fc-status i { width: 7px; height: 7px; border-radius: 50%; background: #5b9b70; }
+.fc-status.inactive i { background: #a3aaa4; }
+.fc-source { color: #7f8b82; font-size: 11.5px; }
+.fc-source.system { display: inline-flex; align-items: center; gap: 5px; color: #62776a; }
+.fc-actions { display: flex; justify-content: flex-end; align-items: center; gap: 4px; }
+.fc-icon-button { display: inline-grid; place-items: center; width: 33px; height: 33px; border: 1px solid transparent; border-radius: 8px; background: transparent; color: #6f7c72; cursor: pointer; }
+.fc-icon-button:hover:not(:disabled) { border-color: #e1e8e2; background: #f3f6f3; color: #2e6345; }
+.fc-locked { color: #98a198; font-size: 10.5px; }
+.fc-empty { min-height: 170px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 7px; color: #829087; font-size: 12.5px; }
+.fc-empty strong { color: #435248; font-size: 13.5px; }
+.fc-note { display: flex; align-items: flex-start; gap: 7px; margin: 12px 2px; color: #87938a; font-size: 11.5px; line-height: 1.7; }
+.fc-note svg { flex: none; margin-top: 2px; }
+.fc-overlay { position: fixed; inset: 0; z-index: 70; display: grid; place-items: center; padding: 16px; background: #17251d70; backdrop-filter: blur(2px); }
+.fc-dialog { width: min(430px, 100%); overflow: hidden; border: 1px solid #dfe7e0; border-radius: 15px; background: #f7f9f7; box-shadow: 0 20px 70px #10251b30; }
+.fc-dialog > header { display: flex; align-items: center; justify-content: space-between; padding: 17px 20px; border-bottom: 1px solid #e4eae5; background: #fff; }
+.fc-dialog h2 { margin: 3px 0 0; color: #26372c; font-size: 18px; font-weight: 600; }
+.fc-dialog-body { display: grid; gap: 17px; padding: 19px 20px; }
+.fc-type-picker { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin: 0; padding: 0; border: 0; }
+.fc-type-picker legend { grid-column: 1 / -1; margin-bottom: 1px; padding: 0; color: #516156; font-size: 12.5px; font-weight: 550; }
+.fc-type-picker label { display: flex; align-items: center; gap: 8px; min-height: 43px; padding: 0 12px; border: 1px solid #dce5dd; border-radius: 9px; background: #fff; color: #647269; font-size: 13px; cursor: pointer; }
+.fc-type-picker label.selected.income { border-color: #62a27a; background: #edf7f0; color: #28734d; }
+.fc-type-picker label.selected.expense { border-color: #cc8c7e; background: #fff3f0; color: #a64f42; }
+.fc-type-picker input { position: absolute; opacity: 0; pointer-events: none; }
+.fc-field { display: flex; flex-direction: column; gap: 6px; color: #516156; font-size: 12.5px; }
+.fc-field > span { font-weight: 530; }
+.fc-field b { color: #b35447; font-weight: 500; }
+.fc-field input { min-height: 42px; padding: 9px 11px; border: 1px solid #dbe4dc; border-radius: 9px; outline: 0; background: #fff; color: #28372d; font-size: 13px; }
+.fc-field input:focus { border-color: #5b9770; box-shadow: 0 0 0 3px #e8f3eb; }
+.fc-dialog > form > footer { display: flex; justify-content: flex-end; gap: 9px; padding: 13px 20px; border-top: 1px solid #e4eae5; background: #fff; }
+@media (max-width: 650px) { .finance-categories-page { padding: 19px 13px 42px; } .fc-header { align-items: flex-start; } .fc-header h1 { font-size: 25px; } .fc-header > .fc-button { width: 100%; } .fc-stats { grid-template-columns: 1fr; gap: 8px; } .fc-stats article { min-height: 70px; padding: 11px 14px; } .fc-table { min-width: 710px; } }

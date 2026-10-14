@@ -1,5 +1,7 @@
 "use client";
 
+import ConfirmDelete from "@/components/ui/ConfirmDelete";
+
 import "../lending-ui.css";
 
 import {
@@ -312,6 +314,8 @@ function BorrowerDetails({ borrower, banks, onClose, onEdit }: { borrower: Borro
 }
 
 export default function Borrowers() {
+  const [deletingBorrower, setDeletingBorrower] = useState<Borrower | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const trackedFetch = useTrackedFetch();
   const [borrowers, setBorrowers] = useState<Borrower[]>([]);
   const [query, setQuery] = useState("");
@@ -718,16 +722,15 @@ export default function Borrowers() {
   }
 
   async function deleteBorrower(borrower: Borrower) {
-    const accepted = window.confirm(
-      `ยืนยันลบข้อมูล ${fullName(borrower)} หรือไม่?`,
-    );
-    if (!accepted) return;
+    if (deleting) return;
+    setDeleting(true);
     try {
       const response = await trackedFetch(`/api/borrowers/${borrower.id}`, {
         method: "DELETE",
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "ลบข้อมูลไม่สำเร็จ");
+      setDeletingBorrower(null);
       notify({ status: "success", message: "ลบข้อมูลผู้กู้แล้ว" });
       await loadBorrowers();
     } catch (deleteError) {
@@ -736,6 +739,8 @@ export default function Borrowers() {
           ? deleteError.message
           : "ลบข้อมูลไม่สำเร็จ",
       );
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -1109,7 +1114,7 @@ export default function Borrowers() {
                           <button
                             aria-label={`ลบ ${fullName(borrower)}`}
                             className="delete-borrower"
-                            onClick={() => void deleteBorrower(borrower)}
+                            onClick={() => setDeletingBorrower(borrower)}
                           >
                             <Trash2 size={15} />
                           </button>
@@ -1174,6 +1179,7 @@ export default function Borrowers() {
       </main>
 
       {viewing && <BorrowerDetails borrower={viewing} banks={banks} onClose={() => setViewing(null)} onEdit={() => { openEdit(viewing); setViewing(null); }} />}
+      {deletingBorrower && <ConfirmDelete name={fullName(deletingBorrower)} busy={deleting} onCancel={() => setDeletingBorrower(null)} onConfirm={() => void deleteBorrower(deletingBorrower)} />}
       {confirmExit && <ConfirmBorrowerExit onStay={() => { pendingExitRef.current = null; setConfirmExit(false); }} onDiscard={() => {
         const afterExit = pendingExitRef.current;
         pendingExitRef.current = null;

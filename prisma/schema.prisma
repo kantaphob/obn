@@ -20,6 +20,44 @@ model Entry {
   @@index([status])
 }
 
+model CompanyLedgerEntry {
+  id              String   @id @default(cuid())
+  type            String // INCOME or EXPENSE
+  title           String
+  category        String
+  financeCategoryId String?
+  financeCategory CompanyFinanceCategory? @relation(fields: [financeCategoryId], references: [id], onDelete: SetNull)
+  amount          Int // satang
+  transactionDate DateTime
+  party           String   @default("")
+  method          String   @default("CASH")
+  reference       String   @default("")
+  note            String   @default("")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([transactionDate])
+  @@index([type, transactionDate])
+  @@index([category])
+  @@index([financeCategoryId])
+}
+
+model CompanyFinanceCategory {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  direction String // INCOME or EXPENSE
+  name      String
+  isSystem  Boolean  @default(false)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  ledgerEntries CompanyLedgerEntry[]
+
+  @@unique([direction, name])
+  @@index([direction, isActive])
+}
+
 //---------------------------------------------------
 // master data
 //---------------------------------------------------
@@ -207,6 +245,7 @@ enum ContractType {
 
 enum ContractStatus {
   DRAFT // ร่าง
+  RESERVED // จองสัญญา รอวันเริ่มหรือเงินทุนพร้อม
   AWAITING_DOCUMENT // เกินเกณฑ์ รอสัญญาที่เซ็นแล้ว
   READY // พร้อมจ่ายเงิน
   ACTIVE // จ่ายเงินแล้ว กำลังดำเนินการ
@@ -349,6 +388,7 @@ model Contract {
   signedAt     DateTime?
   signatureMode SignatureMode @default(PRINT)
   signatureUrl String?
+  documentData String?
   consentAccepted Boolean @default(false)
   consentedAt DateTime?
   consentText String?
@@ -435,4 +475,69 @@ model Repayment {
   note String?
   createdAt DateTime @default(now())
   @@index([contractId, paidAt])
+}
+
+
+model LoanContractDraft {
+  finalizedContractId String?
+  id                  String   @id
+  borrowerId          String
+  dataJson            String
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@index([borrowerId])
+}
+
+//---------------------------------------------------
+// Company and Branch
+//---------------------------------------------------
+
+enum CompanySequenceType {
+  COMPANY
+  BRANCH
+}
+
+enum CompanySequenceStatus {
+  ACTIVE
+  INACTIVE
+}
+
+model CompanySequence {
+  id                      String                @id @default(cuid())
+  companycode             String                @unique
+  logo                    String?
+  nameTH                  String?
+  nameEN                  String?
+  TaxIdentificationNumber String?
+  aboutus                 String?
+  companyoverview         String?
+  address                 String?
+  postcode                String?
+  phone                   String?
+  email                   String?
+  type                    CompanySequenceType
+  status                  CompanySequenceStatus @default(ACTIVE)
+  branches                BranchCodeSequence[]
+}
+
+model BranchCodeSequence {
+  id                      String                @id @default(cuid())
+  companycode             String
+  branchcode              String                @unique
+  logo                    String?
+  nameTH                  String?
+  nameEN                  String?
+  TaxIdentificationNumber String?
+  aboutus                 String?
+  companyoverview         String?
+  address                 String?
+  postcode                String?
+  phone                   String?
+  email                   String?
+  type                    CompanySequenceType
+  status                  CompanySequenceStatus @default(ACTIVE)
+  company                 CompanySequence       @relation(fields: [companycode], references: [companycode], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([companycode])
 }

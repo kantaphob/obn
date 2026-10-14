@@ -1,4 +1,5 @@
-import { mkdir, unlink, writeFile } from "node:fs/promises";
+import { emptyDocumentSettings } from "@/lib/contract-document";
+import { access, mkdir, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { ContractStatus, ContractType, InterestMode, InterestRateBasis, RepayType, SignatureMode } from "@/generated/prisma/enums";
@@ -125,11 +126,12 @@ export async function POST(request: Request) {
   if (data.signedAt && !signedAt) return Response.json({ error: "วันที่ลงนามไม่ถูกต้อง" }, { status: 400 });
 
   const contractType = data.contractType === undefined ? ContractType.NONE : data.contractType;
-  const status = data.status === undefined ? ContractStatus.DRAFT : data.status;
   const signatureMode = data.signatureMode === undefined ? SignatureMode.PRINT : data.signatureMode;
   if (!isOneOf(ContractType, contractType)) return Response.json({ error: "ประเภทเอกสารสัญญาไม่ถูกต้อง" }, { status: 400 });
-  if (!isOneOf(ContractStatus, status)) return Response.json({ error: "สถานะสัญญาไม่ถูกต้อง" }, { status: 400 });
   if (!isOneOf(SignatureMode, signatureMode)) return Response.json({ error: "วิธีลงนามไม่ถูกต้อง" }, { status: 400 });
+  const status = contractType === ContractType.NONE || signatureMode === SignatureMode.DIGITAL || signedAt
+    ? ContractStatus.READY
+    : ContractStatus.AWAITING_DOCUMENT;
 
   const interestRateBasis = repayType === RepayType.INSTALLMENT
     ? InterestRateBasis.MONTHLY_FLAT
@@ -161,6 +163,57 @@ export async function POST(request: Request) {
     }
   }
 
+  const documentInput = data.documentData && typeof data.documentData === "object" && !Array.isArray(data.documentData) ? data.documentData as Record<string, unknown> : {};
+  let lenderCompany: { companyCode: string; name: string; taxId: string; address: string; postcode: string; phone: string } | null = null;
+  if (contractType !== ContractType.NONE) {
+    const companyCode = text(documentInput.companyCode, 80);
+    if (!companyCode) return Response.json({ error: "กรุณากรอก Companycode และเรียกข้อมูลผู้ให้กู้ก่อน" }, { status: 400 });
+    lenderCompany = await prisma.company.findUnique({
+      where: { companyCode },
+      select: { companyCode: true, name: true, taxId: true, address: true, postcode: true, phone: true },
+    });
+    if (!lenderCompany) return Response.json({ error: "ไม่พบข้อมูลผู้ให้กู้จาก Companycode ที่ระบุ" }, { status: 400 });
+  }
+  const documentPayload:Record<string,unknown> = {};
+  for (const [key,defaultValue] of Object.entries(emptyDocumentSettings)) {
+    if (key === "attachments") continue;
+    const raw = documentInput[key];
+    if (raw !== undefined && typeof raw !== "string") return Response.json({error:`ข้อมูลเอกสาร ${key} ไม่ถูกต้อง`},{status:400});
+    documentPayload[key] = typeof raw === "string" ? raw.slice(0, key.endsWith("Signature") ? 800000 : key.endsWith("Text") ? 40000 : 1000) : defaultValue;
+  }
+  if (lenderCompany) {
+    documentPayload.companyCode = lenderCompany.companyCode;
+    documentPayload.lenderName = lenderCompany.name;
+    documentPayload.lenderId = lenderCompany.taxId;
+    documentPayload.lenderAddress = [lenderCompany.address, lenderCompany.postcode].filter(Boolean).join(" ");
+    documentPayload.lenderPhone = lenderCompany.phone;
+  }
+  const attachments = Array.isArray(documentInput.attachments) ? documentInput.attachments : [];
+  if (attachments.length > 20 || attachments.some(file => !file || typeof file.url !== "string" || !/^\/api\/contracts\/attachments\/[a-f0-9-]+\.(jpg|png|webp|pdf)$/.test(file.url) || typeof file.name !== "string")) return Response.json({error:"เอกสารแนบไม่ถูกต้อง"},{status:400});
+  for(const file of attachments){try{await access(path.join(process.cwd(),"storage","contract-attachments",file.url.split("/").pop()));}catch{return Response.json({error:"ไม่พบไฟล์เอกสารแนบ กรุณาอัปโหลดใหม่"},{status:400});}}
+  documentPayload.attachments = attachments.map(file => ({url:file.url,name:file.name.slice(0,200)}));
+  const additionalSignatures:{key:string;buffer:Buffer;filename:string}[] = [];
+  if(signatureMode !== SignatureMode.DIGITAL || contractType === ContractType.NONE){for(const key of ["lenderSignature","witness1Signature","witness2Signature","guarantorSignature"])documentPayload[key]="";}
+  if (signatureMode === SignatureMode.DIGITAL && contractType !== ContractType.NONE) {
+    if (!text(data.witness1,160) || !text(data.witness2,160)) return Response.json({error:"กรุณาระบุชื่อพยานทั้งสองคน"},{status:400});
+    const keys = [...(documentInput.lenderSignature ? ["lenderSignature"] : []),"witness1Signature","witness2Signature",...(contractType === ContractType.WITNESS_GUARANTOR ? ["guarantorSignature"] : [])];
+    if (contractType === ContractType.WITNESS_GUARANTOR && !text(data.guarantor,160)) return Response.json({error:"กรุณาระบุชื่อผู้ค้ำประกัน"},{status:400});
+    for (const key of keys) {
+      const raw = documentInput[key];
+      const match = typeof raw === "string" ? raw.match(/^data:image\/png;base64,([A-Za-z0-9+/=]+)$/) : null;
+      if (!match) return Response.json({error:`กรุณาลงลายเซ็น ${key === "witness1Signature" ? "พยานคนที่ 1" : key === "witness2Signature" ? "พยานคนที่ 2" : key === "guarantorSignature" ? "ผู้ค้ำประกัน" : "ผู้ให้กู้"}`},{status:400});
+      const buffer=Buffer.from(match[1],"base64");
+      if (buffer.length<100 || buffer.length>512*1024 || buffer.subarray(0,8).toString("hex")!=="89504e470d0a1a0a") return Response.json({error:"ไฟล์ลายเซ็นพยานหรือผู้ค้ำไม่ถูกต้อง"},{status:400});
+      additionalSignatures.push({key,buffer,filename:`${randomUUID()}.png`});
+    }
+  }
+  const draftId = typeof data.draftId === "string" && /^[a-f0-9-]{36}$/.test(data.draftId) ? data.draftId : null;
+  if (draftId) {
+    const previous = await prisma.loanContractDraft.findUnique({where:{id:draftId}});
+    if (previous && previous.borrowerId !== debtorId) return Response.json({error:"ร่างไม่ตรงกับผู้กู้ที่เลือก"},{status:400});
+    if (previous?.finalizedContractId) return Response.json(await prisma.contract.findUnique({where:{id:previous.finalizedContractId}}));
+  }
+  const additionalPaths:string[] = [];
   const year = bangkokYear();
   const signatureFilename = signatureBuffer ? `${randomUUID()}.png` : null;
   const signatureDirectory = path.join(process.cwd(), "storage", "contract-signatures");
@@ -172,6 +225,12 @@ export async function POST(request: Request) {
       await writeFile(signaturePath, signatureBuffer, { flag: "wx" });
     }
 
+    if (additionalSignatures.length) await mkdir(signatureDirectory,{recursive:true});
+    for (const signature of additionalSignatures) {
+      const filePath=path.join(signatureDirectory,signature.filename);
+      await writeFile(filePath,signature.buffer,{flag:"wx"});additionalPaths.push(filePath);
+      documentPayload[signature.key]=`/api/contracts/signatures/${signature.filename}`;
+    }
     const scheduleRows = repayType === RepayType.INSTALLMENT
       ? makeInstallmentSchedule({ principal, interestAmount, months: months!, startDate })
       : [{
@@ -183,6 +242,11 @@ export async function POST(request: Request) {
         }];
 
     const saved = await prisma.$transaction(async (tx) => {
+      if (draftId) {
+        await tx.loanContractDraft.updateMany({where:{id:draftId,borrowerId:debtorId},data:{updatedAt:new Date()}});
+        const previous=await tx.loanContractDraft.findUnique({where:{id:draftId}});
+        if (previous?.finalizedContractId) return tx.contract.findUniqueOrThrow({where:{id:previous.finalizedContractId}});
+      }
       const sequence = await tx.contractNumberSequence.upsert({
         where: { year },
         create: { year, lastNumber: 1 },
@@ -190,6 +254,10 @@ export async function POST(request: Request) {
         select: { lastNumber: true },
       });
       const contractNumber = formatContractNumber(year, sequence.lastNumber);
+      const provisionalNumber = text(data.contractNumber,80);
+      if(documentPayload.kind === "NEW_LOAN" && provisionalNumber && provisionalNumber !== contractNumber){
+        for(const key of ["loanText","guaranteeText"]){if(typeof documentPayload[key] === "string")documentPayload[key]=(documentPayload[key] as string).replaceAll(provisionalNumber,contractNumber);}
+      }
       const contract = await tx.contract.create({
         data: {
           contractNumber,
@@ -207,6 +275,7 @@ export async function POST(request: Request) {
           dueDate,
           contractType,
           documentUrl: text(data.documentUrl, 500) || null,
+          documentData: JSON.stringify(documentPayload),
           signedAt: signatureMode === SignatureMode.DIGITAL ? new Date() : signedAt,
           signatureMode,
           signatureUrl: signatureFilename ? `/api/contracts/signatures/${signatureFilename}` : null,
@@ -226,11 +295,13 @@ export async function POST(request: Request) {
           debtor: { select: { id: true, prefixTH: true, firstName: true, lastName: true, nickname: true } },
         },
       });
+      if (draftId) await tx.loanContractDraft.updateMany({where:{id:draftId,borrowerId:debtorId},data:{finalizedContractId:contract.id}});
       return contract;
     });
     return Response.json(saved, { status: 201, headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     if (signaturePath) await unlink(signaturePath).catch(() => {});
+    await Promise.all(additionalPaths.map(file=>unlink(file).catch(()=>{})));
     if (isPrismaCode(error, "P2002")) return Response.json({ error: "ไม่สามารถสร้างเลขที่สัญญาได้ กรุณาลองบันทึกอีกครั้ง" }, { status: 409 });
     if (isPrismaCode(error, "P2003")) return Response.json({ error: "ไม่พบข้อมูลผู้กู้ที่เลือก" }, { status: 404 });
     throw error;

@@ -135,13 +135,15 @@ export const SYSTEMS: Record<SystemKey, System> = {
         l("contract", "ใบสมัคร", FileText),
         l("approvals", "พิจารณาอนุมัติ", FileCheck2),
         l("contracts", "สัญญากู้", ScrollText),
+        l("ap", "ใบแจ้งหนี้", Receipt),
+        l("ar", "ลูกหนี้", UserRound),
       ] },
       { title: "ชำระเงิน", items: [
-        l("cashierpayments", "cashierpayments", CalendarDays),
-        l("payments", "รับชำระและประวัติ", CalendarDays),
+        l("ledger", "สมุดบันชี", Receipt),
+        l("payments", "รับชำระ", CalendarDays),
+        l("payment-history", "ประวัติ", BarChart3),
       ] },
       { title: "ติดตามหนี้", items: [
-        l("schedules", "ตารางชำระ", CalendarDays),
         l("overdue", "ค้างชำระ", AlarmClock),
       ] },
       { title: "ลูกค้า", items: [
@@ -174,6 +176,9 @@ export const SYSTEMS: Record<SystemKey, System> = {
         ad("companies", "ข้อมูลบริษัท", Settings),
         ad("branches", "สาขา", Building2Icon),
         ad("audit-log", "บันทึกกิจกรรม", ShieldCheck),
+      ] },
+      { title: "หมวดหมู่", items: [
+        ad("company-finance-categories", "หมวดหมู่การเงินของบริษัท", FileCheck2),
       ] },
     ],
   },

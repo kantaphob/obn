@@ -1,7 +1,5 @@
-import React from 'react'
+import CompanySequenceManager from '@/components/admin/CompanySequenceManager';
 
-export default function Branches() {
-  return (
-    <div>branches</div>
-  )
+export default function BranchesPage() {
+  return <CompanySequenceManager kind="branches" />;
 }

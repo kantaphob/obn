@@ -1,7 +1,7 @@
 import "dotenv/config";
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 import { PrismaClient } from "@/generated/prisma/client";
-import { BorrowerPayoutChannel, BorrowerRiskRating, BorrowerStatus } from "@/generated/prisma/enums";
+import { BorrowerPayoutChannel, BorrowerRiskRating, BorrowerStatus, ContractStatus } from "@/generated/prisma/enums";
 
 const globalForPrisma = globalThis as unknown as {
   prisma?: PrismaClient;
@@ -14,12 +14,14 @@ const adapter = new PrismaBetterSqlite3({
 
 // Client regeneration can leave a previous schema's client in the dev cache.
 const cachedPrisma = globalForPrisma.prisma;
-const schemaFingerprint = [BorrowerPayoutChannel, BorrowerRiskRating, BorrowerStatus]
+const schemaFingerprint = [BorrowerPayoutChannel, BorrowerRiskRating, BorrowerStatus, ContractStatus]
   .map((values) => Object.values(values).join(","))
-  .join("|") + "|borrowersCode-v1|repayment-v1";
+  .join("|") + "|borrowersCode-v1|repayment-v1|draft-doc-v1|company-sequence-v1|company-ledger-v1|company-finance-categories-v1";
 export const prisma =
   cachedPrisma?.banking &&
   cachedPrisma?.borrowers &&
+  cachedPrisma?.companySequence &&
+  cachedPrisma?.companyFinanceCategory &&
   globalForPrisma.prismaSchemaFingerprint === schemaFingerprint
     ? cachedPrisma
     : new PrismaClient({ adapter });
