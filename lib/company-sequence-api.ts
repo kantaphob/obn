@@ -3,6 +3,7 @@ import { CompanySequenceStatus } from "@/generated/prisma/enums";
 
 export const companyFields = [
   "logo",
+  "houseNo", "soi", "road", "provinceId", "districtId", "subdistrictId",
   "nameTH",
   "nameEN",
   "TaxIdentificationNumber",

@@ -3,6 +3,8 @@ import { mkdir, unlink, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { ContractStatus, PaymentMethod, PaymentType } from '@/generated/prisma/enums';
 import { prisma } from '@/lib/prisma';
+import { formatBorrowerCode } from '@/lib/borrower-code';
+import { writeLoanLog } from '@/lib/loan-logs';
 
 const fileTypes: Record<string, { extension: string; valid: (data: Buffer) => boolean }> = {
   'image/jpeg': { extension: 'jpg', valid: data => data[0] === 255 && data[1] === 216 },
@@ -33,11 +35,15 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
   const file = form.get('file');
   const reference = typeof referenceInput === 'string' ? referenceInput.trim().slice(0, 100) : '';
   const isMethodValid = methodInput === PaymentMethod.CASH || methodInput === PaymentMethod.BANK_TRANSFER;
-  const paidAt = typeof paidDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(paidDate)
-    ? new Date(`${paidDate}T12:00:00+07:00`)
+  const datetimeMatch = typeof paidDate === 'string' ? /^(\d{4}-\d{2}-\d{2})T([01]\d|2[0-3]):([0-5]\d)$/.exec(paidDate) : null;
+  const dateOnlyMatch = typeof paidDate === 'string' ? /^(\d{4}-\d{2}-\d{2})$/.exec(paidDate) : null;
+  const paidDay = datetimeMatch?.[1] ?? dateOnlyMatch?.[1];
+  const paidAt = datetimeMatch
+    ? new Date(`${datetimeMatch[1]}T${datetimeMatch[2]}:${datetimeMatch[3]}:00.000+07:00`)
+    : dateOnlyMatch ? new Date(`${dateOnlyMatch[1]}T12:00:00.000+07:00`)
     : new Date(NaN);
 
-  if (!isMethodValid || typeof paidDate !== 'string' || !Number.isFinite(paidAt.getTime()) || bangkokDate(paidAt) !== paidDate || paidDate > bangkokDate(new Date())) {
+  if (!isMethodValid || !paidDay || !Number.isFinite(paidAt.getTime()) || bangkokDate(paidAt) !== paidDay || paidAt.getTime() > Date.now()) {
     return Response.json({ error: 'ตรวจสอบวันที่และช่องทางการจ่ายเงิน' }, { status: 400 });
   }
 
@@ -87,6 +93,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
           type: PaymentType.DISBURSEMENT,
           amount: contract.netDisbursed,
           paidAt,
+          timeRecorded: Boolean(datetimeMatch),
           method: methodInput as PaymentMethod,
           note: reference ? `เลขอ้างอิงการจ่าย ${reference}` : 'แนบหลักฐานการจ่ายเงิน',
         },
@@ -110,7 +117,16 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
         where: { id: contract.id },
         data: { status: ContractStatus.ACTIVE, documentData: JSON.stringify(documentData) },
       });
-      return { payment, attachment, contractNumber: contract.contractNumber, borrower: contract.debtor };
+      await writeLoanLog(tx, {
+        borrowerId: contract.debtorId,
+        contractId: contract.id,
+        targetId: payment.id,
+        type: 'PAYMENT',
+        action: 'CREATE',
+        note: `บันทึกการจ่ายเงินสัญญา ${contract.contractNumber}`,
+        afterData: { amount: payment.amount, paidAt: payment.paidAt, method: payment.method, type: payment.type },
+      });
+      return { payment, attachment, contractNumber: contract.contractNumber, borrower: { ...contract.debtor, borrowersCode: formatBorrowerCode(contract.debtor.borrowersCode) } };
     });
 
     return Response.json(result, { status: 201 });

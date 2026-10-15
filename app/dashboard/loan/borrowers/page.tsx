@@ -262,7 +262,7 @@ function initials(borrower: Borrower) {
 function BorrowerAvatar({ borrower }: { borrower: Borrower }) {
   const [failedPhoto, setFailedPhoto] = useState<string | null>(null);
   return (
-    <span className="single-avatar" style={{ overflow: "hidden" }}>
+    <span className="single-avatar overflow-hidden!">
       {borrower.photoUrl && failedPhoto !== borrower.photoUrl ? (
         <Image
           src={borrower.photoUrl}
@@ -270,7 +270,7 @@ function BorrowerAvatar({ borrower }: { borrower: Borrower }) {
           height={34}
           unoptimized
           alt=""
-          style={{ width: "100%", height: "100%", objectFit: "cover" }}
+          className="h-full! w-full! object-cover"
           onError={() => setFailedPhoto(borrower.photoUrl)}
         />
       ) : (

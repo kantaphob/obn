@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { CSSProperties } from "react";
 import { connection } from "next/server";
 import {
   AlarmClock,
@@ -16,6 +17,7 @@ import { prisma } from "@/lib/prisma";
 import { loanBalance, thaiDay } from "@/lib/loan-balance";
 import { getCompanyLedgerRows } from "@/lib/company-ledger";
 import { summarizeCompanyLedgerRows } from "@/lib/company-ledger-summary";
+import { formatBorrowerCode } from "@/lib/borrower-code";
 import { SYSTEMS } from "@/lib/nav";
 import { workspaceStyles as styles } from "@/components/ui/workspace-styles";
 import "./overview.css";
@@ -149,8 +151,8 @@ export default async function LoanOverview() {
         <div className="loan-cashflow-chart" role="img" aria-label={`กราฟรายรับและรายจ่าย 12 เดือนของปี ${year + 543} คำนวณถึงวันนี้`}>
           {cashflow.map(row => <div className="loan-cashflow-month" key={row.key}>
             <div className="loan-cashflow-bars">
-              <span className="bar out" style={{ height: `${Math.max(row.expense ? 3 : 0, row.expense / chartMax * 100)}%` }} title={`รายจ่าย ${money(row.expense)}`} />
-              <span className="bar in" style={{ height: `${Math.max(row.income ? 3 : 0, row.income / chartMax * 100)}%` }} title={`รายรับ ${money(row.income)}`} />
+              <span className="bar out h-[var(--bar-height)]!" style={{ "--bar-height": `${Math.max(row.expense ? 3 : 0, row.expense / chartMax * 100)}%` } as CSSProperties} title={`รายจ่าย ${money(row.expense)}`} />
+              <span className="bar in h-[var(--bar-height)]!" style={{ "--bar-height": `${Math.max(row.income ? 3 : 0, row.income / chartMax * 100)}%` } as CSSProperties} title={`รายรับ ${money(row.income)}`} />
             </div>
             <span className="loan-cashflow-month-label">{row.label}</span>
           </div>)}
@@ -163,7 +165,7 @@ export default async function LoanOverview() {
         <header><div><h2><AlarmClock size={18} /> ค้างชำระที่ควรติดตาม</h2><p>เรียงตามจำนวนวันที่เกินกำหนด</p></div><Link href="/dashboard/loan/overdue">ดูทั้งหมด <ArrowUpRight size={15} /></Link></header>
         {overdueFollowups.length ? <ul>{overdueFollowups.map(contract => <li key={contract.id}>
           <span className="loan-overview-row-icon overdue"><Clock3 size={17} /></span>
-          <span className="loan-overview-row-copy"><strong>{contract.contractNumber} · {borrowerName(contract.debtor)}</strong><small>{contract.debtor.borrowersCode} · ครบกำหนด {dateLabel(contract.dueDate)}</small></span>
+          <span className="loan-overview-row-copy"><strong>{contract.contractNumber} · {borrowerName(contract.debtor)}</strong><small>{formatBorrowerCode(contract.debtor.borrowersCode)} · ครบกำหนด {dateLabel(contract.dueDate)}</small></span>
           <span className="loan-overview-row-value"><strong>{money(contract.balance.total)}</strong><small>เกิน {contract.balance.overdueDays.toLocaleString("th-TH")} วัน</small></span>
         </li>)}</ul> : <div className="loan-overview-empty"><CheckCircle2 size={20} /><span>ไม่มีสัญญาค้างชำระ</span></div>}
       </article>
@@ -172,7 +174,7 @@ export default async function LoanOverview() {
         <header><div><h2><RefreshCw size={17} /> รอดำเนินการ</h2><p>รายการที่รอเอกสารหรือพร้อมจ่ายเงิน</p></div><Link href="/dashboard/loan/approvals">เปิดรายการ <ArrowUpRight size={15} /></Link></header>
         {recentReviewQueue.length ? <ul>{recentReviewQueue.map(contract => <li key={contract.id}>
           <span className={`loan-overview-row-icon ${contract.status === "READY" ? "ready" : "waiting"}`}>{contract.status === "READY" ? <CheckCircle2 size={17} /> : <Clock3 size={17} />}</span>
-          <span className="loan-overview-row-copy"><strong>{contract.contractNumber} · {borrowerName(contract.debtor)}</strong><small>{contract.debtor.borrowersCode} · {contract.status === "READY" ? "พร้อมจ่ายเงิน" : "รอเอกสารลงนาม"}</small></span>
+          <span className="loan-overview-row-copy"><strong>{contract.contractNumber} · {borrowerName(contract.debtor)}</strong><small>{formatBorrowerCode(contract.debtor.borrowersCode)} · {contract.status === "READY" ? "พร้อมจ่ายเงิน" : "รอเอกสารลงนาม"}</small></span>
           <span className="loan-overview-row-value"><strong>{money(contract.principal)}</strong><small>{dateLabel(contract.startDate)}</small></span>
         </li>)}</ul> : <div className="loan-overview-empty"><CheckCircle2 size={20} /><span>ไม่มีรายการรอดำเนินการ</span></div>}
       </article>

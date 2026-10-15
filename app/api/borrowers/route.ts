@@ -1,5 +1,7 @@
 import { prisma } from '@/lib/prisma'
 import { isPrismaCode, parseBorrowerInput, validateBorrowerPayout } from '@/lib/borrowers'
+import { formatBorrowerCode } from '@/lib/borrower-code'
+import { writeLoanLog } from '@/lib/loan-logs'
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -13,6 +15,7 @@ export async function GET(request: Request) {
       ? {
           OR: [
             { borrowersCode: { contains: query.toLowerCase() } },
+            { borrowersCode: { contains: query.toUpperCase() } },
             { firstName: { contains: query } },
             { lastName: { contains: query } },
             { nickname: { contains: query } },
@@ -30,7 +33,7 @@ export async function GET(request: Request) {
     },
   })
 
-  return Response.json(borrowers, { headers: { 'Cache-Control': 'no-store' } })
+  return Response.json(borrowers.map(borrower => ({ ...borrower, borrowersCode: formatBorrowerCode(borrower.borrowersCode) })), { headers: { 'Cache-Control': 'no-store' } })
 }
 
 export async function POST(request: Request) {
@@ -51,7 +54,16 @@ export async function POST(request: Request) {
     const borrower = await prisma.$transaction(async tx => {
       const sequence = await tx.borrowerCodeSequence.update({ where: { id: 1 }, data: { value: { increment: 1 } } })
       if (sequence.value > 999999) throw new Error('BORROWER_CODE_EXHAUSTED')
-      return tx.borrowers.create({ data: { ...parsed.data, borrowersCode: `bo${String(sequence.value).padStart(6, '0')}`, phone: parsed.data.phone ?? '', firstName: parsed.data.firstName ?? '' } })
+      const borrower = await tx.borrowers.create({ data: { ...parsed.data, borrowersCode: `BO${String(sequence.value).padStart(6, '0')}`, phone: parsed.data.phone ?? '', firstName: parsed.data.firstName ?? '' } })
+      await writeLoanLog(tx, {
+        borrowerId: borrower.id,
+        targetId: borrower.id,
+        type: 'BORROWER',
+        action: 'CREATE',
+        note: `เพิ่มผู้กู้ ${formatBorrowerCode(borrower.borrowersCode)}`,
+        afterData: borrower,
+      })
+      return borrower
     })
     return Response.json(borrower, { status: 201 })
   } catch (error) {

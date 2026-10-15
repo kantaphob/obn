@@ -1,0 +1,12 @@
+ALTER TABLE "CompanySequence" ADD COLUMN "houseNo" TEXT;
+ALTER TABLE "CompanySequence" ADD COLUMN "soi" TEXT;
+ALTER TABLE "CompanySequence" ADD COLUMN "road" TEXT;
+ALTER TABLE "CompanySequence" ADD COLUMN "provinceId" TEXT;
+ALTER TABLE "CompanySequence" ADD COLUMN "districtId" TEXT;
+ALTER TABLE "CompanySequence" ADD COLUMN "subdistrictId" TEXT;
+ALTER TABLE "BranchCodeSequence" ADD COLUMN "houseNo" TEXT;
+ALTER TABLE "BranchCodeSequence" ADD COLUMN "soi" TEXT;
+ALTER TABLE "BranchCodeSequence" ADD COLUMN "road" TEXT;
+ALTER TABLE "BranchCodeSequence" ADD COLUMN "provinceId" TEXT;
+ALTER TABLE "BranchCodeSequence" ADD COLUMN "districtId" TEXT;
+ALTER TABLE "BranchCodeSequence" ADD COLUMN "subdistrictId" TEXT;

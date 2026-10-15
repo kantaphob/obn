@@ -17,7 +17,7 @@ export default function ConfirmDelete({ name, busy, onConfirm, onCancel }: {
     return () => element?.close();
   }, []);
 
-  return <dialog ref={dialog} aria-labelledby={`${id}-title`} aria-describedby={`${id}-description`} aria-busy={busy} onCancel={event => { event.preventDefault(); if (!busy) onCancel(); }} className="fixed inset-0 m-auto w-[min(420px,calc(100vw-32px))] rounded-[24px] border border-white/70 bg-[#f5f3ed] p-6 text-[#272b29] shadow-[0_16px_60px_#0004] backdrop:bg-black/40">
+  return <dialog data-confirm-delete ref={dialog} aria-labelledby={`${id}-title`} aria-describedby={`${id}-description`} aria-busy={busy} onCancel={event => { event.preventDefault(); if (!busy) onCancel(); }} className="fixed inset-0 m-auto w-[min(420px,calc(100vw-32px))] rounded-[24px] border border-white/70 bg-[#f5f3ed] p-6 text-[#272b29] shadow-[0_16px_60px_#0004] backdrop:bg-black/40">
     <span className="mb-4 grid size-12 place-items-center rounded-2xl bg-red-100 text-red-700"><Trash2 size={23} aria-hidden="true" /></span>
     <h2 id={`${id}-title`} className="m-0 text-xl font-semibold">ยืนยันการลบ</h2>
     <p id={`${id}-description`} className="mt-3 text-sm leading-relaxed">ต้องการลบ “{name}” หรือไม่? ข้อมูลจะถูกลบออกจากระบบ</p>

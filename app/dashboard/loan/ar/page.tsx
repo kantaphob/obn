@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
 import Link from 'next/link';
 import { AlertCircle, CalendarDays, Clock3, FileText, RefreshCw, Search, UsersRound, Wallet } from 'lucide-react';
 import '../lending-ui.css';
@@ -120,7 +120,7 @@ export default function ARPage() {
           ['UNSPECIFIED', 'ไม่กำหนดวัน', 'ตรวจสอบวันครบกำหนดในสัญญา'],
         ] as [AgingBucket, string, string][]).map(([key, label, caption]) => <article key={key}>
           <div><span>{label}</span><strong>{loading ? '—' : currency(totals.buckets[key])}</strong></div><small>{caption}</small>
-          <div className="ar-meter" aria-hidden="true"><span style={{ width: `${loading ? 0 : totals.buckets[key] / maxBucket * 100}%` }}/></div>
+          <div className="ar-meter" aria-hidden="true"><span className="w-[var(--bucket-width)]!" style={{ "--bucket-width": `${loading ? 0 : totals.buckets[key] / maxBucket * 100}%` } as CSSProperties}/></div>
         </article>)}
       </div>
     </section>

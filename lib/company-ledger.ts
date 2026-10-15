@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { formatBorrowerCode } from "@/lib/borrower-code";
 
 export type CompanyLedgerRow = {
   id: string;
@@ -6,8 +7,18 @@ export type CompanyLedgerRow = {
   title: string;
   category: string;
   categoryCode: string;
+  financeCategoryId: string | null;
   amount: number;
+  baseAmount: number | null;
+  vatRateBps: number | null;
+  vatAmount: number | null;
+  whtRateBps: number | null;
+  whtAmount: number | null;
   transactionDate: Date;
+  timeRecorded: boolean;
+  documentNumber: string | null;
+  companyCode: string | null;
+  branchCode: string | null;
   party: string;
   method: string;
   reference: string;
@@ -84,9 +95,19 @@ export async function getCompanyLedgerRows(from: Date | null, to: Date | null): 
       title: `รับชำระสัญญา · ${repayment.contract.contractNumber}`,
       category: categoryByCode.get("LOAN_RECEIPT") ?? "รับชำระเงินกู้",
       categoryCode: "LOAN_RECEIPT",
+      financeCategoryId: null,
       amount: repayment.amount,
+      baseAmount: null,
+      vatRateBps: null,
+      vatAmount: null,
+      whtRateBps: null,
+      whtAmount: null,
       transactionDate: repayment.paidAt,
-      party: [borrower.borrowersCode, borrowerName].filter(Boolean).join(" · "),
+      timeRecorded: repayment.timeRecorded,
+      documentNumber: null,
+      companyCode: null,
+      branchCode: null,
+      party: [formatBorrowerCode(borrower.borrowersCode), borrowerName].filter(Boolean).join(" · "),
       method: repayment.method,
       reference: repayment.receiptNumber,
       note: repayment.note ?? "",
@@ -102,7 +123,7 @@ export async function getCompanyLedgerRows(from: Date | null, to: Date | null): 
     const contract = payment.contract;
     const borrower = contract?.debtor;
     const borrowerName = borrower ? [borrower.firstName || borrower.nickname, borrower.lastName].filter(Boolean).join(" ") : "";
-    const party = contract ? [borrower?.borrowersCode, borrowerName].filter(Boolean).join(" · ") : "";
+    const party = contract ? [borrower ? formatBorrowerCode(borrower.borrowersCode) : null, borrowerName].filter(Boolean).join(" · ") : "";
     const title = contract ? `${label.title} · ${contract.contractNumber}` : label.title;
     return [{
       id: `loan-${payment.id}`,
@@ -110,8 +131,18 @@ export async function getCompanyLedgerRows(from: Date | null, to: Date | null): 
       title,
       category: categoryByCode.get(label.categoryCode) ?? "หมวดหมู่ระบบ",
       categoryCode: label.categoryCode,
+      financeCategoryId: null,
       amount: payment.amount,
+      baseAmount: null,
+      vatRateBps: null,
+      vatAmount: null,
+      whtRateBps: null,
+      whtAmount: null,
       transactionDate: payment.paidAt,
+      timeRecorded: payment.timeRecorded,
+      documentNumber: null,
+      companyCode: null,
+      branchCode: null,
       party,
       method: payment.method,
       reference: payment.type === "DISBURSEMENT" ? payment.note?.match(/^เลขอ้างอิงการจ่าย (.+)$/)?.[1] ?? "" : "",
@@ -120,5 +151,5 @@ export async function getCompanyLedgerRows(from: Date | null, to: Date | null): 
     }];
   });
 
-  return [...manualRows, ...repaymentRows, ...loanRows].sort((a, b) => b.transactionDate.getTime() - a.transactionDate.getTime());
+  return [...manualRows, ...repaymentRows, ...loanRows].sort((a, b) => b.transactionDate.getTime() - a.transactionDate.getTime() || a.id.localeCompare(b.id));
 }

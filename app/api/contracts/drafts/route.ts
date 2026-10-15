@@ -1,10 +1,11 @@
 import { prisma } from '@/lib/prisma';
+import { formatBorrowerCode } from '@/lib/borrower-code';
 export async function GET(request:Request){
  const id=new URL(request.url).searchParams.get('id');
  if(id){const draft=await prisma.loanContractDraft.findUnique({where:{id}});if(!draft)return Response.json({error:'ไม่พบร่าง'},{status:404});return Response.json({...draft,data:JSON.parse(draft.dataJson)});}
- const drafts=await prisma.loanContractDraft.findMany({where:{finalizedContractId:null},orderBy:{updatedAt:'desc'}});
+ const drafts=await prisma.loanContractDraft.findMany({where:{finalizedContractId:null},orderBy:[{updatedAt:'desc'},{createdAt:'desc'},{id:'desc'}]});
  const borrowers=await prisma.borrowers.findMany({where:{id:{in:drafts.map(d=>d.borrowerId)}},select:{id:true,borrowersCode:true,firstName:true,lastName:true,nickname:true}});
- return Response.json(drafts.map(({dataJson,...draft})=>({...draft,status:'DRAFT',data:JSON.parse(dataJson),borrower:borrowers.find(b=>b.id===draft.borrowerId)})),{headers:{'Cache-Control':'no-store'}});
+ return Response.json(drafts.map(({dataJson,...draft})=>{const borrower=borrowers.find(b=>b.id===draft.borrowerId);return {...draft,status:'DRAFT',data:JSON.parse(dataJson),borrower:borrower?{...borrower,borrowersCode:formatBorrowerCode(borrower.borrowersCode)}:undefined};}),{headers:{'Cache-Control':'no-store'}});
 }
 export async function PUT(request:Request){
  const body=await request.json().catch(()=>null);

@@ -4,6 +4,8 @@ import { randomUUID } from 'node:crypto';
 import { prisma } from '@/lib/prisma';
 import { loanBalance, allocateRepayment, thaiDay } from '@/lib/loan-balance';
 import { isPrismaCode } from '@/lib/borrowers';
+import { formatBorrowerCode } from '@/lib/borrower-code';
+import { writeLoanLog } from '@/lib/loan-logs';
 export async function GET(request: Request) {
     const params = new URL(request.url).searchParams;
     const paidDate = params.get('date');
@@ -12,15 +14,67 @@ export async function GET(request: Request) {
         return Response.json({ error: 'วันที่ไม่ถูกต้อง' }, { status: 400 });
     const contractId = params.get('contractId');
     const [contracts, legacyEntries] = await Promise.all([
-        prisma.contract.findMany({ where: contractId ? { id: contractId } : undefined, include: { debtor: { select: { borrowersCode: true, firstName: true, lastName: true, nickname: true } }, payments: true, repayments: { orderBy: [{ paidAt: 'desc' }, { createdAt: 'desc' }] } }, orderBy: { createdAt: 'desc' } }),
+        prisma.contract.findMany({ where: contractId ? { id: contractId } : undefined, include: { debtor: { select: { borrowersCode: true, firstName: true, lastName: true, nickname: true, address: true, houseNumber: true } }, payments: true, repayments: { orderBy: [{ paidAt: 'desc' }, { createdAt: 'desc' }] } }, orderBy: { createdAt: 'desc' } }),
         prisma.companyLedgerEntry.findMany({
             where: { type: 'INCOME', title: { in: ['รับดอกเบี้ย', 'รับชำระเงินต้น', 'รับชำระเงินต้นพร้อมดอกเบี้ย'] }, note: { contains: 'นำเข้าจากบัญชีเดิม' } },
             select: { id: true, title: true, amount: true, transactionDate: true, party: true, reference: true, note: true, method: true },
             orderBy: { transactionDate: 'desc' },
         }),
     ]);
+    const branchInfoOf = (documentData: string | null) => {
+        if (!documentData) return { branchCode: '', companyCode: '' };
+        try {
+            const parsed = JSON.parse(documentData);
+            return {
+                branchCode: typeof parsed?.branchCode === 'string' ? parsed.branchCode.trim() : '',
+                companyCode: typeof parsed?.companyCode === 'string' ? parsed.companyCode.trim() : '',
+            };
+        } catch {
+            return { branchCode: '', companyCode: '' };
+        }
+    };
+    const branchInfoByContract = new Map(contracts.map(contract => [contract.id, branchInfoOf(contract.documentData)]));
+    const branchCodes = [...new Set([...branchInfoByContract.values()].map(info => info.branchCode).filter(Boolean))];
+    const companyCodes = [...new Set([...branchInfoByContract.values()].map(info => info.companyCode).filter(Boolean))];
+    const branchFilters = [
+        ...(branchCodes.length ? [{ branchcode: { in: branchCodes } }] : []),
+        ...(companyCodes.length ? [{ companycode: { in: companyCodes } }] : []),
+    ];
+    const branches = await prisma.branchCodeSequence.findMany({
+        where: branchFilters.length ? { OR: [...branchFilters, { status: 'ACTIVE', type: 'BRANCH' }] } : { status: 'ACTIVE', type: 'BRANCH' },
+        include: { company: { select: { nameTH: true, nameEN: true, TaxIdentificationNumber: true, address: true, postcode: true, phone: true } } },
+    });
+    const branchByCode = new Map(branches.map(branch => [branch.branchcode, {
+        name: branch.nameTH || branch.nameEN || '',
+        companyName: branch.company.nameTH || branch.company.nameEN || '',
+        taxId: branch.TaxIdentificationNumber || branch.company.TaxIdentificationNumber || '',
+        address: [branch.address || [branch.houseNo && `เลขที่ ${branch.houseNo}`, branch.soi && `ซอย${branch.soi}`, branch.road && `ถนน${branch.road}`].filter(Boolean).join(' ') || branch.company.address, branch.postcode || branch.company.postcode].filter(Boolean).join(' '),
+        phone: branch.phone || branch.company.phone || '',
+    }]));
+    const branchesByCompany = new Map<string, typeof branches>();
+    for (const branch of branches) {
+        const companyBranches = branchesByCompany.get(branch.companycode) ?? [];
+        companyBranches.push(branch);
+        branchesByCompany.set(branch.companycode, companyBranches);
+    }
+    const loanBranchOf = (companyCode = '') => {
+        const candidates = branches.filter(branch => branch.status === 'ACTIVE'
+            && (!companyCode || branch.companycode === companyCode)
+            && /loan|สินเชื่อ|เงินกู้|โลน/i.test(`${branch.nameTH ?? ''} ${branch.nameEN ?? ''}`));
+        return candidates.length === 1 ? branchByCode.get(candidates[0].branchcode) ?? null : null;
+    };
+    const receiptBranchOf = (contractId: string) => {
+        const identifiers = branchInfoByContract.get(contractId);
+        if (!identifiers) return null;
+        if (identifiers.branchCode) return branchByCode.get(identifiers.branchCode) ?? null;
+        const companyBranches = branchesByCompany.get(identifiers.companyCode) ?? [];
+        if (companyBranches.length === 1) return branchByCode.get(companyBranches[0].branchcode) ?? null;
+        return loanBranchOf(identifiers.companyCode);
+    };
     return Response.json(contracts.map(({ payments, ...contract }) => ({
         ...contract,
+        debtor: { ...contract.debtor, borrowersCode: formatBorrowerCode(contract.debtor.borrowersCode) },
+        receiptBranch: receiptBranchOf(contract.id),
         balance: loanBalance({ ...contract, payments }, asOf),
         legacyPayments: legacyEntries.filter(entry => entry.party.startsWith(`${contract.contractNumber} · `)),
     })), { headers: { 'Cache-Control': 'no-store' } });
@@ -37,8 +91,13 @@ export async function POST(request: Request) {
     const waivePenalty = raw.waivePenalty;
     if (waivePenalty !== undefined && typeof waivePenalty !== 'boolean')
         return Response.json({ error: 'ตัวเลือกยกเว้นค่าปรับไม่ถูกต้อง' }, { status: 400 });
-    const date = typeof paidAt === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(paidAt) ? new Date(`${paidAt}T12:00:00+07:00`) : new Date(NaN);
-    if (typeof contractId !== 'string' || typeof requestKey !== 'string' || !/^[a-zA-Z0-9-]{16,80}$/.test(requestKey) || !Number.isSafeInteger(amount) || amount <= 0 || amount > 2147483647 || !Number.isFinite(date.getTime()) || thaiDay(date) > thaiDay(new Date()) || !['CASH', 'BANK_TRANSFER'].includes(method))
+    const datetimeMatch = typeof paidAt === 'string' ? /^(\d{4}-\d{2}-\d{2})T([01]\d|2[0-3]):([0-5]\d)$/.exec(paidAt) : null;
+    const legacyDateMatch = typeof paidAt === 'string' ? /^(\d{4}-\d{2}-\d{2})$/.exec(paidAt) : null;
+    const paidDate = datetimeMatch?.[1] ?? legacyDateMatch?.[1];
+    const date = datetimeMatch
+        ? new Date(`${datetimeMatch[1]}T${datetimeMatch[2]}:${datetimeMatch[3]}:00.000+07:00`)
+        : legacyDateMatch ? new Date(`${legacyDateMatch[1]}T12:00:00.000+07:00`) : new Date(NaN);
+    if (typeof contractId !== 'string' || typeof requestKey !== 'string' || !/^[a-zA-Z0-9-]{16,80}$/.test(requestKey) || !Number.isSafeInteger(amount) || amount <= 0 || amount > 2147483647 || !Number.isFinite(date.getTime()) || date.getTime() > Date.now() || !['CASH', 'BANK_TRANSFER'].includes(method))
         return Response.json({ error: 'ตรวจยอดเงิน วันที่ ช่องรับชำระ และรหัสรายการ' }, { status: 400 });
     if (evidenceUrl && (typeof evidenceUrl !== 'string' || !/^\/api\/repayments\/evidence\/[a-f0-9-]+\.(jpg|png|webp|pdf)$/.test(evidenceUrl)))
         return Response.json({ error: 'หลักฐานไม่ถูกต้อง' }, { status: 400 });
@@ -50,14 +109,14 @@ export async function POST(request: Request) {
             return Response.json({ error: 'ไม่พบไฟล์หลักฐาน กรุณาแนบใหม่' }, { status: 400 });
         }
     }
-    if (new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Bangkok', year: 'numeric', month: '2-digit', day: '2-digit' }).format(date) !== paidAt)
+    if (new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Bangkok', year: 'numeric', month: '2-digit', day: '2-digit' }).format(date) !== paidDate)
         return Response.json({ error: 'วันที่รับชำระไม่ถูกต้อง' }, { status: 400 });
     const matches = (record: {
         contractId: string;
         amount: number;
         paidAt: Date;
         method: string;
-    }) => record.contractId === contractId && record.amount === amount && thaiDay(record.paidAt) === thaiDay(date) && record.method === method;
+    }) => record.contractId === contractId && record.amount === amount && record.paidAt.getTime() === date.getTime() && record.method === method;
     try {
         const saved = await prisma.$transaction(async (tx) => {
             // Acquire a write lock before reading balances so simultaneous receipts cannot overpay.
@@ -78,14 +137,33 @@ export async function POST(request: Request) {
             const balance = loanBalance(contract, date);
             const allocation = allocateRepayment(balance, amount);
             const receiptNumber = `RC-${randomUUID()}`;
-            const receipt = await tx.repayment.create({ data: { requestKey, receiptNumber, contractId, paidAt: date, amount, method, ...allocation, evidenceUrl: evidenceUrl || null, note: typeof note === 'string' ? note.trim().slice(0, 2000) || null : null } });
+            const receipt = await tx.repayment.create({ data: { requestKey, receiptNumber, contractId, paidAt: date, timeRecorded: Boolean(datetimeMatch), amount, method, ...allocation, evidenceUrl: evidenceUrl || null, note: typeof note === 'string' ? note.trim().slice(0, 2000) || null : null } });
+            await writeLoanLog(tx, {
+                borrowerId: contract.debtorId,
+                contractId,
+                targetId: receipt.id,
+                type: 'REPAYMENT',
+                action: 'CREATE',
+                note: `รับชำระเงิน ${receiptNumber} · สัญญา ${contract.contractNumber}`,
+                afterData: { receiptNumber, amount: receipt.amount, paidAt: receipt.paidAt, method: receipt.method, interestPaid: receipt.interestPaid, penaltyPaid: receipt.penaltyPaid, principalPaid: receipt.principalPaid },
+            });
             for (const [type, value] of [['INTEREST', allocation.interestPaid], ['PENALTY', allocation.penaltyPaid], ['PRINCIPAL', allocation.principalPaid]] as const) {
                 if (value > 0)
-                    await tx.payment.create({ data: { contractId, type, amount: value, paidAt: date, method, note: `รับชำระ ${receiptNumber}` } });
+                    await tx.payment.create({ data: { contractId, type, amount: value, paidAt: date, timeRecorded: Boolean(datetimeMatch), method, note: `รับชำระ ${receiptNumber}` } });
             }
             if (allocation.totalRemaining === 0) {
                 await tx.contract.update({ where: { id: contractId }, data: { status: 'CLOSED' } });
                 await tx.interestSchedule.updateMany({ where: { contractId }, data: { status: 'PAID' } });
+                await writeLoanLog(tx, {
+                    borrowerId: contract.debtorId,
+                    contractId,
+                    targetId: contractId,
+                    type: 'CONTRACT',
+                    action: 'UPDATE',
+                    note: `ปิดสัญญา ${contract.contractNumber} หลังรับชำระครบ`,
+                    beforeData: { status: contract.status },
+                    afterData: { status: 'CLOSED' },
+                });
             }
             return receipt;
         });

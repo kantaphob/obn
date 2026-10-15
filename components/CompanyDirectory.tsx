@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type CSSProperties } from "react";
 import Link from "next/link";
 import {
   ArrowUpRight,
@@ -107,7 +107,7 @@ export default function CompanyDirectory() {
             return (
               <article key={company.key} className="overflow-hidden rounded-[20px] border border-white/75 bg-[linear-gradient(135deg,#faf9f5,#eeece5)] shadow-[6px_7px_16px_#8e948536,inset_1px_1px_2px_#fff9]">
                 <header className="flex items-start gap-3.5 border-b border-[#c8cbbf]/60 p-5 max-[560px]:p-4">
-                  <span className="grid size-12 shrink-0 place-items-center rounded-[15px] border border-white/75 bg-white/55 shadow-[inset_1px_1px_2px_#fff,3px_4px_7px_#aaa39140]" style={{ color: company.color }}>
+                  <span className="text-[color:var(--company-color)] grid size-12 shrink-0 place-items-center rounded-[15px] border border-white/75 bg-white/55 shadow-[inset_1px_1px_2px_#fff,3px_4px_7px_#aaa39140]" style={{ "--company-color": company.color } as CSSProperties}>
                     <Icon size={25} strokeWidth={1.6} aria-hidden="true" />
                   </span>
                   <div className="min-w-0 flex-1">

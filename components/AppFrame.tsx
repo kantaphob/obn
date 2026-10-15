@@ -9,7 +9,7 @@ export default function AppFrame({ children, sidebar = true }: { children: React
       <AppShortcuts />
     </Suspense>
     {sidebar && <Suspense fallback={<div aria-hidden="true" className={`${styles.sidebar} animate-pulse`} />}><Sidebar /></Suspense>}
-    <main className={styles.main} id="workspace-content">
+    <main className={`${styles.main} [&:has(.loan-theme)]:[background:#f8f3fc] [&:has(.loan-theme)]:[--text:#2d1c43] [&:has(.loan-theme)]:[--muted:#776587] [&:has(.loan-theme)]:[border-color:#eadcf5]`} id="workspace-content">
       {children}
     </main>
   </div>;

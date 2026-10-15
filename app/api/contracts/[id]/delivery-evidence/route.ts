@@ -2,6 +2,7 @@ import { prisma } from '@/lib/prisma';
 import { POST as upload } from '../../attachments/route';
 import { unlink } from 'node:fs/promises';
 import path from 'node:path';
+import { writeLoanLog } from '@/lib/loan-logs';
 
 export async function POST(request:Request, context:{params:Promise<{id:string}>}){
  const {id}=await context.params;
@@ -14,12 +15,20 @@ export async function POST(request:Request, context:{params:Promise<{id:string}>
   await prisma.$transaction(async tx=>{
    // Acquire the SQLite write lock before reading metadata to preserve concurrent uploads.
    await tx.contract.update({where:{id},data:{updatedAt:new Date()}});
-   const contract=await tx.contract.findUniqueOrThrow({where:{id},select:{documentData:true,status:true}});
+   const contract=await tx.contract.findUniqueOrThrow({where:{id},select:{debtorId:true,contractNumber:true,documentData:true,status:true}});
    if(contract.status==='AWAITING_DOCUMENT')throw new Error('ต้องบันทึกวันที่ลงนามในเอกสารก่อนบันทึกหลักฐานส่งมอบเงิน');
    const data=contract.documentData?JSON.parse(contract.documentData):{};
+   const previousCount=Array.isArray(data.deliveryEvidenceRecords)?data.deliveryEvidenceRecords.length:0;
    data.attachments=[...(Array.isArray(data.attachments)?data.attachments:[]),attachment];
    data.deliveryEvidenceRecords=[...(Array.isArray(data.deliveryEvidenceRecords)?data.deliveryEvidenceRecords:[]),{...attachment,uploadedAt:new Date().toISOString()}];
-   await tx.contract.update({where:{id},data:{documentData:JSON.stringify(data),...(contract.status==='READY'?{status:'ACTIVE'}:{})}});
+   const nextStatus=contract.status==='READY'?'ACTIVE':contract.status;
+   await tx.contract.update({where:{id},data:{documentData:JSON.stringify(data),...(contract.status==='READY'?{status:nextStatus}:{})}});
+   await writeLoanLog(tx, {
+    borrowerId:contract.debtorId,contractId:id,targetId:id,type:'CONTRACT',action:'UPDATE',
+    note:`เพิ่มหลักฐานส่งมอบเงินสัญญา ${contract.contractNumber}`,
+    beforeData:{deliveryEvidenceCount:previousCount,status:contract.status},
+    afterData:{deliveryEvidenceCount:previousCount+1,status:nextStatus},
+   });
   });
   return Response.json({attachment},{status:201});
  }catch(error){

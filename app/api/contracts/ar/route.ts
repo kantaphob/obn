@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { loanBalance } from '@/lib/loan-balance';
+import { formatBorrowerCode } from '@/lib/borrower-code';
 
 export async function GET() {
   const contracts = await prisma.contract.findMany({
@@ -29,5 +30,5 @@ export async function GET() {
     balance: loanBalance({ ...contract, payments }, asOf),
   })).filter(contract => contract.balance.total > 0);
 
-  return Response.json(rows, { headers: { 'Cache-Control': 'no-store' } });
+  return Response.json(rows.map(row=>({...row,debtor:{...row.debtor,borrowersCode:formatBorrowerCode(row.debtor.borrowersCode)}})), { headers: { 'Cache-Control': 'no-store' } });
 }

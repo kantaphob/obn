@@ -1,8 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
-export const runtime = 'nodejs';
-
 export async function GET(_request: Request, { params }: { params: Promise<{ filename: string }> }) {
   const { filename } = await params;
   if (!/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}\.(jpg|png|webp)$/.test(filename)) return new Response(null, { status: 404 });

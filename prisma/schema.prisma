@@ -28,7 +28,16 @@ model CompanyLedgerEntry {
   financeCategoryId String?
   financeCategory CompanyFinanceCategory? @relation(fields: [financeCategoryId], references: [id], onDelete: SetNull)
   amount          Int // satang
+  baseAmount      Int?
+  vatRateBps      Int?
+  vatAmount       Int?
+  whtRateBps      Int?
+  whtAmount       Int?
   transactionDate DateTime
+  timeRecorded    Boolean  @default(false)
+  documentNumber  String?  @unique
+  companyCode     String?
+  branchCode      String?
   party           String   @default("")
   method          String   @default("CASH")
   reference       String   @default("")
@@ -56,6 +65,16 @@ model CompanyFinanceCategory {
 
   @@unique([direction, name])
   @@index([direction, isActive])
+}
+
+model CompanyLedgerNumberSequence {
+  id           String @id @default(cuid())
+  companyCode  String
+  branchCode   String
+  year         Int
+  lastNumber   Int    @default(0)
+
+  @@unique([companyCode, branchCode, year])
 }
 
 //---------------------------------------------------
@@ -306,6 +325,31 @@ model BorrowerCodeSequence {
   value Int
 }
 
+model loanlogs{
+  id String @id @default(cuid())
+  userId String @default("guest")
+  borrowerId String
+  contractId String?
+  arId String?
+  apId String?
+  targetId String?
+  action String
+  type String
+  note String?
+  beforeData String?
+  afterData String?
+  createdAt DateTime @default(now())
+
+  @@index([borrowerId])
+  @@index([contractId])
+  @@index([arId])
+  @@index([apId])
+  @@index([borrowerId, createdAt])
+  @@index([contractId, createdAt])
+  @@index([type, targetId])
+  @@index([userId, createdAt])
+}
+
 model borrowers {
   borrowersCode String @unique
   id        String  @id @default(cuid())
@@ -444,6 +488,7 @@ model Payment {
   type       PaymentType
   amount     Int // สตางค์
   paidAt     DateTime
+  timeRecorded Boolean @default(false)
   method     PaymentMethod     @default(CASH)
   note       String?
   createdAt  DateTime          @default(now())
@@ -459,6 +504,7 @@ model Repayment {
   contractId String
   contract Contract @relation(fields: [contractId], references: [id], onDelete: Restrict)
   paidAt DateTime
+  timeRecorded Boolean @default(false)
   amount Int
   interestPaid Int
   penaltyPaid Int
@@ -504,6 +550,12 @@ enum CompanySequenceStatus {
 }
 
 model CompanySequence {
+  houseNo String?
+  soi String?
+  road String?
+  provinceId String?
+  districtId String?
+  subdistrictId String?
   id                      String                @id @default(cuid())
   companycode             String                @unique
   logo                    String?
@@ -522,6 +574,12 @@ model CompanySequence {
 }
 
 model BranchCodeSequence {
+  houseNo String?
+  soi String?
+  road String?
+  provinceId String?
+  districtId String?
+  subdistrictId String?
   id                      String                @id @default(cuid())
   companycode             String
   branchcode              String                @unique

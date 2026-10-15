@@ -16,7 +16,7 @@ const adapter = new PrismaBetterSqlite3({
 const cachedPrisma = globalForPrisma.prisma;
 const schemaFingerprint = [BorrowerPayoutChannel, BorrowerRiskRating, BorrowerStatus, ContractStatus]
   .map((values) => Object.values(values).join(","))
-  .join("|") + "|borrowersCode-v1|repayment-v1|draft-doc-v1|company-sequence-v1|company-ledger-v1|company-finance-categories-v1";
+  .join("|") + "|borrowersCode-v1|repayment-v1|draft-doc-v1|company-address-v2|company-sequence-v1|company-ledger-v1|company-finance-categories-v1|loanlogs-v2";
 export const prisma =
   cachedPrisma?.banking &&
   cachedPrisma?.borrowers &&

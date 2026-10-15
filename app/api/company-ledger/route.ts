@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { getCompanyLedgerRows } from "@/lib/company-ledger";
+import { calculateCompanyLedgerTax } from "@/lib/company-ledger-tax";
 
 const TYPES = ["INCOME", "EXPENSE"] as const;
 const METHODS = ["CASH", "BANK_TRANSFER", "CARD", "OTHER"] as const;
@@ -11,8 +12,18 @@ function text(value: unknown, max = 200) {
 function dateFromInput(value: unknown) {
   if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
   const date = new Date(`${value}T00:00:00.000+07:00`);
+  if (Number.isNaN(date.getTime())) return null;
   const localDate = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Bangkok", year: "numeric", month: "2-digit", day: "2-digit" }).format(date);
-  return Number.isNaN(date.getTime()) || localDate !== value ? null : date;
+  return localDate !== value ? null : date;
+}
+
+function dateTimeFromInput(dateValue: unknown, timeValue: unknown) {
+  if (typeof dateValue !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(dateValue)
+    || typeof timeValue !== "string" || !/^([01]\d|2[0-3]):[0-5]\d$/.test(timeValue)) return null;
+  const date = new Date(`${dateValue}T${timeValue}:00.000+07:00`);
+  if (Number.isNaN(date.getTime())) return null;
+  const localDate = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Bangkok", year: "numeric", month: "2-digit", day: "2-digit" }).format(date);
+  return localDate !== dateValue || date.getTime() > Date.now() ? null : date;
 }
 
 export async function GET(request: Request) {
@@ -41,30 +52,64 @@ export async function POST(request: Request) {
   const title = text(data.title, 120);
   const categoryId = text(data.categoryId, 80);
   const amount = data.amount;
-  const transactionDate = dateFromInput(data.transactionDate);
+  const transactionDate = dateTimeFromInput(data.transactionDate, data.transactionTime);
+  const companyCode = text(data.companyCode, 5);
+  const branchCode = text(data.branchCode, 5);
   const method = data.method;
 
   if (type !== "INCOME" && type !== "EXPENSE") return Response.json({ error: "กรุณาเลือกประเภทรายการ" }, { status: 400 });
   if (!title) return Response.json({ error: "กรุณาระบุชื่อรายการ" }, { status: 400 });
-  if (!Number.isSafeInteger(amount) || Number(amount) <= 0) return Response.json({ error: "จำนวนเงินไม่ถูกต้อง" }, { status: 400 });
-  if (!transactionDate) return Response.json({ error: "วันที่ไม่ถูกต้อง" }, { status: 400 });
+  const tax = calculateCompanyLedgerTax(type, amount, data.vatRateBps, data.whtRateBps);
+  if (!tax) return Response.json({ error: "จำนวนเงินหรืออัตรา VAT/WHT ไม่ถูกต้อง" }, { status: 400 });
+  if (!transactionDate) return Response.json({ error: "วันที่หรือเวลาไม่ถูกต้อง" }, { status: 400 });
+  if (!/^\d{5}$/.test(companyCode) || !/^\d{5}$/.test(branchCode)) return Response.json({ error: "กรุณาเลือกสำนักงานใหญ่และสาขาที่ทำรายการ" }, { status: 400 });
   if (!METHODS.includes(method as (typeof METHODS)[number])) return Response.json({ error: "ช่องทางชำระเงินไม่ถูกต้อง" }, { status: 400 });
   const financeCategory = await prisma.companyFinanceCategory.findFirst({ where: { id: categoryId, direction: type, isActive: true } });
   if (!financeCategory) return Response.json({ error: "กรุณาเลือกหมวดหมู่ที่เปิดใช้งานสำหรับประเภทรายการนี้" }, { status: 400 });
 
-  const entry = await prisma.companyLedgerEntry.create({
-    data: {
-      type,
-      title,
-      category: financeCategory.name,
-      financeCategoryId: financeCategory.id,
-      amount: Number(amount),
-      transactionDate,
-      party: text(data.party, 120),
-      method: String(method),
-      reference: text(data.reference, 100),
-      note: text(data.note, 1000),
-    },
-  });
+  let entry;
+  try {
+    entry = await prisma.$transaction(async (tx) => {
+      const [company, branch] = await Promise.all([
+        tx.companySequence.findFirst({ where: { companycode: companyCode, type: "COMPANY", status: "ACTIVE" }, select: { companycode: true } }),
+        tx.branchCodeSequence.findFirst({ where: { companycode: companyCode, branchcode: branchCode, type: "BRANCH", status: "ACTIVE" }, select: { branchcode: true } }),
+      ]);
+      if (!company || !branch) throw new Error("ไม่พบสำนักงานใหญ่หรือสาขาที่เปิดใช้งาน");
+
+      const year = Number(new Intl.DateTimeFormat("en", { timeZone: "Asia/Bangkok", year: "numeric" }).format(transactionDate));
+      const sequence = await tx.companyLedgerNumberSequence.upsert({
+        where: { companyCode_branchCode_year: { companyCode, branchCode, year } },
+        create: { companyCode, branchCode, year, lastNumber: 1 },
+        update: { lastNumber: { increment: 1 } },
+      });
+      if (sequence.lastNumber > 999999) throw new Error("เลขที่รายการของสาขานี้ครบ 999999 รายการแล้ว");
+      const documentNumber = `OBN-L-${String(year % 100).padStart(2, "0")}-${companyCode}-${branchCode}-${String(sequence.lastNumber).padStart(6, "0")}`;
+
+      return tx.companyLedgerEntry.create({
+        data: {
+          type,
+          title,
+          category: financeCategory.name,
+          financeCategoryId: financeCategory.id,
+          ...tax,
+          transactionDate,
+          timeRecorded: true,
+          documentNumber,
+          companyCode,
+          branchCode,
+          party: text(data.party, 120),
+          method: String(method),
+          reference: text(data.reference, 100),
+          note: text(data.note, 1000),
+        },
+      });
+    });
+  } catch (cause) {
+    if (cause instanceof Error && (cause.message === "ไม่พบสำนักงานใหญ่หรือสาขาที่เปิดใช้งาน" || cause.message.startsWith("เลขที่รายการของสาขานี้ครบ"))) {
+      return Response.json({ error: cause.message }, { status: 400 });
+    }
+    console.error("Company ledger entry creation failed:", cause);
+    return Response.json({ error: "ออกเลขที่รายการหรือบันทึกบัญชีไม่สำเร็จ" }, { status: 500 });
+  }
   return Response.json(entry, { status: 201 });
 }

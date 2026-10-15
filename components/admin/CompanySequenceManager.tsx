@@ -1,13 +1,15 @@
 'use client';
 
+import CompanyAddressFields from './CompanyAddressFields';
 import { useTrackedFetch } from '@/components/ui/ToastProvider';
-import { Building2, MapPin, Pencil, Plus, Search, Store, Trash2 } from 'lucide-react';
+import { Building2, ImagePlus, MapPin, Pencil, Plus, Search, Store, Trash2, X } from 'lucide-react';
 import Link from 'next/link';
-import { useEffect, useMemo, useState, type FormEvent } from 'react';
-import { workspaceStyles as styles } from '@/components/ui/workspace-styles';
+import { useEffect, useMemo, useState, type FormEvent, type CSSProperties } from 'react';
 
 type Status = 'ACTIVE' | 'INACTIVE';
 type Company = {
+  houseNo: string | null; soi: string | null; road: string | null;
+  provinceId: string | null; districtId: string | null; subdistrictId: string | null;
   id: string;
   companycode: string;
   logo: string | null;
@@ -31,22 +33,72 @@ type Branch = Omit<Company, 'companycode' | '_count'> & {
 type RecordItem = Company | Branch;
 type Props = { kind: 'companies' | 'branches' };
 
-const optionalFields = [
+type FieldKey =
+  | 'nameEN' | 'TaxIdentificationNumber' | 'address' | 'postcode'
+  | 'phone' | 'email' | 'aboutus' | 'companyoverview';
+type FieldDef = { key: FieldKey; label: string; max: number; wide?: boolean; type?: string; textarea?: boolean };
+
+const infoFields: FieldDef[] = [
   { key: 'nameEN', label: 'ชื่อภาษาอังกฤษ', max: 200 },
   { key: 'TaxIdentificationNumber', label: 'เลขประจำตัวผู้เสียภาษี', max: 32 },
-  { key: 'address', label: 'ที่อยู่', max: 1000, wide: true },
-  { key: 'postcode', label: 'รหัสไปรษณีย์', max: 10 },
   { key: 'phone', label: 'เบอร์โทรศัพท์', max: 40 },
   { key: 'email', label: 'อีเมล', max: 200, type: 'email' },
+];
+const textFields: FieldDef[] = [
   { key: 'aboutus', label: 'เกี่ยวกับเรา', max: 5000, wide: true, textarea: true },
   { key: 'companyoverview', label: 'ภาพรวมบริษัท', max: 5000, wide: true, textarea: true },
-] as const;
+];
 
-const buttonClass = 'inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-xl border border-[#d7d9d0] bg-[#faf9f5] px-4 text-xs disabled:opacity-50';
-const fieldClass = 'mt-2 w-full rounded-xl border border-[#d7d9d0] bg-white px-3 py-2.5 text-sm';
+/* ---------- design tokens ---------- */
+const focus = 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1f5c4a]';
+const btn = `inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-lg px-4 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${focus}`;
+const btnPrimary = `${btn} bg-[#1f5c4a] text-white hover:bg-[#184a3c]`;
+const btnSecondary = `${btn} border border-[#d5dbd8] bg-white text-[#1d2b27] hover:bg-[#f3f5f4]`;
+const btnDanger = `${btn} bg-[#b42318] text-white hover:bg-[#912018]`;
+const btnDangerGhost = `${btn} border border-[#f1c9c5] bg-white text-[#b42318] hover:bg-[#fdf3f2]`;
+const iconBtn = `inline-flex size-9 items-center justify-center rounded-lg text-[#5b6b66] transition-colors hover:bg-[#eaf0ed] hover:text-[#1f5c4a] ${focus}`;
+const fieldClass =
+  'mt-1.5 w-full rounded-lg border border-[#d5dbd8] bg-white px-3 py-2.5 text-sm text-[#1d2b27] placeholder:text-[#8a9792] focus:border-[#1f5c4a] focus:outline-2 focus:outline-[#1f5c4a]/25 disabled:bg-[#f3f5f4] read-only:bg-[#f3f5f4] read-only:text-[#5b6b66]';
+const labelClass = 'block text-sm font-medium text-[#1d2b27]';
 
 function displayName(item: { nameTH: string | null; nameEN: string | null }) {
   return item.nameTH || item.nameEN || 'ยังไม่ได้ระบุชื่อ';
+}
+
+function Logo({ src, name, size = 40 }: { src: string | null; name: string; size?: number }) {
+  const style = { "--logo-size": `${size}px` } as CSSProperties;
+  if (src) {
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src={src} alt="" style={style} className="size-[var(--logo-size)] shrink-0 rounded-lg border border-[#dfe4e1] bg-white object-contain p-1" />;
+  }
+  return (
+    <span aria-hidden="true" style={style} className="size-[var(--logo-size)] grid shrink-0 place-items-center rounded-lg bg-[#e3ede9] text-sm font-semibold text-[#1f5c4a]">
+      {name.trim().charAt(0) || '?'}
+    </span>
+  );
+}
+
+function StatusBadge({ status }: { status: Status }) {
+  const active = status === 'ACTIVE';
+  return (
+    <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${active ? 'bg-[#e3f2ea] text-[#1f5c4a]' : 'bg-[#eef0ef] text-[#6b7773]'}`}>
+      <span aria-hidden="true" className={`size-1.5 rounded-full ${active ? 'bg-[#2e9a6f]' : 'bg-[#9aa5a1]'}`} />
+      {active ? 'ใช้งาน' : 'ไม่ใช้งาน'}
+    </span>
+  );
+}
+
+function Section({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
+  return (
+    <fieldset className="border-t border-[#e6ebe8] pt-5 first:border-t-0 first:pt-0">
+      <legend className="sr-only">{title}</legend>
+      <div className="mb-3">
+        <h3 className="text-sm font-semibold text-[#1d2b27]">{title}</h3>
+        {hint && <p className="text-xs text-[#6b7773]">{hint}</p>}
+      </div>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">{children}</div>
+    </fieldset>
+  );
 }
 
 function Editor({
@@ -66,16 +118,25 @@ function Editor({
   useEffect(() => {
     return () => { if (preview) URL.revokeObjectURL(preview); };
   }, [preview]);
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape' && !busy) onClose(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [busy, onClose]);
+
   const isBranch = kind === 'branches';
   const isEditing = Boolean(item);
-  const title = deleteMode ? `ลบ${isBranch ? 'สาขา' : 'บริษัท'}` : `${isEditing ? 'แก้ไข' : 'เพิ่ม'}${isBranch ? 'สาขา' : 'บริษัท'}`;
+  const noun = isBranch ? 'สาขา' : 'บริษัท';
+  const title = deleteMode ? `ลบ${noun}` : `${isEditing ? 'แก้ไข' : 'เพิ่ม'}${noun}`;
   const editingCompany = item as Company | null;
   const editingBranch = item as Branch | null;
+  const shownLogo = logoFile ? preview : logo;
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (busy || !item && deleteMode) return;
+    if (busy || (!item && deleteMode)) return;
     const form = event.currentTarget;
+    if (!deleteMode && form.querySelector('[data-address-pending="true"]')) { setError('กรุณารอข้อมูลที่อยู่โหลดสำเร็จก่อนบันทึก'); return; }
     const data = Object.fromEntries(new FormData(form));
     setBusy(true);
     setError('');
@@ -103,7 +164,7 @@ function Editor({
         body: deleteMode ? undefined : JSON.stringify(data),
       });
       if (!response.ok) throw new Error((await response.json()).error ?? 'บันทึกข้อมูลไม่สำเร็จ');
-      onSaved(deleteMode ? `ลบ${isBranch ? 'สาขา' : 'บริษัท'}แล้ว` : 'บันทึกข้อมูลแล้ว');
+      onSaved(deleteMode ? `ลบ${noun}แล้ว` : 'บันทึกข้อมูลแล้ว');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'เชื่อมต่อไม่สำเร็จ');
     } finally {
@@ -111,79 +172,152 @@ function Editor({
     }
   }
 
-  return <div className="borrower-modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !busy) onClose(); }}>
-    <section role="dialog" aria-modal="true" aria-labelledby="company-editor-title" className="borrower-modal borrower-crud-modal" style={{ width: 'min(820px,100%)' }}>
-      <header className="borrower-modal-header">
-        <div><p className="borrowers-eyebrow">MASTER DATA / {isBranch ? 'BRANCH' : 'COMPANY'}</p><h2 id="company-editor-title">{title}</h2><p>รหัสต้องเป็นตัวเลข 5 หลัก</p></div>
-        <button type="button" className="modal-close" aria-label="ปิด" disabled={busy} onClick={onClose}>×</button>
-      </header>
-      <form className="borrower-form" onSubmit={submit}>
-        {deleteMode ? <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
-          ยืนยันลบ{isBranch ? 'สาขา' : 'บริษัท'} <strong>{isBranch ? editingBranch?.branchcode : editingCompany?.companycode} — {displayName(item ?? { nameTH: null, nameEN: null })}</strong>?
-          {!isBranch && Boolean(editingCompany?._count?.branches) && <p className="mt-2">สาขาใต้บริษัทนี้ {editingCompany?._count?.branches} แห่งจะถูกลบตามไปด้วย</p>}
-        </div> : <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          {isBranch && <label className="compact-field sm:col-span-2">บริษัทแม่
-            <select name="companycode" required defaultValue={editingBranch?.companycode ?? ''} disabled={busy} className={fieldClass}>
-              <option value="" disabled>เลือกบริษัท</option>
-              {companies.map((company) => <option key={company.id} value={company.companycode}>{company.companycode} · {displayName(company)}</option>)}
-            </select>
-          </label>}
-          <label className="compact-field">{isBranch ? 'รหัสสาขา' : 'รหัสบริษัท'}
-            <input name={isBranch ? 'branchcode' : 'companycode'} required maxLength={5} minLength={5} pattern="[0-9]{5}" inputMode="numeric" title="กรอกตัวเลข 5 หลัก" defaultValue={isBranch ? editingBranch?.branchcode ?? '' : editingCompany?.companycode ?? ''} readOnly={busy || Boolean(item)} className={fieldClass} />
-          </label>
-          <label className="compact-field">ชื่อภาษาไทย
-            <input name="nameTH" required maxLength={200} defaultValue={item?.nameTH ?? ''} disabled={busy} className={fieldClass} />
-          </label>
-          <div className="compact-field sm:col-span-2">
-            <label htmlFor="company-logo">โลโก้</label>
-            <input id="company-logo" type="file" accept="image/png,image/jpeg,image/webp" disabled={busy} className={fieldClass} onChange={(event) => {
-              const file = event.target.files?.[0];
-              if (!file) return;
-              if (!['image/png', 'image/jpeg', 'image/webp'].includes(file.type) || file.size < 1 || file.size > 5 * 1024 * 1024) {
-                setError('รองรับ PNG, JPG หรือ WebP ขนาดไม่เกิน 5 MB');
-                event.target.value = '';
-                return;
-              }
-              setError(''); setLogoFile(file); setPreview(URL.createObjectURL(file));
-            }} />
-            <p className="mt-2 text-xs text-[#626862]">PNG, JPG หรือ WebP ไม่เกิน 5 MB</p>
-            {(logoFile ? preview : logo) && <div className="mt-3 flex items-center gap-4">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={logoFile ? preview : logo} alt="ตัวอย่างโลโก้" className="h-24 w-24 rounded-xl border border-[#d7d9d0] bg-white object-contain p-2" />
-              <button type="button" className={buttonClass} disabled={busy} onClick={() => { setLogo(''); setLogoFile(null); setPreview(''); const input = document.getElementById('company-logo') as HTMLInputElement | null; if (input) input.value = ''; }}>นำโลโก้ออก</button>
-            </div>}
-          </div>
-          {optionalFields.map((field) => <label key={field.key} className={`compact-field ${'wide' in field && field.wide ? 'sm:col-span-2' : ''}`}>
-            {field.label}
-            {'textarea' in field && field.textarea
-              ? <textarea name={field.key} maxLength={field.max} defaultValue={item?.[field.key] ?? ''} disabled={busy} rows={3} className={`${fieldClass} resize-y`} />
-              : <input name={field.key} type={'type' in field ? field.type : 'text'} maxLength={field.max} defaultValue={item?.[field.key] ?? ''} disabled={busy} className={fieldClass} />}
-          </label>)}
-          <label className="compact-field">สถานะ
-            <select name="status" defaultValue={item?.status ?? 'ACTIVE'} disabled={busy} className={fieldClass}>
-              <option value="ACTIVE">ใช้งาน</option><option value="INACTIVE">ไม่ใช้งาน</option>
-            </select>
-          </label>
-        </div>}
-        {error && <p role="alert" className="mt-4 text-sm text-red-700">{error}</p>}
-        <footer className="borrower-modal-footer">
-          <span>ข้อมูลจะถูกบันทึกลงฐานข้อมูล</span>
+  function renderField(field: FieldDef) {
+    const span = field.wide ? 'sm:col-span-2' : '';
+    return (
+      <label key={field.key} className={`${labelClass} ${span}`}>
+        {field.label}
+        {field.textarea
+          ? <textarea name={field.key} maxLength={field.max} defaultValue={item?.[field.key] ?? ''} disabled={busy} rows={3} className={`${fieldClass} resize-y`} />
+          : <input name={field.key} type={field.type ?? 'text'} maxLength={field.max} defaultValue={item?.[field.key] ?? ''} disabled={busy} className={fieldClass} />}
+      </label>
+    );
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center bg-[#12201b]/45 sm:items-center sm:p-4"
+      role="presentation"
+      onMouseDown={(event) => { if (event.target === event.currentTarget && !busy) onClose(); }}
+    >
+      <section
+        role="dialog" aria-modal="true" aria-labelledby="company-editor-title"
+        className="flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-t-2xl bg-white shadow-2xl sm:rounded-2xl"
+      >
+        <header className="flex items-start justify-between gap-4 border-b border-[#e6ebe8] px-6 py-5">
           <div>
-            {deleteMode && <button type="button" disabled={busy} onClick={() => setDeleteMode(false)} className={buttonClass}>ย้อนกลับ</button>}
-            <button type="button" disabled={busy} onClick={onClose} className={buttonClass}>ยกเลิก</button>
-            {deleteMode
-              ? <button className={`${buttonClass} border-red-700 bg-red-700 text-white`} disabled={busy}>{busy ? 'กำลังลบ…' : 'ยืนยันลบ'}</button>
-              : <><button type="button" disabled={busy || !item} onClick={() => setDeleteMode(true)} className={`${buttonClass} text-red-700`}>ลบ</button><button className={`${buttonClass} border-[#355a4b] bg-[#355a4b] text-white`} disabled={busy}>{busy ? 'กำลังบันทึก…' : 'บันทึก'}</button></>}
+            <h2 id="company-editor-title" className="text-lg font-semibold text-[#1d2b27]">{title}</h2>
+            {!deleteMode && <p className="mt-0.5 text-sm text-[#6b7773]">รหัสต้องเป็นตัวเลข 5 หลัก</p>}
           </div>
-        </footer>
-      </form>
-    </section>
-  </div>;
+          <button type="button" className={iconBtn} aria-label="ปิด" disabled={busy} onClick={onClose}><X size={18} aria-hidden="true" /></button>
+        </header>
+
+        <form className="flex min-h-0 flex-1 flex-col" onSubmit={submit}>
+          <div className="flex-1 space-y-5 overflow-y-auto px-6 py-5">
+            {deleteMode ? (
+              <div className="flex gap-4 rounded-xl border border-[#f1c9c5] bg-[#fdf3f2] p-4 text-sm text-[#7a1f17]">
+                <Trash2 size={20} className="mt-0.5 shrink-0" aria-hidden="true" />
+                <div>
+                  <p>
+                    ต้องการลบ{noun} <strong>{isBranch ? editingBranch?.branchcode : editingCompany?.companycode} {displayName(item ?? { nameTH: null, nameEN: null })}</strong> ใช่หรือไม่
+                  </p>
+                  {!isBranch && Boolean(editingCompany?._count?.branches) && (
+                    <p className="mt-2 font-medium">สาขาใต้บริษัทนี้ {editingCompany?._count?.branches} แห่งจะถูกลบไปด้วย</p>
+                  )}
+                  <p className="mt-2 text-[#9b4a43]">การลบไม่สามารถย้อนกลับได้</p>
+                </div>
+              </div>
+            ) : (
+              <>
+                <Section title="ข้อมูลหลัก">
+                  {isBranch && (
+                    <label className={`${labelClass} sm:col-span-2`}>บริษัทแม่
+                      <select name="companycode" required defaultValue={editingBranch?.companycode ?? ''} disabled={busy} className={fieldClass}>
+                        <option value="" disabled>เลือกบริษัท</option>
+                        {companies.map((company) => <option key={company.id} value={company.companycode}>{company.companycode} {displayName(company)}</option>)}
+                      </select>
+                    </label>
+                  )}
+                  <label className={labelClass}>{isBranch ? 'รหัสสาขา' : 'รหัสบริษัท'}
+                    <input
+                      name={isBranch ? 'branchcode' : 'companycode'} required maxLength={5} minLength={5}
+                      pattern="[0-9]{5}" inputMode="numeric" title="กรอกตัวเลข 5 หลัก" placeholder="00000"
+                      defaultValue={isBranch ? editingBranch?.branchcode ?? '' : editingCompany?.companycode ?? ''}
+                      readOnly={busy || Boolean(item)} className={`${fieldClass} font-mono tabular-nums`}
+                    />
+                  </label>
+                  <label className={labelClass}>สถานะ
+                    <select name="status" defaultValue={item?.status ?? 'ACTIVE'} disabled={busy} className={fieldClass}>
+                      <option value="ACTIVE">ใช้งาน</option><option value="INACTIVE">ไม่ใช้งาน</option>
+                    </select>
+                  </label>
+                  <label className={`${labelClass} sm:col-span-2`}>ชื่อภาษาไทย
+                    <input name="nameTH" required maxLength={200} defaultValue={item?.nameTH ?? ''} disabled={busy} className={fieldClass} />
+                  </label>
+                </Section>
+
+                <Section title="โลโก้" hint="PNG, JPG หรือ WebP ไม่เกิน 5 MB">
+                  <div className="flex items-center gap-4 sm:col-span-2">
+                    {shownLogo
+                      ? <>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={shownLogo} alt="ตัวอย่างโลโก้" className="size-20 shrink-0 rounded-xl border border-[#dfe4e1] bg-white object-contain p-2" />
+                        </>
+                      : <span aria-hidden="true" className="grid size-20 shrink-0 place-items-center rounded-xl border border-dashed border-[#c5cdc9] bg-[#f6f8f7] text-[#8a9792]"><ImagePlus size={24} /></span>}
+                    <div className="flex flex-wrap items-center gap-2">
+                      <label className={`${btnSecondary} cursor-pointer has-[:disabled]:opacity-50`}>
+                        <ImagePlus size={16} aria-hidden="true" />{shownLogo ? 'เปลี่ยนโลโก้' : 'เลือกไฟล์'}
+                        <input
+                          id="company-logo" type="file" accept="image/png,image/jpeg,image/webp" disabled={busy} className="sr-only"
+                          onChange={(event) => {
+                            const file = event.target.files?.[0];
+                            if (!file) return;
+                            if (!['image/png', 'image/jpeg', 'image/webp'].includes(file.type) || file.size < 1 || file.size > 5 * 1024 * 1024) {
+                              setError('รองรับ PNG, JPG หรือ WebP ขนาดไม่เกิน 5 MB');
+                              event.target.value = '';
+                              return;
+                            }
+                            setError(''); setLogoFile(file); setPreview(URL.createObjectURL(file));
+                          }}
+                        />
+                      </label>
+                      {shownLogo && (
+                        <button type="button" className={btnSecondary} disabled={busy} onClick={() => {
+                          setLogo(''); setLogoFile(null); setPreview('');
+                          const input = document.getElementById('company-logo') as HTMLInputElement | null;
+                          if (input) input.value = '';
+                        }}>นำโลโก้ออก</button>
+                      )}
+                    </div>
+                  </div>
+                </Section>
+
+                <Section title="ข้อมูลติดต่อและภาษี">{infoFields.map(renderField)}</Section>
+                <Section title="ที่อยู่"><CompanyAddressFields item={item} disabled={busy} fieldClass={fieldClass} labelClass={labelClass} /></Section>
+                <Section title="รายละเอียดเพิ่มเติม">{textFields.map(renderField)}</Section>
+              </>
+            )}
+          </div>
+
+          <footer className="border-t border-[#e6ebe8] bg-[#f9faf9] px-6 py-4">
+            {error && <p role="alert" className="mb-3 rounded-lg bg-[#fdf3f2] px-3 py-2 text-sm text-[#b42318]">{error}</p>}
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                {!deleteMode && isEditing && (
+                  <button type="button" disabled={busy} onClick={() => setDeleteMode(true)} className={btnDangerGhost}>
+                    <Trash2 size={16} aria-hidden="true" />ลบ
+                  </button>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {deleteMode && <button type="button" disabled={busy} onClick={() => setDeleteMode(false)} className={btnSecondary}>ย้อนกลับ</button>}
+                <button type="button" disabled={busy} onClick={onClose} className={btnSecondary}>ยกเลิก</button>
+                {deleteMode
+                  ? <button className={btnDanger} disabled={busy}>{busy ? 'กำลังลบ…' : `ลบ${noun}`}</button>
+                  : <button className={btnPrimary} disabled={busy}>{busy ? 'กำลังบันทึก…' : 'บันทึก'}</button>}
+              </div>
+            </div>
+          </footer>
+        </form>
+      </section>
+    </div>
+  );
 }
 
 export default function CompanySequenceManager({ kind }: Props) {
   const trackedFetch = useTrackedFetch();
   const isBranch = kind === 'branches';
+  const noun = isBranch ? 'สาขา' : 'บริษัท';
   const [companies, setCompanies] = useState<Company[]>([]);
   const [items, setItems] = useState<RecordItem[]>([]);
   const [query, setQuery] = useState('');
@@ -238,47 +372,143 @@ export default function CompanySequenceManager({ kind }: Props) {
   const loading = loadedRevision !== revision;
   const allBranches = companies.reduce((total, company) => total + (company._count?.branches ?? 0), 0);
 
-  return <section className={styles.page}>
-    <header className={`${styles.pageHeader} flex flex-wrap items-start justify-between gap-4`}>
-      <div><p className={styles.eyebrow}>MASTER DATA / {isBranch ? 'BRANCHES' : 'COMPANIES'}</p>
-        <h1 className="flex items-center gap-3">{isBranch ? <Store size={28} aria-hidden="true" /> : <Building2 size={28} aria-hidden="true" />}{isBranch ? 'สาขา' : 'บริษัท'}</h1>
-        <p className="text-sm text-[#626862]">{isBranch ? 'จัดการสาขาภายใต้บริษัทหลัก' : 'จัดการข้อมูลบริษัทและรหัสบริษัท'}</p>
+  const openEditor = (item: RecordItem | null, del = false) => {
+    setNotice(''); setEditorDelete(del); setEditor(item);
+  };
+
+  const headings = [
+    isBranch ? 'รหัสสาขา' : 'รหัสบริษัท',
+    isBranch ? 'บริษัทแม่' : 'ชื่อบริษัท',
+    'เลขผู้เสียภาษี', 'ที่อยู่', 'เบอร์โทร', 'สถานะ',
+  ];
+
+  return (
+    <section className="mx-auto w-full max-w-7xl space-y-6 bg-[#f3f5f4] p-4 text-[#1d2b27] sm:p-8">
+      {/* ---------- header ---------- */}
+      <header className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <span aria-hidden="true" className="grid size-12 place-items-center rounded-xl bg-[#1f5c4a] text-white">
+            {isBranch ? <Store size={24} /> : <Building2 size={24} />}
+          </span>
+          <div>
+            <h1 className="text-2xl font-semibold leading-tight">{noun}</h1>
+            <p className="text-sm text-[#5b6b66]">{isBranch ? 'จัดการสาขาภายใต้บริษัทแม่' : 'จัดการข้อมูลบริษัทและรหัสบริษัท'}</p>
+          </div>
+        </div>
+        <button className={btnPrimary} disabled={isBranch && companies.length === 0} onClick={() => openEditor(null)}>
+          <Plus size={16} aria-hidden="true" />เพิ่ม{noun}
+        </button>
+      </header>
+
+      {/* ---------- summary ---------- */}
+      <dl className="flex flex-wrap items-center gap-x-8 gap-y-2 text-sm text-[#5b6b66]">
+        <div className="flex items-baseline gap-2"><dt>บริษัท</dt><dd className="text-xl font-semibold tabular-nums text-[#1d2b27]">{companies.length}</dd><span>แห่ง</span></div>
+        <div className="flex items-baseline gap-2"><dt>สาขา</dt><dd className="text-xl font-semibold tabular-nums text-[#1d2b27]">{allBranches}</dd><span>แห่ง</span></div>
+        {isBranch && (
+          <Link href="/admin/companies" className={`inline-flex items-center gap-1.5 rounded text-[#1f5c4a] underline underline-offset-4 ${focus}`}>
+            <Building2 size={15} aria-hidden="true" />จัดการบริษัทแม่
+          </Link>
+        )}
+      </dl>
+
+      {notice && <p role="status" className="rounded-lg border border-[#bfe0cf] bg-[#e3f2ea] px-4 py-2.5 text-sm text-[#1f5c4a]">{notice}</p>}
+      {error && (
+        <div role="alert" className="flex flex-wrap items-center gap-3 rounded-lg border border-[#f1c9c5] bg-[#fdf3f2] px-4 py-2.5 text-sm text-[#b42318]">
+          {error}
+          <button className={`${btnSecondary} h-8 px-3`} onClick={() => setRevision((value) => value + 1)}>ลองใหม่</button>
+        </div>
+      )}
+
+      {/* ---------- table ---------- */}
+      <div className="overflow-hidden rounded-xl border border-[#dfe4e1] bg-white shadow-[0_1px_2px_rgba(18,32,27,0.05)]">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#e6ebe8] px-4 py-3">
+          <label className="flex w-full items-center gap-2 rounded-lg border border-[#d5dbd8] bg-[#f9faf9] px-3 focus-within:border-[#1f5c4a] focus-within:bg-white focus-within:outline-2 focus-within:outline-[#1f5c4a]/25 sm:w-96">
+            <Search size={16} className="text-[#8a9792]" aria-hidden="true" />
+            <span className="sr-only">ค้นหา{noun}</span>
+            <input
+              value={query} onChange={(event) => setQuery(event.target.value)}
+              placeholder={`ค้นหารหัส ชื่อ เลขผู้เสียภาษี หรือเบอร์โทร${isBranch ? ' / บริษัทแม่' : ''}`}
+              className="h-10 w-full bg-transparent text-sm outline-none placeholder:text-[#8a9792]"
+            />
+          </label>
+          <span className="text-sm tabular-nums text-[#5b6b66]">แสดง {filteredItems.length} จาก {items.length} รายการ</span>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table aria-busy={loading} className="w-full min-w-[920px] text-left text-sm">
+            <caption className="sr-only">รายการ{noun}จากฐานข้อมูล</caption>
+            <thead className="bg-[#f6f8f7] text-xs text-[#5b6b66]">
+              <tr>
+                {headings.map((heading) => <th key={heading} scope="col" className="whitespace-nowrap px-4 py-3 font-medium">{heading}</th>)}
+                <th scope="col" className="px-4 py-3 text-right font-medium">จัดการ</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[#edf0ee]">
+              {loading ? (
+                <tr><td colSpan={7} className="px-4 py-12 text-center text-[#5b6b66]">กำลังโหลด…</td></tr>
+              ) : error ? (
+                <tr><td colSpan={7} className="px-4 py-12 text-center text-[#5b6b66]">ไม่สามารถโหลดข้อมูลได้</td></tr>
+              ) : !filteredItems.length ? (
+                <tr><td colSpan={7} className="px-4 py-12 text-center text-[#5b6b66]">
+                  {query ? `ไม่พบ${noun}ที่ตรงกับ “${query}”` : `ยังไม่มีข้อมูล${noun} กด “เพิ่ม${noun}” เพื่อเริ่มต้น`}
+                </td></tr>
+              ) : filteredItems.map((item) => {
+                const code = isBranch ? (item as Branch).branchcode : (item as Company).companycode;
+                const mainName = isBranch ? displayName((item as Branch).company) : displayName(item);
+                return (
+                  <tr key={item.id} className="transition-colors hover:bg-[#f6f9f7]">
+                    <th scope="row" className="whitespace-nowrap px-4 py-3.5 font-mono font-medium tabular-nums text-[#1f5c4a]">{code}</th>
+                    <td className="px-4 py-3.5">
+                      <div className="flex items-center gap-3">
+                        <Logo src={isBranch ? null : item.logo} name={mainName} />
+                        {isBranch ? (
+                          <div>
+                            <span className="block font-medium">{displayName(item)}</span>
+                            <small className="text-[#5b6b66]">{mainName} <span className="font-mono tabular-nums">({item.companycode})</span></small>
+                          </div>
+                        ) : (
+                          <div>
+                            <span className="block font-medium">{displayName(item)}</span>
+                            {item.nameEN && <small lang="en" className="text-[#5b6b66]">{item.nameEN}</small>}
+                          </div>
+                        )}
+                      </div>
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3.5 tabular-nums">{item.TaxIdentificationNumber || '—'}</td>
+                    <td className="max-w-[260px] px-4 py-3.5">
+                      <span className="line-clamp-2">{item.address || '—'}</span>
+                      {item.postcode && <small className="text-[#5b6b66]">{item.postcode}</small>}
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3.5 tabular-nums">{item.phone || '—'}</td>
+                    <td className="px-4 py-3.5"><StatusBadge status={item.status} /></td>
+                    <td className="px-4 py-3.5">
+                      <div className="flex justify-end gap-1">
+                        <button aria-label={`แก้ไข ${code}`} title="แก้ไข" className={iconBtn} onClick={() => openEditor(item)}><Pencil size={16} aria-hidden="true" /></button>
+                        <button aria-label={`ลบ ${code}`} title="ลบ" className={`${iconBtn} hover:!bg-[#fdf3f2] hover:!text-[#b42318]`} onClick={() => openEditor(item, true)}><Trash2 size={16} aria-hidden="true" /></button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       </div>
-      <button className={`${buttonClass} bg-[#355a4b] text-white`} disabled={isBranch && companies.length === 0} onClick={() => { setNotice(''); setEditorDelete(false); setEditor(null); }}><Plus size={16} aria-hidden="true" />เพิ่ม{isBranch ? 'สาขา' : 'บริษัท'}</button>
-    </header>
-    <div className="mb-5 flex flex-wrap gap-3 text-sm text-[#626862]">
-      <span className="rounded-xl border border-[#d7d9d0] bg-[#faf9f5] px-4 py-2">บริษัท {companies.length} แห่ง</span>
-      <span className="rounded-xl border border-[#d7d9d0] bg-[#faf9f5] px-4 py-2">สาขา {allBranches} แห่ง</span>
-      {isBranch && <Link href="/admin/companies" className="inline-flex items-center gap-2 px-2 text-[#355a4b] underline"><Building2 size={15} />จัดการบริษัทแม่</Link>}
-    </div>
-    {notice && <p role="status" className="mb-4 text-sm text-[#355a4b]">{notice}</p>}
-    <label className="mb-5 flex items-center gap-2 rounded-xl border border-[#d7d9d0] bg-[#faf9f5] px-3 py-2.5"><Search size={18} aria-hidden="true" /><span className="sr-only">ค้นหา{isBranch ? 'สาขา' : 'บริษัท'}</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={`ค้นหารหัส ชื่อ เลขผู้เสียภาษี หรือเบอร์โทร${isBranch ? ' / บริษัทแม่' : ''}`} className="w-full bg-transparent text-sm" /></label>
-    {error && <div role="alert" className="mb-4 flex items-center gap-3 text-sm text-red-700">{error}<button className={buttonClass} onClick={() => setRevision((value) => value + 1)}>ลองใหม่</button></div>}
-    <div className="overflow-hidden rounded-2xl border border-[#d7d9d0] bg-[#faf9f5]">
-      <div className="flex justify-between border-b border-[#d7d9d0] px-5 py-4 text-sm"><h2>รายการ{isBranch ? 'สาขา' : 'บริษัท'}</h2><span>{filteredItems.length} / {items.length} รายการ</span></div>
-      <div className="overflow-x-auto"><table aria-busy={loading} className="w-full min-w-[900px] text-left text-sm">
-        <caption className="sr-only">รายการ{isBranch ? 'สาขา' : 'บริษัท'}จากฐานข้อมูล</caption>
-        <thead className="bg-[#eeece5] text-xs text-[#626862]"><tr>{[isBranch ? 'รหัสสาขา' : 'รหัสบริษัท', ...(isBranch ? ['บริษัทแม่'] : ['ชื่อบริษัท']), 'เลขผู้เสียภาษี', 'ที่อยู่', 'เบอร์โทร', 'สถานะ', 'จัดการ'].map((heading) => <th key={heading} scope="col" className="whitespace-nowrap px-5 py-3 font-medium">{heading}</th>)}</tr></thead>
-        <tbody className="divide-y divide-[#d7d9d0]">
-          {loading ? <tr><td colSpan={7} className="p-6 text-center">กำลังโหลด…</td></tr>
-            : error ? <tr><td colSpan={7} className="p-6 text-center">ไม่สามารถโหลดข้อมูลได้</td></tr>
-              : !filteredItems.length ? <tr><td colSpan={7} className="p-6 text-center">ไม่พบข้อมูล{isBranch ? 'สาขา' : 'บริษัท'}</td></tr>
-                : filteredItems.map((item) => {
-                  const code = isBranch ? (item as Branch).branchcode : (item as Company).companycode;
-                  return <tr key={item.id} className="hover:bg-[#f0f2eb]">
-                    <th scope="row" className="px-5 py-4 font-mono text-[#355a4b]">{code}</th>
-                    <td className="px-5 py-4">{isBranch ? <><span className="block">{displayName((item as Branch).company)}</span><small className="text-[#626862]">{item.companycode}</small></> : <><span className="block">{displayName(item)}</span>{item.nameEN && <small lang="en" className="text-[#626862]">{item.nameEN}</small>}</>}</td>
-                    <td className="px-5 py-4">{item.TaxIdentificationNumber || '—'}</td>
-                    <td className="max-w-[260px] px-5 py-4"><span className="line-clamp-2">{item.address || '—'}</span>{item.postcode && <small className="text-[#626862]">{item.postcode}</small>}</td>
-                    <td className="whitespace-nowrap px-5 py-4">{item.phone || '—'}</td>
-                    <td className="px-5 py-4"><span className={`rounded-full px-2.5 py-1 text-xs ${item.status === 'ACTIVE' ? 'bg-[#e8f3eb] text-[#355a4b]' : 'bg-[#f0eee8] text-[#77756e]'}`}>{item.status === 'ACTIVE' ? 'ใช้งาน' : 'ไม่ใช้งาน'}</span></td>
-                    <td className="px-5 py-4"><div className="flex gap-2"><button aria-label={`แก้ไข ${code}`} className={buttonClass} onClick={() => { setNotice(''); setEditorDelete(false); setEditor(item); }}><Pencil size={14} aria-hidden="true" />แก้ไข</button><button aria-label={`ลบ ${code}`} className={`${buttonClass} text-red-700`} onClick={() => { setNotice(''); setEditorDelete(true); setEditor(item); }}><Trash2 size={14} aria-hidden="true" />ลบ</button></div></td>
-                  </tr>;
-                })}
-        </tbody>
-      </table></div>
-    </div>
-    {isBranch && companies.length === 0 && !loading && <div className="mt-4 flex items-center gap-2 text-sm text-[#626862]"><MapPin size={16} />เพิ่มบริษัทก่อน แล้วจึงเพิ่มสาขาได้ <Link className="text-[#355a4b] underline" href="/admin/companies">ไปหน้าบริษัท</Link></div>}
-    {editor !== undefined && <Editor kind={kind} companies={companies} item={editor} initialDelete={editorDelete} onClose={() => setEditor(undefined)} onSaved={(message) => { setEditor(undefined); setNotice(message); setQuery(''); setRevision((value) => value + 1); }} />}
-  </section>;
+
+      {isBranch && companies.length === 0 && !loading && (
+        <div className="flex items-center gap-2 text-sm text-[#5b6b66]">
+          <MapPin size={16} aria-hidden="true" />เพิ่มบริษัทก่อน แล้วจึงเพิ่มสาขาได้
+          <Link className={`rounded text-[#1f5c4a] underline underline-offset-4 ${focus}`} href="/admin/companies">ไปหน้าบริษัท</Link>
+        </div>
+      )}
+
+      {editor !== undefined && (
+        <Editor
+          kind={kind} companies={companies} item={editor} initialDelete={editorDelete}
+          onClose={() => setEditor(undefined)}
+          onSaved={(message) => { setEditor(undefined); setNotice(message); setQuery(''); setRevision((value) => value + 1); }}
+        />
+      )}
+    </section>
+  );
 }

@@ -5,6 +5,8 @@ import { randomUUID } from "node:crypto";
 import { ContractStatus, ContractType, InterestMode, InterestRateBasis, RepayType, SignatureMode } from "@/generated/prisma/enums";
 import { isPrismaCode } from "@/lib/borrowers";
 import { prisma } from "@/lib/prisma";
+import { formatBorrowerCode } from "@/lib/borrower-code";
+import { writeLoanLog } from "@/lib/loan-logs";
 
 const CONSENT_TEXT = "ข้าพเจ้ายืนยันว่าลายเซ็นดิจิทัลที่เขียนข้างต้นเป็นลายเซ็นจริงของข้าพเจ้า และยินยอมใช้ลายเซ็นนี้ประกอบสัญญาฉบับนี้";
 
@@ -111,6 +113,10 @@ export async function POST(request: Request) {
   if (!startDate) return Response.json({ error: "กรุณาระบุวันที่เริ่มสัญญาให้ถูกต้อง" }, { status: 400 });
   if (!dueDate) return Response.json({ error: "กรุณาระบุวันครบกำหนด" }, { status: 400 });
   if (dueDate <= startDate) return Response.json({ error: "วันครบกำหนดต้องอยู่หลังวันเริ่มสัญญา" }, { status: 400 });
+  if (data.reserveMoney !== undefined && typeof data.reserveMoney !== "boolean") return Response.json({ error: "ข้อมูลการจองเงินไม่ถูกต้อง" }, { status: 400 });
+  const todayInBangkok = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Bangkok", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+  const todayEnd = new Date(`${todayInBangkok}T23:59:59.999+07:00`);
+  if (data.reserveMoney === true && startDate <= todayEnd) return Response.json({ error: "การจองเงินต้องกำหนดวันเริ่มสัญญาเป็นวันถัดไปหรือหลังจากนั้น" }, { status: 400 });
   if (repayType === RepayType.INSTALLMENT && (months === null || months < 1 || months > 360)) {
     return Response.json({ error: "จำนวนเดือนผ่อนต้องอยู่ระหว่าง 1 ถึง 360 เดือน" }, { status: 400 });
   }
@@ -129,9 +135,12 @@ export async function POST(request: Request) {
   const signatureMode = data.signatureMode === undefined ? SignatureMode.PRINT : data.signatureMode;
   if (!isOneOf(ContractType, contractType)) return Response.json({ error: "ประเภทเอกสารสัญญาไม่ถูกต้อง" }, { status: 400 });
   if (!isOneOf(SignatureMode, signatureMode)) return Response.json({ error: "วิธีลงนามไม่ถูกต้อง" }, { status: 400 });
-  const status = contractType === ContractType.NONE || signatureMode === SignatureMode.DIGITAL || signedAt
-    ? ContractStatus.READY
-    : ContractStatus.AWAITING_DOCUMENT;
+  const isReservation = data.reserveMoney === true || startDate > todayEnd;
+  const status = isReservation
+    ? ContractStatus.RESERVED
+    : contractType === ContractType.NONE || signatureMode === SignatureMode.DIGITAL || signedAt
+      ? ContractStatus.READY
+      : ContractStatus.AWAITING_DOCUMENT;
 
   const interestRateBasis = repayType === RepayType.INSTALLMENT
     ? InterestRateBasis.MONTHLY_FLAT
@@ -296,9 +305,33 @@ export async function POST(request: Request) {
         },
       });
       if (draftId) await tx.loanContractDraft.updateMany({where:{id:draftId,borrowerId:debtorId},data:{finalizedContractId:contract.id}});
+      await writeLoanLog(tx, {
+        borrowerId: debtorId,
+        contractId: contract.id,
+        targetId: contract.id,
+        type: 'CONTRACT',
+        action: 'CREATE',
+        note: `สร้างสัญญา ${contract.contractNumber}`,
+        afterData: {
+          contractNumber: contract.contractNumber,
+          principal: contract.principal,
+          interestRate: contract.interestRate,
+          interestAmount: contract.interestAmount,
+          netDisbursed: contract.netDisbursed,
+          repayType: contract.repayType,
+          interestMode: contract.interestMode,
+          startDate: contract.startDate,
+          dueDate: contract.dueDate,
+          status: contract.status,
+        },
+      });
       return contract;
     });
-    return Response.json(saved, { status: 201, headers: { "Cache-Control": "no-store" } });
+    const savedWithDebtor = saved as typeof saved & { debtor?: { borrowersCode: string; [key: string]: unknown } };
+    const responsePayload = savedWithDebtor.debtor
+      ? { ...savedWithDebtor, debtor: { ...savedWithDebtor.debtor, borrowersCode: formatBorrowerCode(savedWithDebtor.debtor.borrowersCode) } }
+      : saved;
+    return Response.json(responsePayload, { status: 201, headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     if (signaturePath) await unlink(signaturePath).catch(() => {});
     await Promise.all(additionalPaths.map(file=>unlink(file).catch(()=>{})));

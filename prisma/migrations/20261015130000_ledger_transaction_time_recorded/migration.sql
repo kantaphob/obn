@@ -1,0 +1,3 @@
+ALTER TABLE "CompanyLedgerEntry" ADD COLUMN "timeRecorded" BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE "Payment" ADD COLUMN "timeRecorded" BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE "Repayment" ADD COLUMN "timeRecorded" BOOLEAN NOT NULL DEFAULT false;

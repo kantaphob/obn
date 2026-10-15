@@ -1,44 +1,46 @@
-.overdue-page .lx-wrap { max-width: 1320px; }
-.overdue-page .lx-crumb a { color: inherit; text-decoration: none; }
-.overdue-page .lx-crumb a:hover { color: var(--lx-brand); }
-.overdue-head { align-items: center; }
-.overdue-actions { display: flex; gap: 10px; flex-wrap: wrap; }
-.overdue-summary { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 14px; margin-bottom: 18px; }
-.overdue-summary article { display: grid; gap: 6px; min-width: 0; padding: 17px 20px; border: 1px solid var(--lx-line); border-radius: 14px; background: var(--lx-surface); }
-.overdue-summary article > span { color: var(--lx-muted); font-size: 13px; }
-.overdue-summary strong { font-size: 23px; font-weight: 600; letter-spacing: -.02em; }
-.overdue-summary small { color: var(--lx-muted); font-size: 13px; font-weight: 400; }
-.overdue-report { overflow: hidden; }
-.overdue-toolbar { display: flex; align-items: end; gap: 14px; flex-wrap: wrap; padding: 18px 20px; border-bottom: 1px solid var(--lx-line); }
-.overdue-search { display: flex; align-items: center; gap: 9px; min-width: 280px; flex: 1; height: 42px; padding: 0 12px; border: 1px solid var(--lx-line-strong); border-radius: 10px; color: var(--lx-muted); }
-.overdue-search:focus-within { border-color: var(--lx-brand); outline: 2px solid var(--lx-brand-soft); }
-.overdue-search input { width: 100%; min-width: 0; border: 0; outline: 0; background: transparent; font-size: 14px; }
-.overdue-period { display: grid; gap: 4px; min-width: 180px; color: var(--lx-muted); font-size: 12px; }
-.overdue-period select { height: 42px; border: 1px solid var(--lx-line-strong); border-radius: 10px; background: #fff; padding: 0 32px 0 11px; color: var(--lx-ink); font-size: 14px; }
-.overdue-result-count { min-width: 80px; padding-bottom: 10px; color: var(--lx-muted); font-size: 13px; text-align: right; }
-.overdue-table-wrap { width: 100%; overflow: auto; }
-.overdue-table { width: 100%; border-collapse: collapse; text-align: left; white-space: nowrap; }
-.overdue-table th { padding: 12px 16px; background: #f7f9f7; color: var(--lx-muted); font-size: 12px; font-weight: 500; }
-.overdue-table td { padding: 15px 16px; border-top: 1px solid var(--lx-line); font-size: 13px; vertical-align: middle; }
-.overdue-table td:first-child { min-width: 220px; }
-.overdue-table td:first-child strong, .overdue-table td:first-child span { display: block; }
-.overdue-table td:first-child span { margin-top: 3px; color: var(--lx-muted); }
-.overdue-table .amount-col { text-align: right; }
-.overdue-contact { display: grid; gap: 5px; }
-.overdue-contact a, .overdue-contact span { display: inline-flex; align-items: center; gap: 6px; color: var(--lx-ink); text-decoration: none; }
-.overdue-contact a:hover { color: var(--lx-brand); text-decoration: underline; }
-.overdue-contact svg { flex: 0 0 auto; color: var(--lx-muted); }
-.overdue-days { display: inline-flex; padding: 4px 9px; border-radius: 999px; background: var(--lx-danger-soft); color: var(--lx-danger); font-size: 12px; font-weight: 500; }
-.overdue-error { margin: 14px 20px; color: var(--lx-danger); }
-.overdue-empty { display: grid; justify-items: center; gap: 4px; padding: 46px 18px; color: var(--lx-muted); text-align: center; }
-.overdue-empty strong { color: var(--lx-ink); font-size: 15px; }
+/* @reference shares Tailwind utilities without duplicating its generated CSS. */
+@reference "tailwindcss";
+.overdue-page .lx-wrap { @apply [max-width:1320px]; }
+.overdue-page .lx-crumb a { @apply [color:inherit]; @apply [text-decoration:none]; }
+.overdue-page .lx-crumb a:hover { @apply [color:var(--lx-brand)]; }
+.overdue-head { @apply items-center; }
+.overdue-actions { @apply flex; @apply [gap:10px]; @apply flex-wrap; }
+.overdue-summary { @apply grid; @apply [grid-template-columns:repeat(3,minmax(0,1fr))]; @apply [gap:14px]; @apply [margin-bottom:18px]; }
+.overdue-summary article { @apply grid; @apply [gap:6px]; @apply [min-width:0]; @apply [padding:17px_20px]; @apply [border:1px_solid_var(--lx-line)]; @apply [border-radius:14px]; @apply [background:var(--lx-surface)]; }
+.overdue-summary article > span { @apply [color:var(--lx-muted)]; @apply [font-size:13px]; }
+.overdue-summary strong { @apply [font-size:23px]; @apply [font-weight:600]; @apply [letter-spacing:-.02em]; }
+.overdue-summary small { @apply [color:var(--lx-muted)]; @apply [font-size:13px]; @apply [font-weight:400]; }
+.overdue-report { @apply overflow-hidden; }
+.overdue-toolbar { @apply flex; @apply [align-items:end]; @apply [gap:14px]; @apply flex-wrap; @apply [padding:18px_20px]; @apply [border-bottom:1px_solid_var(--lx-line)]; }
+.overdue-search { @apply flex; @apply items-center; @apply [gap:9px]; @apply [min-width:280px]; @apply [flex:1]; @apply [height:42px]; @apply [padding:0_12px]; @apply [border:1px_solid_var(--lx-line-strong)]; @apply [border-radius:10px]; @apply [color:var(--lx-muted)]; }
+.overdue-search:focus-within { @apply [border-color:var(--lx-brand)]; @apply [outline:2px_solid_var(--lx-brand-soft)]; }
+.overdue-search input { @apply [width:100%]; @apply [min-width:0]; @apply [border:0]; @apply [outline:0]; @apply [background:transparent]; @apply [font-size:14px]; }
+.overdue-period { @apply grid; @apply [gap:4px]; @apply [min-width:180px]; @apply [color:var(--lx-muted)]; @apply [font-size:12px]; }
+.overdue-period select { @apply [height:42px]; @apply [border:1px_solid_var(--lx-line-strong)]; @apply [border-radius:10px]; @apply [background:#fff]; @apply [padding:0_32px_0_11px]; @apply [color:var(--lx-ink)]; @apply [font-size:14px]; }
+.overdue-result-count { @apply [min-width:80px]; @apply [padding-bottom:10px]; @apply [color:var(--lx-muted)]; @apply [font-size:13px]; @apply text-right; }
+.overdue-table-wrap { @apply [width:100%]; @apply overflow-auto; }
+.overdue-table { @apply [width:100%]; @apply border-collapse; @apply text-left; @apply whitespace-nowrap; }
+.overdue-table th { @apply [padding:12px_16px]; @apply [background:#f7f9f7]; @apply [color:var(--lx-muted)]; @apply [font-size:12px]; @apply [font-weight:500]; }
+.overdue-table td { @apply [padding:15px_16px]; @apply [border-top:1px_solid_var(--lx-line)]; @apply [font-size:13px]; @apply [vertical-align:middle]; }
+.overdue-table td:first-child { @apply [min-width:220px]; }
+.overdue-table td:first-child strong, .overdue-table td:first-child span { @apply block; }
+.overdue-table td:first-child span { @apply [margin-top:3px]; @apply [color:var(--lx-muted)]; }
+.overdue-table .amount-col { @apply text-right; }
+.overdue-contact { @apply grid; @apply [gap:5px]; }
+.overdue-contact a, .overdue-contact span { @apply inline-flex; @apply items-center; @apply [gap:6px]; @apply [color:var(--lx-ink)]; @apply [text-decoration:none]; }
+.overdue-contact a:hover { @apply [color:var(--lx-brand)]; @apply [text-decoration:underline]; }
+.overdue-contact svg { @apply [flex:0_0_auto]; @apply [color:var(--lx-muted)]; }
+.overdue-days { @apply inline-flex; @apply [padding:4px_9px]; @apply [border-radius:999px]; @apply [background:var(--lx-danger-soft)]; @apply [color:var(--lx-danger)]; @apply [font-size:12px]; @apply [font-weight:500]; }
+.overdue-error { @apply [margin:14px_20px]; @apply [color:var(--lx-danger)]; }
+.overdue-empty { @apply grid; @apply [justify-items:center]; @apply [gap:4px]; @apply [padding:46px_18px]; @apply [color:var(--lx-muted)]; @apply text-center; }
+.overdue-empty strong { @apply [color:var(--lx-ink)]; @apply [font-size:15px]; }
 @media (max-width: 760px) {
-  .overdue-summary { grid-template-columns: 1fr; gap: 9px; }
-  .overdue-summary article { padding: 13px 16px; }
-  .overdue-summary strong { font-size: 20px; }
-  .overdue-toolbar { align-items: stretch; padding: 14px; }
-  .overdue-search { min-width: 100%; }
-  .overdue-period { flex: 1; }
-  .overdue-result-count { align-self: end; }
-  .overdue-head .lx-head { align-items: stretch; }
+  .overdue-summary { @apply [grid-template-columns:1fr]; @apply [gap:9px]; }
+  .overdue-summary article { @apply [padding:13px_16px]; }
+  .overdue-summary strong { @apply [font-size:20px]; }
+  .overdue-toolbar { @apply items-stretch; @apply [padding:14px]; }
+  .overdue-search { @apply [min-width:100%]; }
+  .overdue-period { @apply [flex:1]; }
+  .overdue-result-count { @apply [align-self:end]; }
+  .overdue-head .lx-head { @apply items-stretch; }
 }

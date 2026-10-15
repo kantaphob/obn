@@ -2,12 +2,13 @@ import { prisma } from '@/lib/prisma';
 import { POST as upload } from '../../attachments/route';
 import { unlink } from 'node:fs/promises';
 import path from 'node:path';
+import { writeLoanLog } from '@/lib/loan-logs';
 
 export async function POST(request:Request, context:{params:Promise<{id:string}>}){
  const {id}=await context.params;
  const existing=await prisma.contract.findUnique({where:{id},select:{status:true,signatureMode:true}});
  if(!existing)return Response.json({error:'ไม่พบสัญญา'},{status:404});
- if(existing.status!=='AWAITING_DOCUMENT'||existing.signatureMode!=='PRINT')return Response.json({error:'สัญญานี้ไม่อยู่ระหว่างรอเอกสารลงนาม'},{status:409});
+ if(!['AWAITING_DOCUMENT','RESERVED'].includes(existing.status)||existing.signatureMode!=='PRINT')return Response.json({error:'สัญญานี้ไม่อยู่ระหว่างรอเอกสารลงนาม'},{status:409});
  const result=await upload(request);
  if(!result.ok)return result;
  const {url}=await result.json();
@@ -15,11 +16,21 @@ export async function POST(request:Request, context:{params:Promise<{id:string}>
  try{
   await prisma.$transaction(async tx=>{
    await tx.contract.update({where:{id},data:{updatedAt:new Date()}});
-   const contract=await tx.contract.findUniqueOrThrow({where:{id},select:{documentData:true,status:true,signatureMode:true}});
-   if(contract.status!=='AWAITING_DOCUMENT'||contract.signatureMode!=='PRINT')throw new Error('สัญญานี้ไม่อยู่ระหว่างรอเอกสารลงนาม');
+   const contract=await tx.contract.findUniqueOrThrow({where:{id},select:{debtorId:true,contractNumber:true,documentData:true,status:true,signatureMode:true,startDate:true}});
+   if(!['AWAITING_DOCUMENT','RESERVED'].includes(contract.status)||contract.signatureMode!=='PRINT')throw new Error('สัญญานี้ไม่อยู่ระหว่างรอเอกสารลงนาม');
    const data=contract.documentData?JSON.parse(contract.documentData):{};
+   const hadSignedDocument=Boolean(data.signedDocument);
    data.signedDocument={...attachment,uploadedAt:new Date().toISOString()};
-   await tx.contract.update({where:{id},data:{documentData:JSON.stringify(data),status:'READY'}});
+   const today=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Bangkok',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+   const todayEnd=new Date(`${today}T23:59:59.999+07:00`);
+   const nextStatus=contract.startDate>todayEnd?'RESERVED':'READY';
+   await tx.contract.update({where:{id},data:{documentData:JSON.stringify(data),status:nextStatus,signedAt:new Date()}});
+   await writeLoanLog(tx, {
+    borrowerId:contract.debtorId,contractId:id,targetId:id,type:'CONTRACT',action:'UPDATE',
+    note:`บันทึกเอกสารลงนามสัญญา ${contract.contractNumber}`,
+    beforeData:{signedDocument:hadSignedDocument,status:contract.status},
+    afterData:{signedDocument:true,status:nextStatus},
+   });
   });
   return Response.json({attachment},{status:201});
  }catch(error){

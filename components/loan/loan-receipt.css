@@ -1,0 +1,130 @@
+.loan-receipt-shell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+}
+
+.loan-receipt-ticket {
+  box-sizing: border-box;
+  width: min(360px, 100%);
+  padding: 24px 22px;
+  border: 1px solid #e5e7e5;
+  border-radius: 12px;
+  background: #fff;
+  color: #202622;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.loan-receipt-heading {
+  padding-bottom: 13px;
+  border-bottom: 1px dashed #aeb6b0;
+  text-align: center;
+}
+
+.loan-receipt-heading > span { display: block; font-size: 11px; letter-spacing: .1em; }
+.loan-receipt-heading h2 { margin: 2px 0 5px; font-size: 18px; font-weight: 750; }
+.loan-receipt-heading p { margin: 0; font-size: 10px; overflow-wrap: anywhere; }
+
+.loan-receipt-issuer {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 11px 0;
+  border-bottom: 1px dashed #aeb6b0;
+  text-align: center;
+  font-size: 10px;
+}
+.loan-receipt-issuer strong { font-size: 12px; }
+
+.loan-receipt-details,
+.loan-receipt-allocation {
+  margin: 0;
+  padding: 10px 0;
+  border-bottom: 1px dashed #aeb6b0;
+}
+.loan-receipt-details > div,
+.loan-receipt-allocation > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 3px 0;
+}
+.loan-receipt-details dt,
+.loan-receipt-allocation dt { color: #626b65; }
+.loan-receipt-details dd,
+.loan-receipt-allocation dd {
+  max-width: 66%;
+  margin: 0;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.loan-receipt-line-item { display: flex; flex-direction: column; gap: 3px; padding: 10px 0 3px; }
+.loan-receipt-line-item > span { color: #626b65; }
+.loan-receipt-total {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 9px 0;
+  border-bottom: 1px solid #202622;
+}
+.loan-receipt-total strong { font-size: 19px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.loan-receipt-method { margin: 10px 0 0; }
+.loan-receipt-note { margin: 8px 0 0; overflow-wrap: anywhere; }
+.loan-receipt-signature {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 21px;
+  padding-top: 10px;
+  border-top: 1px dashed #aeb6b0;
+  font-size: 10px;
+}
+.loan-receipt-signature > div { display: flex; flex-direction: column; align-items: center; min-width: 94px; gap: 4px; }
+.loan-receipt-signature i { display: block; width: 100%; height: 18px; border-bottom: 1px solid #737b75; }
+.loan-receipt-actions { display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; }
+.loan-receipt-actions button {
+  padding: 9px 12px;
+  border: 1px solid #d7ddd8;
+  border-radius: 8px;
+  background: #fff;
+  color: #33443a;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+@media (max-width: 480px) {
+  .loan-receipt-ticket { padding: 20px 16px; }
+}
+
+@media print {
+  @page { size: 80mm auto; margin: 4mm; }
+  body:has(.loan-receipt-ticket) * { visibility: hidden !important; }
+  body:has(.loan-receipt-ticket) .loan-receipt-shell,
+  body:has(.loan-receipt-ticket) .loan-receipt-shell * { visibility: visible !important; }
+  .loan-receipt-shell {
+    position: fixed !important;
+    inset: 0 auto auto 0 !important;
+    display: block !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    background: #fff !important;
+  }
+  .loan-receipt-ticket {
+    width: 72mm !important;
+    max-width: none !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+  }
+  .loan-receipt-actions, .ph-close { display: none !important; }
+}
