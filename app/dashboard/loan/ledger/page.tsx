@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
 import Link from 'next/link';
 import { ArrowDownLeft, ArrowDownToLine, ArrowUpRight, CalendarDays, Check, ChevronLeft, ChevronRight, CircleDollarSign, FileText, Plus, Search, Wallet, X } from 'lucide-react';
+import { summarizeCompanyLedgerRows } from '@/lib/company-ledger-summary';
 import './ledger.css';
 
 type LedgerType = 'INCOME' | 'EXPENSE';
@@ -24,6 +25,10 @@ type Draft = { type: LedgerType; title: string; categoryId: string; amount: stri
 type FinanceCategory = { id: string; direction: LedgerType; name: string; isActive: boolean };
 
 const today = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Bangkok', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+const currentMonthStart = () => {
+  const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Bangkok', year: 'numeric', month: '2-digit' }).formatToParts(new Date());
+  return `${parts.find(part => part.type === 'year')?.value}-${parts.find(part => part.type === 'month')?.value}-01`;
+};
 const bangkokDate = (value: string) => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Bangkok', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(value));
 const PAGE_SIZE = 25;
 const currency = (value: number) => new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB', maximumFractionDigits: 2 }).format(value / 100);
@@ -35,7 +40,7 @@ export default function Ledger() {
   const [closingBalance, setClosingBalance] = useState(0);
   const [financeCategories, setFinanceCategories] = useState<FinanceCategory[]>([]);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
-  const [from, setFrom] = useState('');
+  const [from, setFrom] = useState(currentMonthStart);
   const [to, setTo] = useState(today());
   const [query, setQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<'ALL' | LedgerType>('ALL');
@@ -59,7 +64,7 @@ export default function Ledger() {
       if (!response.ok) throw new Error(data.error || 'โหลดบัญชีไม่สำเร็จ');
       const throughDate = data.filter((entry: LedgerEntry) => !from || bangkokDate(entry.transactionDate) >= from);
       setEntries(throughDate);
-      setClosingBalance(data.reduce((balance: number, entry: LedgerEntry) => balance + (entry.type === 'INCOME' ? entry.amount : -entry.amount), 0));
+      setClosingBalance(summarizeCompanyLedgerRows(data).net);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'โหลดบัญชีไม่สำเร็จ');
     } finally {
@@ -95,11 +100,7 @@ export default function Ledger() {
   const pageCount = Math.max(1, Math.ceil(visibleEntries.length / PAGE_SIZE));
   const currentPage = Math.min(page, pageCount);
   const pagedEntries = useMemo(() => visibleEntries.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE), [visibleEntries, currentPage]);
-  const totals = useMemo(() => visibleEntries.reduce((sum, entry) => {
-    if (entry.type === 'INCOME') sum.income += entry.amount;
-    else sum.expense += entry.amount;
-    return sum;
-  }, { income: 0, expense: 0 }), [visibleEntries]);
+  const totals = useMemo(() => summarizeCompanyLedgerRows(entries), [entries]);
   const categories = financeCategories.filter((category) => category.direction === draft.type && category.isActive);
   const amountSatang = /^\d+(\.\d{1,2})?$/.test(draft.amount) ? Math.round(Number(draft.amount) * 100) : 0;
 
@@ -147,10 +148,11 @@ export default function Ledger() {
       {error && <div className="cl-alert error" role="alert"><X size={17}/>{error}<button type="button" aria-label="ปิด" onClick={() => setError('')}><X size={16}/></button></div>}
       {notice && <div className="cl-alert success" role="status"><Check size={17}/>{notice}<button type="button" aria-label="ปิด" onClick={() => setNotice('')}><X size={16}/></button></div>}
 
-      <section className="cl-summary" aria-label="สรุปยอดจากรายการที่แสดง">
-        <article className="cl-summary-card"><div className="cl-summary-label"><span className="cl-summary-icon income"><ArrowDownLeft size={18}/></span><span>รายรับ</span></div><strong className="positive">{currency(totals.income)}</strong><small>{visibleEntries.filter((entry) => entry.type === 'INCOME').length} รายการที่แสดง</small></article>
-        <article className="cl-summary-card"><div className="cl-summary-label"><span className="cl-summary-icon expense"><ArrowUpRight size={18}/></span><span>รายจ่าย</span></div><strong className="negative">{currency(totals.expense)}</strong><small>{visibleEntries.filter((entry) => entry.type === 'EXPENSE').length} รายการที่แสดง</small></article>
-        <article className="cl-summary-card balance"><div className="cl-summary-label"><span className="cl-summary-icon net"><Wallet size={18}/></span><span>ยอดคงเหลือ ณ {new Intl.DateTimeFormat('th-TH', { timeZone: 'Asia/Bangkok', day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(`${to}T12:00:00+07:00`))}</span></div><strong>{currency(closingBalance)}</strong><small>ยอดสะสมตั้งแต่รายการแรกถึงวันที่เลือก</small></article>
+      <section className="cl-summary" aria-label="สรุปบัญชี">
+        <article className="cl-summary-card"><div className="cl-summary-label"><span className="cl-summary-icon income"><ArrowDownLeft size={18}/></span><span>รายรับในช่วงที่เลือก</span></div><strong className="positive">{currency(totals.income)}</strong><small>{entries.filter((entry) => entry.type === 'INCOME').length} รายการ · ไม่รวมตัวกรองรายการ</small></article>
+        <article className="cl-summary-card"><div className="cl-summary-label"><span className="cl-summary-icon expense"><ArrowUpRight size={18}/></span><span>รายจ่ายในช่วงที่เลือก</span></div><strong className="negative">{currency(totals.expense)}</strong><small>{entries.filter((entry) => entry.type === 'EXPENSE').length} รายการ · ไม่รวมตัวกรองรายการ</small></article>
+        <article className="cl-summary-card period-net"><div className="cl-summary-label"><span className="cl-summary-icon net"><CircleDollarSign size={18}/></span><span>สุทธิในช่วงที่เลือก</span></div><strong className={totals.net < 0 ? 'negative' : 'positive'}>{currency(totals.net)}</strong><small>รายรับลบรายจ่ายตามช่วงวันที่เลือก</small></article>
+        <article className="cl-summary-card balance"><div className="cl-summary-label"><span className="cl-summary-icon net"><Wallet size={18}/></span><span>ยอดสะสม ณ {new Intl.DateTimeFormat('th-TH', { timeZone: 'Asia/Bangkok', day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(`${to}T12:00:00+07:00`))}</span></div><strong className={closingBalance < 0 ? 'negative' : ''}>{currency(closingBalance)}</strong><small>สะสมตั้งแต่รายการแรกถึงวันที่เลือก</small></article>
       </section>
 
       <section className="cl-panel">

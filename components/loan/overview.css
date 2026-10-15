@@ -49,7 +49,7 @@
 .loan-cashflow-legend i { width: 8px; height: 8px; border-radius: 3px; }
 .loan-cashflow-legend i.out { background: #ad8ac7; }
 .loan-cashflow-legend i.in { background: #70a881; }
-.loan-cashflow-chart { display: grid; height: 150px; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; padding-top: 8px; border-bottom: 1px solid #a9b0a54a; background: repeating-linear-gradient(to bottom, transparent 0, transparent 36px, #a9b0a51c 37px, transparent 38px); }
+.loan-cashflow-chart { display: grid; height: 150px; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 8px; padding-top: 8px; border-bottom: 1px solid #a9b0a54a; background: repeating-linear-gradient(to bottom, transparent 0, transparent 36px, #a9b0a51c 37px, transparent 38px); }
 .loan-cashflow-month { display: flex; min-width: 0; flex-direction: column; align-items: center; justify-content: flex-end; gap: 6px; }
 .loan-cashflow-bars { display: flex; width: 100%; height: 118px; align-items: flex-end; justify-content: center; gap: 5px; }
 .loan-cashflow-bars .bar { width: min(22px, 30%); min-height: 0; border-radius: 5px 5px 1px 1px; }
@@ -59,3 +59,5 @@
 @media (max-width: 1100px) { .loan-overview-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 760px) { .loan-overview-panels { grid-template-columns: 1fr; gap: 12px; } }
 @media (max-width: 440px) { .loan-overview-metrics { gap: 9px; } .loan-overview-metric { min-height: 132px; padding: 13px; } .loan-overview-metric-top { font-size: 10px; } .loan-overview-metric strong { font-size: 19px; } .loan-overview-panel > header { padding: 14px 12px 12px; } .loan-overview-panel ul { padding: 0 12px; } .loan-overview-row-copy strong { max-width: 155px; } .loan-cashflow { padding: 15px 12px 12px; } .loan-cashflow-kpis { gap: 6px; } .loan-cashflow-kpis article { padding: 10px 8px; } .loan-cashflow-kpis article > span { font-size: 9px; } .loan-cashflow-kpis article > strong { font-size: 15px; } .loan-cashflow-kpis article > small { font-size: 8px; } .loan-cashflow-chart-wrap { padding: 10px 7px 3px; } .loan-cashflow-bars { gap: 3px; } }
+
+@media (max-width: 760px) { .loan-cashflow-chart-wrap { overflow-x: auto; } .loan-cashflow-chart { min-width: 560px; } }

@@ -38,7 +38,6 @@ const optionalFields = [
   { key: 'postcode', label: 'รหัสไปรษณีย์', max: 10 },
   { key: 'phone', label: 'เบอร์โทรศัพท์', max: 40 },
   { key: 'email', label: 'อีเมล', max: 200, type: 'email' },
-  { key: 'logo', label: 'URL โลโก้', max: 1000, wide: true },
   { key: 'aboutus', label: 'เกี่ยวกับเรา', max: 5000, wide: true, textarea: true },
   { key: 'companyoverview', label: 'ภาพรวมบริษัท', max: 5000, wide: true, textarea: true },
 ] as const;
@@ -61,6 +60,12 @@ function Editor({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [deleteMode, setDeleteMode] = useState(initialDelete);
+  const [logo, setLogo] = useState(item?.logo ?? '');
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [preview, setPreview] = useState('');
+  useEffect(() => {
+    return () => { if (preview) URL.revokeObjectURL(preview); };
+  }, [preview]);
   const isBranch = kind === 'branches';
   const isEditing = Boolean(item);
   const title = deleteMode ? `ลบ${isBranch ? 'สาขา' : 'บริษัท'}` : `${isEditing ? 'แก้ไข' : 'เพิ่ม'}${isBranch ? 'สาขา' : 'บริษัท'}`;
@@ -75,6 +80,21 @@ function Editor({
     setBusy(true);
     setError('');
     try {
+      if (!deleteMode) {
+        let savedLogo = logo;
+        if (logoFile) {
+          const upload = new FormData();
+          upload.set('file', logoFile);
+          const uploadResponse = await trackedFetch('/api/company-logos', { method: 'POST', body: upload });
+          const result = await uploadResponse.json();
+          if (!uploadResponse.ok) throw new Error(result.error ?? 'อัปโหลดโลโก้ไม่สำเร็จ');
+          savedLogo = result.url;
+          setLogo(savedLogo);
+          setLogoFile(null);
+          setPreview('');
+        }
+        data.logo = savedLogo;
+      }
       const endpoint = isBranch ? '/api/branch-sequences' : '/api/company-sequences';
       const url = item ? `${endpoint}/${encodeURIComponent(item.id)}` : endpoint;
       const response = await trackedFetch(url, {
@@ -95,7 +115,7 @@ function Editor({
     <section role="dialog" aria-modal="true" aria-labelledby="company-editor-title" className="borrower-modal borrower-crud-modal" style={{ width: 'min(820px,100%)' }}>
       <header className="borrower-modal-header">
         <div><p className="borrowers-eyebrow">MASTER DATA / {isBranch ? 'BRANCH' : 'COMPANY'}</p><h2 id="company-editor-title">{title}</h2><p>รหัสต้องเป็นตัวเลข 5 หลัก</p></div>
-        <button type="button" className="modal-close" aria-label="ปิด" onClick={onClose}>×</button>
+        <button type="button" className="modal-close" aria-label="ปิด" disabled={busy} onClick={onClose}>×</button>
       </header>
       <form className="borrower-form" onSubmit={submit}>
         {deleteMode ? <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
@@ -114,6 +134,25 @@ function Editor({
           <label className="compact-field">ชื่อภาษาไทย
             <input name="nameTH" required maxLength={200} defaultValue={item?.nameTH ?? ''} disabled={busy} className={fieldClass} />
           </label>
+          <div className="compact-field sm:col-span-2">
+            <label htmlFor="company-logo">โลโก้</label>
+            <input id="company-logo" type="file" accept="image/png,image/jpeg,image/webp" disabled={busy} className={fieldClass} onChange={(event) => {
+              const file = event.target.files?.[0];
+              if (!file) return;
+              if (!['image/png', 'image/jpeg', 'image/webp'].includes(file.type) || file.size < 1 || file.size > 5 * 1024 * 1024) {
+                setError('รองรับ PNG, JPG หรือ WebP ขนาดไม่เกิน 5 MB');
+                event.target.value = '';
+                return;
+              }
+              setError(''); setLogoFile(file); setPreview(URL.createObjectURL(file));
+            }} />
+            <p className="mt-2 text-xs text-[#626862]">PNG, JPG หรือ WebP ไม่เกิน 5 MB</p>
+            {(logoFile ? preview : logo) && <div className="mt-3 flex items-center gap-4">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={logoFile ? preview : logo} alt="ตัวอย่างโลโก้" className="h-24 w-24 rounded-xl border border-[#d7d9d0] bg-white object-contain p-2" />
+              <button type="button" className={buttonClass} disabled={busy} onClick={() => { setLogo(''); setLogoFile(null); setPreview(''); const input = document.getElementById('company-logo') as HTMLInputElement | null; if (input) input.value = ''; }}>นำโลโก้ออก</button>
+            </div>}
+          </div>
           {optionalFields.map((field) => <label key={field.key} className={`compact-field ${'wide' in field && field.wide ? 'sm:col-span-2' : ''}`}>
             {field.label}
             {'textarea' in field && field.textarea
