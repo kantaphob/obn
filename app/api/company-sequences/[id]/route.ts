@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { CompanySequenceType } from "@/generated/prisma/enums";
 import {
   companySequenceError,
+  parseCompanyOwner,
   parseCompanyRecord,
   validateFiveDigitCode,
 } from "@/lib/company-sequence-api";
@@ -14,12 +15,14 @@ export async function PATCH(request: Request, { params }: Context) {
     const input = await request.json();
     const codeError = validateFiveDigitCode(input?.companycode, "รหัสบริษัท");
     if (codeError) return Response.json({ error: codeError }, { status: 400 });
+    const owner = parseCompanyOwner(input);
+    if (typeof owner === 'string') return Response.json({ error: owner }, { status: 400 });
     const data = parseCompanyRecord(input);
     if (typeof data === "string") return Response.json({ error: data }, { status: 400 });
 
     return Response.json(await prisma.companySequence.update({
       where: { id },
-      data: { ...data, companycode: input.companycode.trim(), type: CompanySequenceType.COMPANY },
+      data: { ...data, ...owner, companycode: input.companycode.trim(), type: CompanySequenceType.COMPANY },
       include: { _count: { select: { branches: true } } },
     }));
   } catch (error) {

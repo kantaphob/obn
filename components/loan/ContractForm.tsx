@@ -17,6 +17,12 @@ type Borrower = {
   firstName: string;
   lastName: string | null;
   address: string | null;
+  birthDate?: string | null;
+  houseNumber?: string | null;
+  buildingName?: string | null;
+  alley?: string | null;
+  road?: string | null;
+  subdistrict?: { nameTh: string; district?: { nameTh: string; province?: { nameTh: string } } } | null;
   approvedLimit: number | null;
   availableLimit: number | null;
 };
@@ -33,6 +39,11 @@ type LoanBranch = {
   nameTH: string | null;
   nameEN: string | null;
   status: string;
+  address?: string | null;
+  houseNo?: string | null;
+  soi?: string | null;
+  road?: string | null;
+  postcode?: string | null;
   company: { nameTH: string | null; nameEN: string | null };
 };
 
@@ -432,7 +443,7 @@ export default function ContractForm({ embedded = false, draftId, onClose, onSav
         body: JSON.stringify({
           ...contract,
           draftId: draftIdRef.current || null,
-          documentData: {...documents, loanText: contract.contractType === "NONE" ? "" : documents.loanText || makeLoanDocument(documents, documentLoan), guaranteeText: contract.contractType === "WITNESS_GUARANTOR" ? documents.guaranteeText || makeGuaranteeDocument(documents,documentLoan,contract.guarantor) : ""},
+          documentData: {...documentSettings, loanText: contract.contractType === "NONE" ? "" : documents.loanText || makeLoanDocument(documentSettings, documentLoan), guaranteeText: contract.contractType === "WITNESS_GUARANTOR" ? documents.guaranteeText || makeGuaranteeDocument(documentSettings,documentLoan,contract.guarantor) : ""},
           debtorId: selected.id,
           principal: principalSatang,
           interestRate,
@@ -583,7 +594,11 @@ export default function ContractForm({ embedded = false, draftId, onClose, onSav
     return () => controller.abort();
   }, [selected, contract.contractNumber]);
 
-  const documentLoan = {number:savedContractNumber || contract.contractNumber,borrowerName:selected?borrowerName(selected):"",borrowerId:selected?.nationalId||"",borrowerAddress:selected?.address||"",borrowerPhone:selected?.phone||"",principal:principalSatang,rate:interestRate,monthly:isInstallment,months:isInstallment?contract.installmentMonths:"",startDate:contract.startDate,dueDate:contract.dueDate,paymentOption:contract.paymentOption};
+  const selectedBranch = loanBranches.find(branch => branch.branchcode === documents.branchCode);
+  const branchAddress = selectedBranch ? [selectedBranch.address || [selectedBranch.houseNo && `บ้านเลขที่ ${selectedBranch.houseNo}`, selectedBranch.soi && `ซอย${selectedBranch.soi}`, selectedBranch.road && `ถนน${selectedBranch.road}`].filter(Boolean).join(' '), selectedBranch.postcode].filter(Boolean).join(' ') : '';
+  const branchPlace = selectedBranch ? [selectedBranch.nameTH || selectedBranch.nameEN || selectedBranch.branchcode, branchAddress].filter(Boolean).join(' · ') : '';
+  const documentSettings = { ...documents, place: documents.place.trim() || branchPlace };
+  const documentLoan = {number:savedContractNumber || contract.contractNumber,borrowerCode:selected?formatBorrowerCode(selected.borrowersCode):"",borrowerName:selected?borrowerName(selected):"",borrowerId:selected?.nationalId||"",borrowerAddress:selected?.address||"",borrowerPhone:selected?.phone||"",borrowerBirthDate:selected?.birthDate||null,borrowerHouseNumber:selected?.houseNumber||null,borrowerBuildingName:selected?.buildingName||null,borrowerAlley:selected?.alley||null,borrowerRoad:selected?.road||null,borrowerSubdistrict:selected?.subdistrict?.nameTh||null,borrowerDistrict:selected?.subdistrict?.district?.nameTh||null,borrowerProvince:selected?.subdistrict?.district?.province?.nameTh||null,principal:principalSatang,rate:interestRate,monthly:isInstallment,months:isInstallment?contract.installmentMonths:"",startDate:contract.startDate,contractDate:contract.signedAt||contract.startDate,dueDate:contract.dueDate,paymentOption:contract.paymentOption,witness1:contract.witness1,witness2:contract.witness2};
   const signers = [{role:"ผู้ให้กู้",name:documents.lenderName,signature:contract.signatureMode==="DIGITAL"?documents.lenderSignature:""},{role:"ผู้กู้",name:selected?borrowerName(selected):"",signature:contract.signatureMode === "DIGITAL" ? digitalSignature : ""},...(contract.contractType!=="NONE"?[{role:"พยานคนที่ 1",name:contract.witness1,signature:contract.signatureMode === "DIGITAL" ? documents.witness1Signature : ""},{role:"พยานคนที่ 2",name:contract.witness2,signature:contract.signatureMode === "DIGITAL" ? documents.witness2Signature : ""}]:[]),...(contract.contractType==="WITNESS_GUARANTOR"?[{role:"ผู้ค้ำประกัน",name:contract.guarantor,signature:contract.signatureMode === "DIGITAL" ? documents.guarantorSignature : ""}]:[])];
 
   const limitsForSelected = selected && borrowerLimits?.borrowerId === selected.id ? borrowerLimits : null;
@@ -592,7 +607,7 @@ export default function ContractForm({ embedded = false, draftId, onClose, onSav
 
   return (
     <RootElement className="page-wrap contract-page lx-page"><div className="lx-wrap">
-      {showDocument && <ContractDocumentPreview loanText={documents.loanText || makeLoanDocument(documents,documentLoan)} guaranteeText={contract.contractType==="WITNESS_GUARANTOR" ? documents.guaranteeText || makeGuaranteeDocument(documents,documentLoan,contract.guarantor) : undefined} signers={signers} attachments={documents.attachments} draft={!savedContractNumber} onClose={()=>setShowDocument(false)}/>}
+      {showDocument && <ContractDocumentPreview loanText={documents.loanText || makeLoanDocument(documentSettings,documentLoan)} guaranteeText={contract.contractType==="WITNESS_GUARANTOR" ? documents.guaranteeText || makeGuaranteeDocument(documentSettings,documentLoan,contract.guarantor) : undefined} signers={signers} attachments={documents.attachments} draft={!savedContractNumber} onClose={()=>setShowDocument(false)}/>}
       <div className="contract-heading lx-head">
         <div>
           <div className="eyebrow"><span className="eyebrow-dot" /> LOAN MANAGEMENT</div>
@@ -828,7 +843,7 @@ export default function ContractForm({ embedded = false, draftId, onClose, onSav
                   <h3>เอกสารและสถานที่ทำสัญญา</h3>
                   <label className="contract-field lx-field"><span>แบบเอกสาร</span><select value={documents.kind} onChange={event=>setDocuments(current=>({...current,kind:event.target.value as ContractDocumentSettings["kind"],loanText:"",guaranteeText:""}))}><option value="NEW_LOAN">สัญญากู้ยืมเงินใหม่</option><option value="AMENDMENT">เอกสารแนบท้ายแก้ไขสัญญาเดิม</option></select></label>
                   <p className="contract-section-caption">แบบแนบท้ายใช้แก้ไขหนี้เดิม ไม่ยืนยันการจ่ายเงินกู้ใหม่ อัตราต่อปีในเอกสารไม่ถูกนำไปเปลี่ยนสูตรรับชำระโดยอัตโนมัติ</p>
-                  <div className="contract-form-grid">{([{key:"place",label:"สถานที่ทำสัญญา"},{key:"collateral",label:"ทรัพย์สินที่ใช้เป็นประกัน (ถ้ามี)"},...(documents.kind==="AMENDMENT"?[{key:"originalNumber",label:"เลขที่สัญญาเดิม"},{key:"originalDate",label:"วันที่สัญญาเดิม"},{key:"annualRate",label:"อัตราดอกเบี้ยในแบบแนบท้าย (% ต่อปี)"},{key:"principalPaid",label:"เงินต้นชำระแล้ว (บาท)"},{key:"lawfulInterest",label:"ดอกเบี้ยที่ชอบด้วยกฎหมายค้าง (บาท)"}]:[]),...(contract.contractType==="WITNESS_GUARANTOR"?[{key:"guarantorId",label:"เลขบัตรผู้ค้ำ"},{key:"guarantorAddress",label:"ที่อยู่ผู้ค้ำ"},{key:"guarantorPhone",label:"โทรศัพท์ผู้ค้ำ"},{key:"guarantorAge",label:"อายุผู้ค้ำ"},{key:"guaranteeLimit",label:"วงเงินรับผิดรวมสูงสุด (บาท)"}]:[])] as {key:keyof ContractDocumentSettings;label:string}[]).map(field=><label key={field.key} className="contract-field lx-field"><span>{field.label}</span><input value={typeof documents[field.key]==="string"?documents[field.key] as string:""} onChange={event=>setDocuments(current=>({...current,[field.key]:event.target.value}))}/></label>)}</div>
+                  <div className="contract-form-grid">{([{key:"place",label:"สถานที่ทำสัญญา (เว้นว่างเพื่อใช้ที่อยู่สาขา)"},{key:"collateral",label:"ทรัพย์สินที่ใช้เป็นประกัน (ถ้ามี)"},...(documents.kind==="AMENDMENT"?[{key:"originalNumber",label:"เลขที่สัญญาเดิม"},{key:"originalDate",label:"วันที่สัญญาเดิม"},{key:"annualRate",label:"อัตราดอกเบี้ยในแบบแนบท้าย (% ต่อปี)"},{key:"principalPaid",label:"เงินต้นชำระแล้ว (บาท)"},{key:"lawfulInterest",label:"ดอกเบี้ยที่ชอบด้วยกฎหมายค้าง (บาท)"}]:[]),...(contract.contractType==="WITNESS_GUARANTOR"?[{key:"guarantorId",label:"เลขบัตรผู้ค้ำ"},{key:"guarantorAddress",label:"ที่อยู่ผู้ค้ำ"},{key:"guarantorPhone",label:"โทรศัพท์ผู้ค้ำ"},{key:"guarantorAge",label:"อายุผู้ค้ำ"},{key:"guaranteeLimit",label:"วงเงินรับผิดรวมสูงสุด (บาท)"}]:[])] as {key:keyof ContractDocumentSettings;label:string}[]).map(field=><label key={field.key} className="contract-field lx-field"><span>{field.label}</span><input value={typeof documents[field.key]==="string"?documents[field.key] as string:""} onChange={event=>setDocuments(current=>({...current,[field.key]:event.target.value}))}/></label>)}</div>
                   <div className="contract-lender-lookup">
                     <label className="contract-field lx-field"><span>Companycode</span><input value={documents.companyCode} maxLength={80} onChange={event=>{const companyCode=event.target.value;setDocuments(current=>({...current,companyCode,lenderName:"",lenderId:"",lenderAddress:"",lenderPhone:"",lenderSignature:"",loanText:"",guaranteeText:""}));setCompanyLookupError("");}} onKeyDown={event=>{if(event.key==="Enter"){event.preventDefault();void lookupLenderCompany();}}} placeholder="กรอกรหัสบริษัท"/></label>
                     <button type="button" className="lx-btn" disabled={companyLookupBusy || !documents.companyCode.trim()} onClick={()=>void lookupLenderCompany()}>{companyLookupBusy?<LoaderCircle size={16} className="animate-spin"/>:<Search size={16}/>}เรียกข้อมูลบริษัท</button>

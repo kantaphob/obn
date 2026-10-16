@@ -550,6 +550,11 @@ enum CompanySequenceStatus {
 }
 
 model CompanySequence {
+  ownerFirstName String?
+  ownerLastName String?
+  ownerPhone String?
+  ownerEmail String?
+
   houseNo String?
   soi String?
   road String?

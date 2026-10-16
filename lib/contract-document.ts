@@ -13,7 +13,7 @@ export function thaiMoneyWords(cents:number){
  function read(n:number):string{if(n>=1000000)return read(Math.floor(n/1000000))+'ล้าน'+(n%1000000?read(n%1000000):'');const s=String(n);return [...s].map((c,i)=>{const d=Number(c),pos=s.length-i-1;if(!d)return '';if(pos===1)return (d===1?'':d===2?'ยี่':digits[d])+'สิบ';if(pos===0 && d===1 && s.length>1)return 'เอ็ด';return digits[d]+units[pos];}).join('');}
  const baht=Math.floor(cents/100),satang=cents%100;return (baht?read(baht):'ศูนย์')+'บาท'+(satang?read(satang)+'สตางค์':'ถ้วน');
 }
-export type DocumentLoan={number:string;borrowerName:string;borrowerId:string;borrowerAddress:string;borrowerPhone:string;principal:number|null;rate:number;monthly:boolean;months:string;startDate:string;dueDate:string;paymentOption:string};
+export type DocumentLoan={number:string;borrowerCode?:string;borrowerName:string;borrowerId:string;borrowerAddress:string;borrowerPhone:string;borrowerBirthDate?:string|null;borrowerHouseNumber?:string|null;borrowerBuildingName?:string|null;borrowerAlley?:string|null;borrowerRoad?:string|null;borrowerSubdistrict?:string|null;borrowerDistrict?:string|null;borrowerProvince?:string|null;principal:number|null;rate:number;monthly:boolean;months:string;startDate:string;contractDate?:string;dueDate:string;paymentOption:string;witness1?:string;witness2?:string};
 function legalDate(value:string){
  if(!/^\d{4}-\d{2}-\d{2}/.test(value))return blank(value);
  const date=new Date(`${value.slice(0,10)}T12:00:00+07:00`);
@@ -26,45 +26,75 @@ export function makeLoanDocument(doc:ContractDocumentSettings,loan:DocumentLoan)
  const amount=loan.principal===null?'…………':new Intl.NumberFormat('th-TH').format(loan.principal/100);const words=loan.principal===null?'……………………':thaiMoneyWords(loan.principal);
  const parties=`ทำที่ ${blank(doc.place)}\nวันที่ ${legalDate(loan.startDate)}\n\nฝ่ายที่หนึ่ง ผู้ให้กู้ (เจ้าหนี้)\nชื่อ-นามสกุล ${blank(doc.lenderName)}\nเลขประจำตัวประชาชน ${blank(doc.lenderId)}\nที่อยู่ ${blank(doc.lenderAddress)}\nโทรศัพท์ ${blank(doc.lenderPhone)}\nต่อไปนี้เรียกว่า “ผู้ให้กู้”\n\nฝ่ายที่สอง ผู้กู้ (ลูกหนี้)\nชื่อ-นามสกุล ${blank(loan.borrowerName)}\nเลขประจำตัวประชาชน ${blank(loan.borrowerId)}\nที่อยู่ ${blank(loan.borrowerAddress)}\nโทรศัพท์ ${blank(loan.borrowerPhone)}\nต่อไปนี้เรียกว่า “ผู้กู้”\n\nคู่สัญญาตกลงดังต่อไปนี้\n`;
  if (doc.kind === 'NEW_LOAN') {
-    const interest = loan.monthly
-      ? `ร้อยละ ${loan.rate} ต่อเดือน แก่ท่านทุกเดือนไป จนกว่าข้าพเจ้าจะนำเงินต้นส่งให้แก่ท่านจนครบตามจำนวนที่ได้กู้ไป`
-      : `ร้อยละ ${loan.rate} ตามสัญญา แก่ท่านเมื่อครบกำหนด จนกว่าข้าพเจ้าจะนำเงินต้นส่งให้แก่ท่านจนครบตามจำนวนที่ได้กู้ไป`;
+    const agreementDate = legalDate(loan.contractDate || loan.startDate);
     const newAmount = loan.principal === null ? '…………' : new Intl.NumberFormat('th-TH', { minimumFractionDigits: 2 }).format(loan.principal / 100);
-    return `หนังสือสัญญาเงินกู้
+    const baht = loan.principal === null ? '…………' : new Intl.NumberFormat('th-TH').format(Math.floor(loan.principal / 100));
+    const satang = loan.principal === null ? '……' : String(loan.principal % 100).padStart(2, '0');
+    const addressParts = [
+      loan.borrowerHouseNumber && `บ้านเลขที่ ${loan.borrowerHouseNumber}`,
+      loan.borrowerBuildingName && `อาคาร ${loan.borrowerBuildingName}`,
+      loan.borrowerAlley && `ตรอก/ซอย ${loan.borrowerAlley}`,
+      loan.borrowerRoad && `ถนน ${loan.borrowerRoad}`,
+      loan.borrowerSubdistrict && `ตำบล ${loan.borrowerSubdistrict}`,
+      loan.borrowerDistrict && `อำเภอ ${loan.borrowerDistrict}`,
+      loan.borrowerProvince && `จังหวัด ${loan.borrowerProvince}`,
+    ].filter(Boolean).join(' ');
+    const borrowerAddress = addressParts || loan.borrowerAddress || '………………………………';
+    let age = '……';
+    if (loan.borrowerBirthDate && /^\d{4}-\d{2}-\d{2}/.test(loan.borrowerBirthDate)) {
+      const birth = new Date(`${loan.borrowerBirthDate.slice(0, 10)}T12:00:00+07:00`);
+      const at = new Date(`${(loan.contractDate || loan.startDate).slice(0, 10)}T12:00:00+07:00`);
+      if (Number.isFinite(birth.getTime()) && Number.isFinite(at.getTime())) {
+        age = String(at.getFullYear() - birth.getFullYear() - (at.getMonth() < birth.getMonth() || (at.getMonth() === birth.getMonth() && at.getDate() < birth.getDate()) ? 1 : 0));
+      }
+    }
+    const interest = loan.monthly
+      ? `อัตราร้อยละ ${loan.rate} ต่อเดือน แต่ไม่เกินอัตราสูงสุดที่กฎหมายกำหนด`
+      : `อัตราร้อยละ ${loan.rate} ตามระยะเวลาสัญญา แต่ไม่เกินอัตราสูงสุดที่กฎหมายกำหนด`;
+    return `หนังสือสัญญาเงินกู้ตามกฎหมาย
 ลำดับที่ ${blank(loan.number)}
+รหัสผู้กู้ ${blank(loan.borrowerCode)}
+
 ทำที่ ${blank(doc.place)}
-วันที่ ${legalDate(loan.startDate)}
+วันที่ ${agreementDate}
 
-ข้าพเจ้า ${blank(loan.borrowerName)} เลขประจำตัวประชาชน ${blank(loan.borrowerId)}
-อยู่ที่ ${blank(loan.borrowerAddress)} โทรศัพท์ ${blank(loan.borrowerPhone)}
-ได้ทำหนังสือสัญญากู้เงินให้ไว้แก่ ${blank(doc.lenderName)} (เลขประจำตัวประชาชน ${blank(doc.lenderId)} ที่อยู่ ${blank(doc.lenderAddress)}) มีข้อสัญญาดังแจ้งต่อไปนี้
+ข้าพเจ้า ${blank(loan.borrowerName)} อายุ ${age} ปี
+เลขประจำตัวประชาชน ${blank(loan.borrowerId)}
+อยู่ ${blank(borrowerAddress)} โทรศัพท์ ${blank(loan.borrowerPhone)}
+ได้ทำหนังสือสัญญากู้เงินให้ไว้แก่ ${blank(doc.lenderName)} มีข้อสัญญาดังแจ้งต่อไปนี้
 
-ข้อ 1. ข้าพเจ้า ${blank(loan.borrowerName)} ได้กู้เงินของ ${blank(doc.lenderName)} เป็นจำนวนเงิน ${newAmount} บาท (${words})
+ข้อ ๑. ข้าพเจ้า ${blank(loan.borrowerName)} ได้กู้เงินของ ${blank(doc.lenderName)} เป็นจำนวนเงิน (${words}) ${baht} บาท ${satang} สตางค์ รวม ${newAmount} บาท
 ข้าพเจ้าได้รับเงินไปครบถ้วนเสร็จแล้วตั้งแต่วันทำสัญญานี้
 
-ข้อ 2. เพื่อเป็นหลักฐานในเงินซึ่งข้าพเจ้ากู้ไปนี้ ข้าพเจ้าได้นำ ${blank(doc.collateral)} ให้ท่านถือไว้เป็นประกันด้วย และข้าพเจ้าขอรับรองว่า ทรัพย์สินซึ่งข้าพเจ้านำมานี้ เป็นของข้าพเจ้าโดยแท้จริง และไม่มีภาระผูกพันใด ๆ ในหนี้สินรายอื่นนอกเหนือทรัพย์สินนี้เลย
+ข้อ ๒. เพื่อเป็นหลักฐานในเงินซึ่งข้าพเจ้ากู้ไปนี้ ข้าพเจ้าได้นำ ${blank(doc.collateral)} ให้ท่านถือไว้เป็นประกันด้วย และข้าพเจ้าขอรับรองว่าทรัพย์สินซึ่งข้าพเจ้านำมานี้เป็นของข้าพเจ้าโดยแท้จริง และไม่มีภาระผูกพันในหนี้สินรายอื่นนอกเหนือจากทรัพย์สินนี้
 
-ข้อ 3. ในจำนวนเงินซึ่งข้าพเจ้าได้กู้ไปนี้ ข้าพเจ้าจะนำมาใช้ให้ท่านเสร็จภายใน ${legalDate(loan.dueDate)} นับตั้งแต่วันทำสัญญานี้เป็นต้นไป${loan.monthly ? ` โดยผ่อนชำระ ${blank(loan.months)} งวด ตามตารางแนบท้าย` : loan.paymentOption === 'UPFRONT' ? ' โดยหักดอกเบี้ยก่อนจ่ายเงิน และชำระเงินต้นตามกำหนด' : ''}
+ข้อ ๓. ข้าพเจ้าจะชำระเงินกู้ให้เสร็จภายในวันที่ ${legalDate(loan.dueDate)} นับตั้งแต่วันทำสัญญานี้เป็นต้นไป${loan.monthly ? ` โดยผ่อนชำระ ${blank(loan.months)} งวด ตามตารางแนบท้าย` : loan.paymentOption === 'UPFRONT' ? ' โดยหักดอกเบี้ยก่อนจ่ายเงิน และชำระคืนเงินต้นตามกำหนด' : ''}
 
-ข้อ 4. ข้าพเจ้ายอมให้ดอกเบี้ย ${interest}
+ข้อ ๔. ข้าพเจ้ายอมให้ดอกเบี้ย ${interest} จนกว่าจะชำระเงินต้นครบถ้วน
 
-ข้อ 5. ข้าพเจ้าล้มตายเสียก็ดี หรือหลบหายไปเสียก็ดี ข้าพเจ้ายอมให้ท่านมีอำนาจเอาทรัพย์สมบัติของข้าพเจ้า ขายทอดตลาดเอาเงินต้นและดอกเบี้ยของท่านจนครบ
+ข้อ ๕. หากข้าพเจ้าถึงแก่ความตายหรือหลบหายไป ผู้ให้กู้มีสิทธิเรียกร้องและดำเนินการเกี่ยวกับทรัพย์สินของข้าพเจ้าเพื่อชำระหนี้ตามขั้นตอนและอำนาจที่กฎหมายกำหนด
 
-ข้อ 6. แม้ว่าข้าพเจ้าประพฤติผิดสัญญานี้แต่ข้อหนึ่งข้อใดก็ดี ยอมให้ท่านฟ้องร้องเรียกเงินต้นและดอกเบี้ยแก่ข้าพเจ้าตามกฎหมาย
+ข้อ ๖. หากข้าพเจ้าผิดสัญญาข้อหนึ่งข้อใด ผู้ให้กู้มีสิทธิเรียกเงินต้นและดอกเบี้ยที่ชอบด้วยกฎหมาย และฟ้องร้องตามกฎหมาย
 
-ข้อ 7. ค่าธรรมเนียม ค่าพาหนะและค่าเสียหายต่าง ๆ ซึ่งท่านต้องเสียไปในการทวงถามฟ้องร้องข้าพเจ้านั้น ข้าพเจ้ายอมใช้ให้ท่านตามที่ได้เสียหายไปจนครบถ้วน
+ข้อ ๗. ค่าธรรมเนียม ค่าพาหนะ และค่าเสียหายจากการทวงถามหรือดำเนินคดี ให้เป็นไปตามที่กฎหมายอนุญาตและตามความเสียหายที่เกิดขึ้นจริง
 
-ทั้งนี้ ผู้เขียนสัญญาได้อ่านข้อสัญญาให้ข้าพเจ้าผู้กู้ฟังเข้าใจโดยละเอียดตลอดทุกข้อแล้ว ข้าพเจ้าได้ลงลายมือชื่อให้ไว้ต่อหน้าพยานพร้อมกัน ณ ที่นี้
+ผู้เขียนสัญญาได้อ่านข้อสัญญาให้ข้าพเจ้าผู้กู้ฟังและเข้าใจโดยละเอียดตลอดทุกข้อแล้ว ข้าพเจ้าได้ลงลายมือชื่อไว้ต่อหน้าพยาน ณ ที่นี้
 
-ข้าพเจ้าพยาน ขอรับรองว่าข้าพเจ้าเข้าใจข้อความในหนังสือสัญญานี้ตลอดแล้ว และได้เห็นคู่สัญญาส่งมอบเงินกู้ ตกลงปากคำ ทำหนังสือสัญญานี้ และลงลายมือชื่อต่อหน้าข้าพเจ้า
+ลงลายมือชื่อ ____________________________________ ผู้กู้
+(${blank(loan.borrowerName)} · ${blank(loan.borrowerCode)})
 
-ข้อมูลพยานคนที่ 1
-เลขบัตร ${blank(doc.witness1Id)} โทรศัพท์ ${blank(doc.witness1Phone)}
-ที่อยู่ ${blank(doc.witness1Address)}
+ลงลายมือชื่อ ____________________________________ ผู้ให้กู้ (เจ้าของเงิน)
+(${blank(doc.lenderName)})
 
-ข้อมูลพยานคนที่ 2
-เลขบัตร ${blank(doc.witness2Id)} โทรศัพท์ ${blank(doc.witness2Phone)}
-ที่อยู่ ${blank(doc.witness2Address)}`;
+ข้าพเจ้าพยานรับรองว่าเข้าใจข้อความในหนังสือสัญญานี้ และได้เห็นคู่สัญญาส่งมอบเงินกู้ ตกลงทำสัญญา และลงลายมือชื่อต่อหน้าข้าพเจ้า
+
+ลงลายมือชื่อ ____________________________________ พยาน
+(${blank(loan.witness1)})
+
+ลงลายมือชื่อ ____________________________________ พยาน
+(${blank(loan.witness2)})
+
+ลงลายมือชื่อ ____________________________________ ผู้เขียนและพยาน`;
   }
  return `เอกสารแนบท้ายสัญญากู้ยืมเงิน\nอ้างอิงสัญญาเลขที่ ${blank(doc.originalNumber)}\n${parties}
 ข้อ 1 อ้างอิงสัญญากู้ยืมเงินเดิม

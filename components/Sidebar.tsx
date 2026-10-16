@@ -4,13 +4,14 @@ import { useEffect, useState, type CSSProperties } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ChevronDown, Menu, X, PanelLeft } from "lucide-react";
-import { getSystem } from "@/lib/nav";
+import SidebarMenu from "./SidebarMenu";
+import { flattenNavItems, getSystem } from "@/lib/nav";
 import { workspaceStyles as styles } from "./ui/workspace-styles";
 
 export default function Sidebar() {
   const pathname = usePathname();
   const system = getSystem(pathname);
-  const [closed, setClosed] = useState<Record<string, boolean>>({});
+  const [closed, setClosed] = useState<Record<string, { path: string; collapsed: boolean }>>({});
   const [mobileOpen, setMobileOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [online, setOnline] = useState<boolean | null>(null);
@@ -42,7 +43,7 @@ export default function Sidebar() {
     <div className={`${styles.windowBar} ${sidebarCollapsed ? "min-[761px]:flex-col min-[761px]:gap-3" : ""}`}><span role="status" aria-label={connectionLabel} title={`${connectionLabel} (สถานะจากเบราว์เซอร์)`} className="flex shrink-0 items-center gap-1.5">{lights.map(light => <span key={light.label} aria-hidden="true" className={`size-2.5 rounded-full border border-white/35 ${light.active ? light.color : "bg-[#92988f]/30"}`} />)}</span><button type="button" onClick={() => setSidebarCollapsed(value => !value)} aria-expanded={!sidebarCollapsed} aria-controls="sidebar-content" aria-label={sidebarCollapsed ? "ขยาย Sidebar" : "ยุบ Sidebar"} title={sidebarCollapsed ? "ขยาย Sidebar" : "ยุบ Sidebar"} className="grid size-9 place-items-center rounded-lg border border-current/20 text-[color:var(--text)] hover:bg-white/15 focus-visible:outline-current"><PanelLeft size={20} aria-hidden="true" /></button></div>
     {sidebarCollapsed && <nav aria-label={`ไอคอนเมนู${system.label}`} className="hidden min-[761px]:block">
       {system.groups.map(group => <div key={group.title} className="mb-3 grid gap-2 border-b border-current/15 pb-3">
-        {group.items.map(({ href, label, icon: ItemIcon }) => {
+        {flattenNavItems(group.items).filter(item => !item.children?.length).map(({ href, label, icon: ItemIcon }) => {
           const selected = pathname === href || (href !== system.href && pathname.startsWith(`${href}/`));
           return <Link key={href} href={href} title={`${group.title} — ${label}`} aria-label={label} aria-current={selected ? "page" : undefined} className={`grid size-11 place-items-center rounded-xl border text-inherit! focus-visible:outline-current ${selected ? "border-white/50 bg-[color-mix(in_srgb,var(--accent)_25%,var(--surface))] shadow-[inset_1px_1px_3px_#fff4,3px_4px_8px_#0002]" : "border-transparent hover:bg-white/15"}`}><ItemIcon size={22} aria-hidden="true" /></Link>;
         })}
@@ -58,15 +59,12 @@ export default function Sidebar() {
       <nav aria-label="เมนูในระบบ">
         {system.groups.map(group => {
           const key = `${system.key}:${group.title}`;
-          const collapsed = !!closed[key];
+          const collapsed = closed[key]?.path === pathname ? closed[key].collapsed : false;
           return <section className={styles.navGroup} key={key}>
-            <button type="button" className={styles.groupTitle} aria-expanded={!collapsed} onClick={() => setClosed(previous => ({ ...previous, [key]: !previous[key] }))}>
+            <button type="button" className={styles.groupTitle} aria-expanded={!collapsed} onClick={() => setClosed(previous => ({ ...previous, [key]: { path: pathname, collapsed: !collapsed } }))}>
               <span className="flex items-center gap-2"><span className="size-2 rounded-full bg-[var(--accent)] ring-1 ring-black/15" aria-hidden="true" />{group.title}</span><ChevronDown size={14} className={collapsed ? "-rotate-90" : undefined} />
             </button>
-            {!collapsed && <ul>{group.items.map(({ href, label, icon: ItemIcon }) => {
-              const selected = pathname === href || (href !== system.href && pathname.startsWith(`${href}/`));
-              return <li key={`${href}:${label}`}><Link className={`flex min-h-11 items-center gap-3 rounded-[11px] border px-3 py-[11px] text-[13px] transition-colors focus-visible:outline-current ${selected ? "border-white/50 bg-[color-mix(in_srgb,var(--accent)_25%,var(--surface))] font-semibold shadow-[inset_1px_1px_3px_#fff4,4px_5px_10px_#0002]" : "border-transparent hover:bg-white/10"}`} href={href} aria-current={selected ? "page" : undefined} onClick={() => setMobileOpen(false)}><ItemIcon size={20} strokeWidth={1.6} aria-hidden="true" className="shrink-0" /><span>{label}</span>{selected && <span className="ml-auto size-[7px] shrink-0 rounded-full bg-[var(--accent)] ring-4 ring-white/20" aria-hidden="true" />}</Link></li>;
-            })}</ul>}
+            {!collapsed && <SidebarMenu items={group.items} pathname={pathname} onNavigate={() => setMobileOpen(false)} />}
           </section>;
         })}
       </nav>

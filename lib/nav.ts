@@ -34,7 +34,7 @@ import {
   CreditCard,
 } from "lucide-react";
 
-export type NavItem = { label: string; href: string; icon: LucideIcon };
+export type NavItem = { label: string; href: string; icon: LucideIcon; children?: NavItem[] };
 export type NavGroup = { title: string; items: NavItem[] };
 export type SystemKey =
   | "dashboard"
@@ -87,17 +87,45 @@ export const SYSTEMS: Record<SystemKey, System> = {
         ],
       },
       {
-        title: "เข้าสู่ระบบบริษัท",
+        title: "Accounts",
+        items: [
+          { label: "สมุดบัญชี", href: "/dashboard/accounts", icon: Receipt },
+          { label: "ดุลยบัญชี", href: "/dashboard/accounts/trial-balance", icon: BarChart3 },
+          {
+            label: "งานบัญชีประจำวัน", href: "/dashboard/accounts/daily", icon: CalendarDays,
+            children: [
+              {
+                label: "บัญชีลูกหนี้ (AR)", href: "/dashboard/accounts/ar", icon: HandCoins,
+                children: [
+                  { label: "ใบแจ้งหนี้", href: "/dashboard/accounts/ar/invoices", icon: FileText },
+                  { label: "ใบเสร็จรับเงิน", href: "/dashboard/accounts/ar/receipts", icon: Receipt },
+                  { label: "รับชำระเงิน", href: "/dashboard/accounts/ar/payments", icon: Wallet },
+                ],
+              },
+              {
+                label: "บัญชีเจ้าหนี้ (AP)", href: "/dashboard/accounts/ap", icon: CreditCard,
+                children: [
+                  { label: "ใบสั่งซื้อ", href: "/dashboard/accounts/ap/purchase-orders", icon: ShoppingCart },
+                  { label: "ใบสำคัญจ่าย", href: "/dashboard/accounts/ap/vouchers", icon: FileCheck2 },
+                  { label: "จ่ายชำระเงิน", href: "/dashboard/accounts/ap/payments", icon: Wallet },
+                ],
+              },
+              { label: "เงินสดและธนาคาร", href: "/dashboard/accounts/cash-and-banks", icon: Landmark },
+            ],
+          },
+          { label: "งานภาษีและกฎหมาย", href: "/dashboard/accounts/tax-and-legal", icon: ScrollText },
+          { label: "ปิดบัญชีและงบการเงิน", href: "/dashboard/accounts/closing", icon: FileCheck2 },
+          { label: "บัญชีบริหารและงบประมาณ", href: "/dashboard/accounts/budget", icon: Calculator },
+          { label: "ตรวจสอบและเอกสาร", href: "/dashboard/accounts/audit", icon: ShieldCheck },
+        ],
+      },
+      {
+        title: "Human Resources",
         items: [
           {
-            label: "ก่อสร้าง",
-            href: "/dashboard/construction",
-            icon: BuildingComplex,
-          },
-          {
-            label: "บิ้วอิน",
-            href: "/dashboard/buildin",
-            icon: BuildingComplexPlus,
+            label: "พนักงาน",
+            href: "/dashboard/employees",
+            icon: Users,
           },
           {
             label: "ขายการเกษตร",
@@ -271,6 +299,7 @@ export const SYSTEMS: Record<SystemKey, System> = {
         items: [
           l("borrowers", "ผู้กู้", UserRound),
           l("collaterals", "หลักประกัน", Landmark),
+          l("docs", "เอกสาร", FileText),
         ],
       },
     ],
@@ -346,9 +375,14 @@ export const COMPANY_KEYS: SystemKey[] = [
   "loan",
 ];
 
+/** Flatten navigation for route lookup and icon-only sidebars. */
+export function flattenNavItems(items: NavItem[]): NavItem[] {
+  return items.flatMap(item => [item, ...flattenNavItems(item.children ?? [])]);
+}
+
 export function findItem(system: System, href: string) {
   for (const group of system.groups) {
-    const item = group.items.find((i) => i.href === href);
+    const item = flattenNavItems(group.items).find((i) => i.href === href);
     if (item) return { group, item };
   }
   return null;

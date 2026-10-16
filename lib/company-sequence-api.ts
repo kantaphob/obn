@@ -60,3 +60,17 @@ export function companySequenceError(error: unknown) {
   console.error("Company and branch request failed:", error);
   return Response.json({ error: "ดำเนินการไม่สำเร็จ กรุณาลองใหม่" }, { status: 500 });
 }
+
+export function parseCompanyOwner(value: Record<string, unknown>) {
+  const data: { ownerFirstName?: string | null; ownerLastName?: string | null; ownerPhone?: string | null; ownerEmail?: string | null } = {};
+  for (const key of ['ownerFirstName', 'ownerLastName', 'ownerPhone', 'ownerEmail'] as const) {
+    if (!(key in value)) continue;
+    const raw = value[key];
+    if (raw !== null && typeof raw !== 'string') return 'ข้อมูลเจ้าของไม่ถูกต้อง';
+    const text = typeof raw === 'string' ? raw.trim() : '';
+    if (text.length > (key === 'ownerPhone' ? 40 : 200)) return 'ข้อมูลเจ้าของยาวเกินกำหนด';
+    if (key === 'ownerEmail' && text && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(text)) return 'อีเมลเจ้าของไม่ถูกต้อง';
+    data[key] = text || null;
+  }
+  return data;
+}

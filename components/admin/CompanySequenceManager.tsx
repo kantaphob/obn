@@ -8,6 +8,7 @@ import { useEffect, useMemo, useState, type FormEvent, type CSSProperties } from
 
 type Status = 'ACTIVE' | 'INACTIVE';
 type Company = {
+  ownerFirstName?: string | null; ownerLastName?: string | null; ownerPhone?: string | null; ownerEmail?: string | null;
   houseNo: string | null; soi: string | null; road: string | null;
   provinceId: string | null; districtId: string | null; subdistrictId: string | null;
   id: string;
@@ -34,10 +35,17 @@ type RecordItem = Company | Branch;
 type Props = { kind: 'companies' | 'branches' };
 
 type FieldKey =
+  | 'ownerFirstName' | 'ownerLastName' | 'ownerPhone' | 'ownerEmail'
   | 'nameEN' | 'TaxIdentificationNumber' | 'address' | 'postcode'
   | 'phone' | 'email' | 'aboutus' | 'companyoverview';
 type FieldDef = { key: FieldKey; label: string; max: number; wide?: boolean; type?: string; textarea?: boolean };
 
+const ownerFields: FieldDef[] = [
+  { key: 'ownerFirstName', label: 'ชื่อเจ้าของ', max: 200 },
+  { key: 'ownerLastName', label: 'นามสกุลเจ้าของ', max: 200 },
+  { key: 'ownerPhone', label: 'เบอร์โทรเจ้าของ', max: 40, type: 'tel' },
+  { key: 'ownerEmail', label: 'อีเมลเจ้าของ', max: 200, type: 'email' },
+];
 const infoFields: FieldDef[] = [
   { key: 'nameEN', label: 'ชื่อภาษาอังกฤษ', max: 200 },
   { key: 'TaxIdentificationNumber', label: 'เลขประจำตัวผู้เสียภาษี', max: 32 },
@@ -282,6 +290,7 @@ function Editor({
                   </div>
                 </Section>
 
+                {!isBranch && <Section title="ข้อมูลเจ้าของบริษัท" hint="ไม่บังคับกรอก สามารถบันทึกเพื่อเรียกใช้ภายหลัง">{ownerFields.map(renderField)}</Section>}
                 <Section title="ข้อมูลติดต่อและภาษี">{infoFields.map(renderField)}</Section>
                 <Section title="ที่อยู่"><CompanyAddressFields item={item} disabled={busy} fieldClass={fieldClass} labelClass={labelClass} /></Section>
                 <Section title="รายละเอียดเพิ่มเติม">{textFields.map(renderField)}</Section>
@@ -365,6 +374,7 @@ export default function CompanySequenceManager({ kind }: Props) {
       item.nameEN,
       item.TaxIdentificationNumber,
       item.phone,
+      item.ownerFirstName, item.ownerLastName, item.ownerPhone, item.ownerEmail,
       item.address,
       isBranch ? displayName((item as Branch).company) : '',
     ].some((value) => value?.toLocaleLowerCase().includes(normalized)));
