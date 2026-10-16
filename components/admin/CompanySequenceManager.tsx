@@ -1,15 +1,25 @@
 'use client';
 
 import CompanyAddressFields from './CompanyAddressFields';
+import OwnerAddressFields from './OwnerAddressFields';
 import { useTrackedFetch } from '@/components/ui/ToastProvider';
 import { Building2, ImagePlus, MapPin, Pencil, Plus, Search, Store, Trash2, X } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useMemo, useState, type FormEvent, type CSSProperties } from 'react';
 
 type Status = 'ACTIVE' | 'INACTIVE';
+type CompanyOwner = {
+  ownerNationalId?: string | null; ownerPrefix?: string | null; ownerFirstName?: string | null; ownerLastName?: string | null;
+  ownerPhone?: string | null; ownerEmail?: string | null; ownerAddress?: string | null;
+  ownerDocumentUrl?: string | null; ownerDocumentName?: string | null;
+  ownerProvince?: string | null; ownerDistrict?: string | null; ownerSubdistrict?: string | null;
+  ownerPostcode?: string | null;
+  ownerMoo?: string | null; ownerSoi?: string | null; ownerRoad?: string | null;
+  ownerProvinceId?: number | null; ownerDistrictId?: number | null; ownerSubdistrictId?: number | null;
+};
 type Company = {
-  ownerFirstName?: string | null; ownerLastName?: string | null; ownerPhone?: string | null; ownerEmail?: string | null;
-  houseNo: string | null; soi: string | null; road: string | null;
+  owner?: CompanyOwner | null;
+  houseNo: string | null; moo: string | null; soi: string | null; road: string | null;
   provinceId: string | null; districtId: string | null; subdistrictId: string | null;
   id: string;
   companycode: string;
@@ -35,14 +45,17 @@ type RecordItem = Company | Branch;
 type Props = { kind: 'companies' | 'branches' };
 
 type FieldKey =
+  | 'ownerNationalId' | 'ownerPrefix'
   | 'ownerFirstName' | 'ownerLastName' | 'ownerPhone' | 'ownerEmail'
   | 'nameEN' | 'TaxIdentificationNumber' | 'address' | 'postcode'
   | 'phone' | 'email' | 'aboutus' | 'companyoverview';
 type FieldDef = { key: FieldKey; label: string; max: number; wide?: boolean; type?: string; textarea?: boolean };
 
 const ownerFields: FieldDef[] = [
+  { key: 'ownerNationalId', label: 'เลขประจำตัวประชาชนเจ้าของ', max: 13, wide: true },
+  { key: 'ownerPrefix', label: 'คำนำหน้า', max: 40 },
   { key: 'ownerFirstName', label: 'ชื่อเจ้าของ', max: 200 },
-  { key: 'ownerLastName', label: 'นามสกุลเจ้าของ', max: 200 },
+  { key: 'ownerLastName', label: 'นามสกุลเจ้าของ', max: 200, wide: true },
   { key: 'ownerPhone', label: 'เบอร์โทรเจ้าของ', max: 40, type: 'tel' },
   { key: 'ownerEmail', label: 'อีเมลเจ้าของ', max: 200, type: 'email' },
 ];
@@ -60,13 +73,13 @@ const textFields: FieldDef[] = [
 /* ---------- design tokens ---------- */
 const focus = 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1f5c4a]';
 const btn = `inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-lg px-4 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${focus}`;
-const btnPrimary = `${btn} bg-[#1f5c4a] text-white hover:bg-[#184a3c]`;
-const btnSecondary = `${btn} border border-[#d5dbd8] bg-white text-[#1d2b27] hover:bg-[#f3f5f4]`;
+const btnPrimary = `${btn} bg-[var(--ws-accent-soft,#1f5c4a)] text-white hover:bg-[var(--ws-accent-soft,#184a3c)]`;
+const btnSecondary = `${btn} border border-[#d5dbd8] bg-white text-[#1d2b27] hover:bg-[var(--ws-soft,#f3f5f4)]`;
 const btnDanger = `${btn} bg-[#b42318] text-white hover:bg-[#912018]`;
 const btnDangerGhost = `${btn} border border-[#f1c9c5] bg-white text-[#b42318] hover:bg-[#fdf3f2]`;
-const iconBtn = `inline-flex size-9 items-center justify-center rounded-lg text-[#5b6b66] transition-colors hover:bg-[#eaf0ed] hover:text-[#1f5c4a] ${focus}`;
+const iconBtn = `inline-flex size-9 items-center justify-center rounded-lg text-[#5b6b66] transition-colors hover:bg-[var(--ws-soft,#eaf0ed)] hover:text-[#1f5c4a] ${focus}`;
 const fieldClass =
-  'mt-1.5 w-full rounded-lg border border-[#d5dbd8] bg-white px-3 py-2.5 text-sm text-[#1d2b27] placeholder:text-[#8a9792] focus:border-[#1f5c4a] focus:outline-2 focus:outline-[#1f5c4a]/25 disabled:bg-[#f3f5f4] read-only:bg-[#f3f5f4] read-only:text-[#5b6b66]';
+  'mt-1.5 w-full rounded-lg border border-[#d5dbd8] bg-white px-3 py-2.5 text-sm text-[#1d2b27] placeholder:text-[#8a9792] focus:border-[#1f5c4a] focus:outline-2 focus:outline-[#1f5c4a]/25 disabled:bg-[var(--ws-soft,#f3f5f4)] read-only:bg-[var(--ws-soft,#f3f5f4)] read-only:text-[#5b6b66]';
 const labelClass = 'block text-sm font-medium text-[#1d2b27]';
 
 function displayName(item: { nameTH: string | null; nameEN: string | null }) {
@@ -80,7 +93,7 @@ function Logo({ src, name, size = 40 }: { src: string | null; name: string; size
     return <img src={src} alt="" style={style} className="size-[var(--logo-size)] shrink-0 rounded-lg border border-[#dfe4e1] bg-white object-contain p-1" />;
   }
   return (
-    <span aria-hidden="true" style={style} className="size-[var(--logo-size)] grid shrink-0 place-items-center rounded-lg bg-[#e3ede9] text-sm font-semibold text-[#1f5c4a]">
+    <span aria-hidden="true" style={style} className="size-[var(--logo-size)] grid shrink-0 place-items-center rounded-lg bg-[var(--ws-soft,#e3ede9)] text-sm font-semibold text-[#1f5c4a]">
       {name.trim().charAt(0) || '?'}
     </span>
   );
@@ -89,8 +102,8 @@ function Logo({ src, name, size = 40 }: { src: string | null; name: string; size
 function StatusBadge({ status }: { status: Status }) {
   const active = status === 'ACTIVE';
   return (
-    <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${active ? 'bg-[#e3f2ea] text-[#1f5c4a]' : 'bg-[#eef0ef] text-[#6b7773]'}`}>
-      <span aria-hidden="true" className={`size-1.5 rounded-full ${active ? 'bg-[#2e9a6f]' : 'bg-[#9aa5a1]'}`} />
+    <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${active ? 'bg-[var(--ws-soft,#e3f2ea)] text-[#1f5c4a]' : 'bg-[var(--ws-soft,#eef0ef)] text-[#6b7773]'}`}>
+      <span aria-hidden="true" className={`size-1.5 rounded-full ${active ? 'bg-[var(--ws-accent-soft,#2e9a6f)]' : 'bg-[#9aa5a1]'}`} />
       {active ? 'ใช้งาน' : 'ไม่ใช้งาน'}
     </span>
   );
@@ -120,6 +133,9 @@ function Editor({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [deleteMode, setDeleteMode] = useState(initialDelete);
+  const [ownerDocumentUrl, setOwnerDocumentUrl] = useState(item?.owner?.ownerDocumentUrl ?? '');
+  const [ownerDocumentName, setOwnerDocumentName] = useState(item?.owner?.ownerDocumentName ?? '');
+  const [ownerDocument, setOwnerDocument] = useState<File | null>(null);
   const [logo, setLogo] = useState(item?.logo ?? '');
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [preview, setPreview] = useState('');
@@ -154,6 +170,7 @@ function Editor({
         if (logoFile) {
           const upload = new FormData();
           upload.set('file', logoFile);
+          upload.set('entityCode', String(data[isBranch ? 'branchcode' : 'companycode'] ?? ''));
           const uploadResponse = await trackedFetch('/api/company-logos', { method: 'POST', body: upload });
           const result = await uploadResponse.json();
           if (!uploadResponse.ok) throw new Error(result.error ?? 'อัปโหลดโลโก้ไม่สำเร็จ');
@@ -163,6 +180,19 @@ function Editor({
           setPreview('');
         }
         data.logo = savedLogo;
+        if (!isBranch) {
+          let documentUrl = ownerDocumentUrl;
+          let documentName = ownerDocumentName;
+          if (ownerDocument) {
+            const upload = new FormData(); upload.set('file', ownerDocument); upload.set('entityCode', String(data.companycode ?? ''));
+            const response = await trackedFetch('/api/company-owner-documents', { method: 'POST', body: upload });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.error ?? 'อัปโหลดเอกสารไม่สำเร็จ');
+            documentUrl = result.url; documentName = ownerDocument.name;
+            setOwnerDocumentUrl(documentUrl); setOwnerDocumentName(documentName); setOwnerDocument(null);
+          }
+          data.ownerDocumentUrl = documentUrl; data.ownerDocumentName = documentName;
+        }
       }
       const endpoint = isBranch ? '/api/branch-sequences' : '/api/company-sequences';
       const url = item ? `${endpoint}/${encodeURIComponent(item.id)}` : endpoint;
@@ -182,12 +212,18 @@ function Editor({
 
   function renderField(field: FieldDef) {
     const span = field.wide ? 'sm:col-span-2' : '';
+    const initialValue = field.key.startsWith('owner') ? (item as Company | null)?.owner?.[field.key as keyof CompanyOwner] : (item as unknown as Record<string, unknown> | null)?.[field.key];
+    if (field.key === 'ownerPrefix') return <label key={field.key} className={labelClass}>{field.label}
+      <select name={field.key} defaultValue={initialValue ?? ''} disabled={busy} className={fieldClass}>
+        <option value="">เลือกคำนำหน้า</option><option>นาย</option><option>นาง</option><option>นางสาว</option><option>ดร.</option><option>อื่น ๆ</option>
+      </select>
+    </label>;
     return (
       <label key={field.key} className={`${labelClass} ${span}`}>
         {field.label}
         {field.textarea
-          ? <textarea name={field.key} maxLength={field.max} defaultValue={item?.[field.key] ?? ''} disabled={busy} rows={3} className={`${fieldClass} resize-y`} />
-          : <input name={field.key} type={field.type ?? 'text'} maxLength={field.max} defaultValue={item?.[field.key] ?? ''} disabled={busy} className={fieldClass} />}
+          ? <textarea name={field.key} maxLength={field.max} defaultValue={initialValue ?? ''} disabled={busy} rows={3} className={`${fieldClass} resize-y`} />
+          : <input name={field.key} type={field.type ?? 'text'} maxLength={field.max} defaultValue={initialValue ?? ''} disabled={busy} className={fieldClass} />}
       </label>
     );
   }
@@ -254,6 +290,23 @@ function Editor({
                   </label>
                 </Section>
 
+                {!isBranch && <Section title="ข้อมูลเจ้าของบริษัทและเอกสาร" hint="ชื่อ–นามสกุล ข้อมูลติดต่อ และเอกสารยืนยันความเป็นเจ้าของ (ไม่บังคับ)">
+                  {ownerFields.map(renderField)}
+                  <OwnerAddressFields item={(item as Company | null)?.owner ?? null} disabled={busy} fieldClass={fieldClass} labelClass={labelClass} />
+                  <label className={`${labelClass} sm:col-span-2`}>เอกสารยืนยันความเป็นเจ้าของ
+                    <input type="file" disabled={busy} accept="application/pdf,image/png,image/jpeg,image/webp" className={fieldClass} onChange={(event) => {
+                      const file = event.target.files?.[0]; if (!file) return;
+                      if (!['application/pdf', 'image/png', 'image/jpeg', 'image/webp'].includes(file.type) || file.size < 1 || file.size > 10 * 1024 * 1024 || file.name.length > 200) { setError('เลือก PDF, PNG, JPG หรือ WebP ไม่เกิน 10 MB ชื่อไฟล์ไม่เกิน 200 ตัวอักษร'); event.target.value = ''; return; }
+                      setError(''); setOwnerDocument(file);
+                    }} />
+                    <span className="mt-2 block text-xs text-[#6b7773]">PDF, PNG, JPG หรือ WebP ไม่เกิน 10 MB อัปโหลดเมื่อกดบันทึก</span>
+                  </label>
+                  {(ownerDocument || ownerDocumentUrl) && <div className="flex flex-wrap items-center gap-3 sm:col-span-2">
+                    {ownerDocument ? <span className="text-sm">ไฟล์ที่เลือก: {ownerDocument.name}</span> : <a href={ownerDocumentUrl} target="_blank" rel="noreferrer" className="text-sm text-[#1f5c4a] underline">เปิดเอกสาร: {ownerDocumentName || 'เอกสารเจ้าของ'}</a>}
+                    <button type="button" disabled={busy} className={btnSecondary} onClick={() => { setOwnerDocument(null); setOwnerDocumentUrl(''); setOwnerDocumentName(''); }}>นำเอกสารออก</button>
+                  </div>}
+                </Section>}
+
                 <Section title="โลโก้" hint="PNG, JPG หรือ WebP ไม่เกิน 5 MB">
                   <div className="flex items-center gap-4 sm:col-span-2">
                     {shownLogo
@@ -261,7 +314,7 @@ function Editor({
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img src={shownLogo} alt="ตัวอย่างโลโก้" className="size-20 shrink-0 rounded-xl border border-[#dfe4e1] bg-white object-contain p-2" />
                         </>
-                      : <span aria-hidden="true" className="grid size-20 shrink-0 place-items-center rounded-xl border border-dashed border-[#c5cdc9] bg-[#f6f8f7] text-[#8a9792]"><ImagePlus size={24} /></span>}
+                      : <span aria-hidden="true" className="grid size-20 shrink-0 place-items-center rounded-xl border border-dashed border-[#c5cdc9] bg-[var(--ws-soft,#f6f8f7)] text-[#8a9792]"><ImagePlus size={24} /></span>}
                     <div className="flex flex-wrap items-center gap-2">
                       <label className={`${btnSecondary} cursor-pointer has-[:disabled]:opacity-50`}>
                         <ImagePlus size={16} aria-hidden="true" />{shownLogo ? 'เปลี่ยนโลโก้' : 'เลือกไฟล์'}
@@ -290,7 +343,6 @@ function Editor({
                   </div>
                 </Section>
 
-                {!isBranch && <Section title="ข้อมูลเจ้าของบริษัท" hint="ไม่บังคับกรอก สามารถบันทึกเพื่อเรียกใช้ภายหลัง">{ownerFields.map(renderField)}</Section>}
                 <Section title="ข้อมูลติดต่อและภาษี">{infoFields.map(renderField)}</Section>
                 <Section title="ที่อยู่"><CompanyAddressFields item={item} disabled={busy} fieldClass={fieldClass} labelClass={labelClass} /></Section>
                 <Section title="รายละเอียดเพิ่มเติม">{textFields.map(renderField)}</Section>
@@ -298,7 +350,7 @@ function Editor({
             )}
           </div>
 
-          <footer className="border-t border-[#e6ebe8] bg-[#f9faf9] px-6 py-4">
+          <footer className="border-t border-[#e6ebe8] bg-[var(--ws-surface,#f9faf9)] px-6 py-4">
             {error && <p role="alert" className="mb-3 rounded-lg bg-[#fdf3f2] px-3 py-2 text-sm text-[#b42318]">{error}</p>}
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
@@ -374,7 +426,7 @@ export default function CompanySequenceManager({ kind }: Props) {
       item.nameEN,
       item.TaxIdentificationNumber,
       item.phone,
-      item.ownerFirstName, item.ownerLastName, item.ownerPhone, item.ownerEmail,
+      (item as Company).owner?.ownerFirstName, (item as Company).owner?.ownerLastName, (item as Company).owner?.ownerPhone, (item as Company).owner?.ownerEmail,
       item.address,
       isBranch ? displayName((item as Branch).company) : '',
     ].some((value) => value?.toLocaleLowerCase().includes(normalized)));
@@ -393,11 +445,11 @@ export default function CompanySequenceManager({ kind }: Props) {
   ];
 
   return (
-    <section className="mx-auto w-full max-w-7xl space-y-6 bg-[#f3f5f4] p-4 text-[#1d2b27] sm:p-8">
+    <section className="mx-auto w-full max-w-7xl space-y-6 bg-[var(--ws-soft,#f3f5f4)] p-4 text-[#1d2b27] sm:p-8">
       {/* ---------- header ---------- */}
       <header className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <span aria-hidden="true" className="grid size-12 place-items-center rounded-xl bg-[#1f5c4a] text-white">
+          <span aria-hidden="true" className="grid size-12 place-items-center rounded-xl bg-[var(--ws-accent-soft,#1f5c4a)] text-white">
             {isBranch ? <Store size={24} /> : <Building2 size={24} />}
           </span>
           <div>
@@ -421,7 +473,7 @@ export default function CompanySequenceManager({ kind }: Props) {
         )}
       </dl>
 
-      {notice && <p role="status" className="rounded-lg border border-[#bfe0cf] bg-[#e3f2ea] px-4 py-2.5 text-sm text-[#1f5c4a]">{notice}</p>}
+      {notice && <p role="status" className="rounded-lg border border-[#bfe0cf] bg-[var(--ws-soft,#e3f2ea)] px-4 py-2.5 text-sm text-[#1f5c4a]">{notice}</p>}
       {error && (
         <div role="alert" className="flex flex-wrap items-center gap-3 rounded-lg border border-[#f1c9c5] bg-[#fdf3f2] px-4 py-2.5 text-sm text-[#b42318]">
           {error}
@@ -432,7 +484,7 @@ export default function CompanySequenceManager({ kind }: Props) {
       {/* ---------- table ---------- */}
       <div className="overflow-hidden rounded-xl border border-[#dfe4e1] bg-white shadow-[0_1px_2px_rgba(18,32,27,0.05)]">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#e6ebe8] px-4 py-3">
-          <label className="flex w-full items-center gap-2 rounded-lg border border-[#d5dbd8] bg-[#f9faf9] px-3 focus-within:border-[#1f5c4a] focus-within:bg-white focus-within:outline-2 focus-within:outline-[#1f5c4a]/25 sm:w-96">
+          <label className="flex w-full items-center gap-2 rounded-lg border border-[#d5dbd8] bg-[var(--ws-surface,#f9faf9)] px-3 focus-within:border-[#1f5c4a] focus-within:bg-white focus-within:outline-2 focus-within:outline-[#1f5c4a]/25 sm:w-96">
             <Search size={16} className="text-[#8a9792]" aria-hidden="true" />
             <span className="sr-only">ค้นหา{noun}</span>
             <input
@@ -447,7 +499,7 @@ export default function CompanySequenceManager({ kind }: Props) {
         <div className="overflow-x-auto">
           <table aria-busy={loading} className="w-full min-w-[920px] text-left text-sm">
             <caption className="sr-only">รายการ{noun}จากฐานข้อมูล</caption>
-            <thead className="bg-[#f6f8f7] text-xs text-[#5b6b66]">
+            <thead className="bg-[var(--ws-soft,#f6f8f7)] text-xs text-[#5b6b66]">
               <tr>
                 {headings.map((heading) => <th key={heading} scope="col" className="whitespace-nowrap px-4 py-3 font-medium">{heading}</th>)}
                 <th scope="col" className="px-4 py-3 text-right font-medium">จัดการ</th>
@@ -466,7 +518,7 @@ export default function CompanySequenceManager({ kind }: Props) {
                 const code = isBranch ? (item as Branch).branchcode : (item as Company).companycode;
                 const mainName = isBranch ? displayName((item as Branch).company) : displayName(item);
                 return (
-                  <tr key={item.id} className="transition-colors hover:bg-[#f6f9f7]">
+                  <tr key={item.id} className="transition-colors hover:bg-[var(--ws-surface,#f6f9f7)]">
                     <th scope="row" className="whitespace-nowrap px-4 py-3.5 font-mono font-medium tabular-nums text-[#1f5c4a]">{code}</th>
                     <td className="px-4 py-3.5">
                       <div className="flex items-center gap-3">

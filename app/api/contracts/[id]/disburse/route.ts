@@ -1,10 +1,9 @@
-import { randomUUID } from 'node:crypto';
-import { mkdir, unlink, writeFile } from 'node:fs/promises';
-import path from 'node:path';
+import { unlink } from 'node:fs/promises';
 import { ContractStatus, PaymentMethod, PaymentType } from '@/generated/prisma/enums';
 import { prisma } from '@/lib/prisma';
 import { formatBorrowerCode } from '@/lib/borrower-code';
 import { writeLoanLog } from '@/lib/loan-logs';
+import { saveBorrowerFile, storedUploadPath } from '@/lib/borrower-file-storage';
 
 const fileTypes: Record<string, { extension: string; valid: (data: Buffer) => boolean }> = {
   'image/jpeg': { extension: 'jpg', valid: data => data[0] === 255 && data[1] === 216 },
@@ -65,13 +64,17 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     return Response.json({ error: 'กรุณาระบุเลขอ้างอิงหรือแนบสลิปการจ่ายเงินอย่างน้อยหนึ่งอย่าง' }, { status: 400 });
   }
 
-  const filename = fileData ? `${randomUUID()}.${fileExtension}` : '';
-  const evidenceUrl = filename ? `/api/contracts/attachments/${filename}` : '';
-  if (fileData) {
-    const directory = path.join(process.cwd(), 'storage', 'contract-attachments');
-    await mkdir(directory, { recursive: true });
-    await writeFile(path.join(directory, filename), fileData, { flag: 'wx' });
-  }
+  const contractForFile = fileData ? await prisma.contract.findUnique({ where: { id }, include: { debtor: { select: { borrowersCode: true } } } }) : null;
+  if (fileData && !contractForFile) return Response.json({ error: 'ไม่พบสัญญา' }, { status: 404 });
+  const savedFile = fileData && contractForFile ? await saveBorrowerFile({
+    storageArea: 'contract-attachments',
+    borrowerCode: formatBorrowerCode(contractForFile.debtor.borrowersCode),
+    contractNumber: contractForFile.contractNumber,
+    extension: fileExtension,
+    apiRoute: '/api/contracts/attachments',
+    data: fileData,
+  }) : null;
+  const evidenceUrl = savedFile?.url || '';
 
   try {
     const result = await prisma.$transaction(async tx => {
@@ -131,7 +134,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
 
     return Response.json(result, { status: 201 });
   } catch (error) {
-    if (filename) await unlink(path.join(process.cwd(), 'storage', 'contract-attachments', filename)).catch(() => {});
+    if (savedFile) await unlink(storedUploadPath('contract-attachments', evidenceUrl)).catch(() => {});
     if (error && typeof error === 'object' && 'code' in error && error.code === 'P2025') {
       return Response.json({ error: 'ไม่พบสัญญา' }, { status: 404 });
     }

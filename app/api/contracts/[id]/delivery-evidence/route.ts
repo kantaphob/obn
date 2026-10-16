@@ -1,13 +1,17 @@
 import { prisma } from '@/lib/prisma';
 import { POST as upload } from '../../attachments/route';
 import { unlink } from 'node:fs/promises';
-import path from 'node:path';
+import { storedUploadPath } from '@/lib/borrower-file-storage';
 import { writeLoanLog } from '@/lib/loan-logs';
 
 export async function POST(request:Request, context:{params:Promise<{id:string}>}){
  const {id}=await context.params;
- if(!await prisma.contract.findUnique({where:{id},select:{id:true}}))return Response.json({error:'ไม่พบสัญญา'},{status:404});
- const result=await upload(request);
+ const existing=await prisma.contract.findUnique({where:{id},select:{id:true,contractNumber:true,debtorId:true}});
+ if(!existing)return Response.json({error:'ไม่พบสัญญา'},{status:404});
+ const form=await request.formData().catch(()=>null);
+ if(!form)return Response.json({error:'ข้อมูลที่ส่งมาไม่ถูกต้อง'},{status:400});
+ form.set('contractId',id);form.set('borrowerId',existing.debtorId);form.set('contractNumber',existing.contractNumber);
+ const result=await upload(new Request(request.url,{method:'POST',headers:{origin:request.headers.get('origin')||''},body:form}));
  if(!result.ok)return result;
  const {url}=await result.json();
  const attachment={url,name:`หลักฐานส่งมอบเงิน ${new Date().toISOString()}`};
@@ -32,7 +36,7 @@ export async function POST(request:Request, context:{params:Promise<{id:string}>
   });
   return Response.json({attachment},{status:201});
  }catch(error){
-  await unlink(path.join(process.cwd(),'storage','contract-attachments',url.split('/').pop())).catch(()=>{});
+  await unlink(storedUploadPath('contract-attachments',url)).catch(()=>{});
   if(error instanceof Error && error.message==='ต้องบันทึกวันที่ลงนามในเอกสารก่อนบันทึกหลักฐานส่งมอบเงิน')return Response.json({error:error.message},{status:409});
   return Response.json({error:'บันทึกหลักฐานไม่สำเร็จ กรุณาลองใหม่'},{status:500});
  }

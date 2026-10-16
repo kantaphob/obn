@@ -9,9 +9,15 @@ import {
 export async function GET(request: Request) {
   try {
     const companycode = new URL(request.url).searchParams.get("companycode")?.trim();
+    const branchcode = new URL(request.url).searchParams.get("branchcode")?.trim();
+    if (branchcode && !/^\d{5}$/.test(branchcode)) {
+      return Response.json({ error: "กรุณาระบุรหัสสาขา 5 หลัก" }, { status: 400 });
+    }
     return Response.json(await prisma.branchCodeSequence.findMany({
-      where: companycode ? { companycode } : undefined,
-      include: { company: { select: { nameTH: true, nameEN: true } } },
+      where: { ...(companycode ? { companycode } : {}), ...(branchcode ? { branchcode } : {}) },
+      include: {
+        company: { select: { owner: true, nameTH: true, nameEN: true, TaxIdentificationNumber: true, address: true, postcode: true, phone: true } },
+      },
       orderBy: [{ companycode: "asc" }, { branchcode: "asc" }],
     }), { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
@@ -33,7 +39,7 @@ export async function POST(request: Request) {
 
     return Response.json(await prisma.branchCodeSequence.create({
       data: { ...data, companycode, branchcode, type: CompanySequenceType.BRANCH },
-      include: { company: { select: { nameTH: true, nameEN: true } } },
+      include: { company: { select: { owner: true, nameTH: true, nameEN: true, TaxIdentificationNumber: true, address: true, postcode: true, phone: true } } },
     }), { status: 201 });
   } catch (error) {
     return companySequenceError(error);

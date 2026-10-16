@@ -22,8 +22,8 @@ export async function PATCH(request: Request, { params }: Context) {
 
     return Response.json(await prisma.companySequence.update({
       where: { id },
-      data: { ...data, ...owner, companycode: input.companycode.trim(), type: CompanySequenceType.COMPANY },
-      include: { _count: { select: { branches: true } } },
+      data: { ...data, companycode: input.companycode.trim(), type: CompanySequenceType.COMPANY, ...(Object.keys(owner).length ? { owner: { upsert: { create: owner, update: owner } } } : {}) },
+      include: { owner: true, _count: { select: { branches: true } } },
     }));
   } catch (error) {
     return companySequenceError(error);

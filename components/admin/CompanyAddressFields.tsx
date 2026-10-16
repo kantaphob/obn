@@ -3,9 +3,10 @@
 import { useEffect, useState } from 'react';
 import type { PostcodeResult } from '@/lib/postcode-types';
 
-type Address = { houseNo?: string | null; soi?: string | null; road?: string | null; provinceId?: string | null; districtId?: string | null; subdistrictId?: string | null; address?: string | null; postcode?: string | null };
+type Address = { houseNo?: string | null; moo?: string | null; soi?: string | null; road?: string | null; provinceId?: string | null; districtId?: string | null; subdistrictId?: string | null; address?: string | null; postcode?: string | null };
 export default function CompanyAddressFields({ item, disabled, fieldClass, labelClass }: { item: Address | null; disabled: boolean; fieldClass: string; labelClass: string }) {
   const [houseNo, setHouseNo] = useState(item?.houseNo ?? '');
+  const [moo, setMoo] = useState(item?.moo ?? '');
   const [soi, setSoi] = useState(item?.soi ?? '');
   const [road, setRoad] = useState(item?.road ?? '');
   const [provinceId, setProvinceId] = useState(item?.provinceId ?? '');
@@ -42,11 +43,11 @@ export default function CompanyAddressFields({ item, disabled, fieldClass, label
   const province = data?.provinces.find((row) => String(row.id) === provinceId);
   const district = data?.districts.find((row) => String(row.id) === districtId);
   const subdistrict = data?.items.find((row) => String(row.id) === subdistrictId);
-  const address = data ? [legacy.trim(), houseNo.trim() && `เลขที่ ${houseNo.trim()}`, soi.trim() && `ซอย${soi.trim()}`, road.trim() && `ถนน${road.trim()}`, subdistrict && `${provinceId === '1' ? 'แขวง' : 'ตำบล'}${subdistrict.nameTh}`, district && `${provinceId === '1' ? 'เขต' : 'อำเภอ'}${district.nameTh}`, province?.nameTh].filter(Boolean).join(' ') : item?.address ?? '';
+  const address = data ? [legacy.trim(), houseNo.trim() && `เลขที่ ${houseNo.trim()}`, moo.trim() && `หมู่${moo.trim()}`, soi.trim() && `ซอย${soi.trim()}`, road.trim() && `ถนน${road.trim()}`, subdistrict && `${provinceId === '1' ? 'แขวง' : 'ตำบล'}${subdistrict.nameTh}`, district && `${provinceId === '1' ? 'เขต' : 'อำเภอ'}${district.nameTh}`, province && `จังหวัด${province.nameTh}`].filter(Boolean).join(' ') : item?.address ?? '';
   return <>
     <input type="hidden" name="address" value={address} data-address-pending={!data ? "true" : undefined} />
     <input type="hidden" name="provinceId" value={provinceId} /><input type="hidden" name="districtId" value={districtId} /><input type="hidden" name="subdistrictId" value={subdistrictId} />
-    {([['houseNo', 'เลขที่', houseNo, setHouseNo], ['soi', 'ซอย', soi, setSoi], ['road', 'ถนน', road, setRoad]] as const).map(([name, label, value, setter]) => <label key={name} className={labelClass}>{label}<input name={name} value={value} onChange={(event) => setter(event.target.value)} disabled={disabled} maxLength={200} className={fieldClass} /></label>)}
+    {([['houseNo', 'เลขที่', houseNo, setHouseNo], ['moo', 'หมู่', moo, setMoo], ['soi', 'ซอย', soi, setSoi], ['road', 'ถนน', road, setRoad]] as const).map(([name, label, value, setter]) => <label key={name} className={labelClass}>{label}<input name={name} value={value} onChange={(event) => setter(event.target.value)} disabled={disabled} maxLength={200} className={fieldClass} /></label>)}
     <label className={labelClass}>จังหวัด<select value={provinceId} disabled={disabled || !data} className={fieldClass} onChange={(event) => { setProvinceId(event.target.value); setDistrictId(''); setSubdistrictId(''); setPostcode(''); }}><option value="">เลือกจังหวัด</option>{data?.provinces.map((row) => <option key={row.id} value={row.id}>{row.nameTh}</option>)}</select></label>
     <label className={labelClass}>อำเภอ / เขต<select value={districtId} disabled={disabled || !data || !provinceId} className={fieldClass} onChange={(event) => { setDistrictId(event.target.value); setSubdistrictId(''); setPostcode(''); }}><option value="">เลือกอำเภอ / เขต</option>{data?.districts.map((row) => <option key={row.id} value={row.id}>{row.nameTh}</option>)}</select></label>
     <label className={labelClass}>ตำบล / แขวง<select value={subdistrictId} disabled={disabled || !data || !districtId} className={fieldClass} onChange={(event) => { setSubdistrictId(event.target.value); setPostcode(data?.items.find((row) => String(row.id) === event.target.value)?.postcode ?? ''); }}><option value="">เลือกตำบล / แขวง</option>{districtId && data?.items.map((row) => <option key={row.id} value={row.id}>{row.nameTh}</option>)}</select></label>

@@ -28,3 +28,12 @@ Keep a qualifying candidate through the reporting pass even if you resolve or wo
 Before the final response, run one reporting pass. If candidates remain, from this file's directory run `node node_modules/next/dist/bin/next internal agent-feedback-instructions` once without piping or truncating its output. Follow its output or error guidance. If a network sandbox blocks it, retry with network access; if it still returns no output, continue normally.
 
 <!-- END:nextjs-agent-feedback -->
+
+## Project conventions
+
+- For address forms that use Masterdata Postcode, follow this order: ที่อยู่ → หมู่ → ซอย → ถนน → ตำบล/แขวง → อำเภอ/เขต → จังหวัด.
+- Load province, district, and subdistrict options from the existing `/api/postcodes` endpoint, with district and subdistrict options cascading from the selected parent.
+- For reusable person and juristic-person records, keep them in a dedicated Masterdata model and reference them by stable IDs instead of copying names between business records. Keep access-control `Role` separate from person or company identity.
+- A person record should have: เลขประจำตัวประชาชน, คำนำหน้า, ชื่อ, สกุล, เบอร์โทร, อีเมล, and ที่อยู่.
+- Store a juristic person's registered name and tax identification number as separate fields; include contact and address fields when the workflow needs them.
+- For contracts or other records that need an unchanging historical value, store a snapshot of the referenced person's or entity's details at the time the record is saved, alongside the Masterdata ID.

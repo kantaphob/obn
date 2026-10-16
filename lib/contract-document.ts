@@ -1,12 +1,17 @@
+export type ContractDocumentPackage = 'NONE'|'LOAN_WITNESS'|'LOAN_GUARANTEE_WITNESS'|'LOAN_GUARANTEE_COLLATERAL'|'LOAN_GUARANTEE_WITNESS_COLLATERAL';
 export type ContractDocumentSettings = {
+ witnessCount:string;
+ documentFont:string; documentFontSize:string; documentHeadingSize:string;
+ lenderType:'COMPANY'|'PERSON'; lenderDocumentUrl:string; lenderDocumentName:string;
  collateral:string; branchCode:string; witness1Id:string; witness1Phone:string; witness1Address:string; witness2Id:string; witness2Phone:string; witness2Address:string;
  kind:'NEW_LOAN'|'AMENDMENT'; place:string; companyCode:string; lenderName:string; lenderId:string; lenderAddress:string; lenderPhone:string;
  annualRate:string; originalDate:string; originalNumber:string; principalPaid:string; lawfulInterest:string; deliveryEvidence:string;
  guarantorId:string; guarantorAddress:string; guarantorPhone:string; guarantorAge:string; guaranteeLimit:string;
- loanText:string; guaranteeText:string; attachments:{url:string;name:string}[];
- lenderSignature:string; witness1Signature:string; witness2Signature:string; guarantorSignature:string;
+ packageType:ContractDocumentPackage; collateralDetails:string; collateralProviderName:string; collateralProviderId:string; collateralProviderAddress:string;
+ loanText:string; guaranteeText:string; collateralAgreementText:string; attachments:{url:string;name:string}[];
+ lenderSignature:string; witness1Signature:string; witness2Signature:string; guarantorSignature:string; collateralProviderSignature:string;
 };
-export const emptyDocumentSettings:ContractDocumentSettings={collateral:'',branchCode:'',witness1Id:'',witness1Phone:'',witness1Address:'',witness2Id:'',witness2Phone:'',witness2Address:'',kind:'NEW_LOAN',place:'',companyCode:'',lenderName:'',lenderId:'',lenderAddress:'',lenderPhone:'',annualRate:'',originalDate:'',originalNumber:'',principalPaid:'',lawfulInterest:'',deliveryEvidence:'',guarantorId:'',guarantorAddress:'',guarantorPhone:'',guarantorAge:'',guaranteeLimit:'',loanText:'',guaranteeText:'',attachments:[],lenderSignature:'',witness1Signature:'',witness2Signature:'',guarantorSignature:''};
+export const emptyDocumentSettings:ContractDocumentSettings={witnessCount:"2",documentFont:"TH Sarabun New",documentFontSize:"14",documentHeadingSize:"14",lenderType:'COMPANY',lenderDocumentUrl:'',lenderDocumentName:'',collateral:'',branchCode:'',witness1Id:'',witness1Phone:'',witness1Address:'',witness2Id:'',witness2Phone:'',witness2Address:'',kind:'NEW_LOAN',place:'',companyCode:'',lenderName:'',lenderId:'',lenderAddress:'',lenderPhone:'',annualRate:'',originalDate:'',originalNumber:'',principalPaid:'',lawfulInterest:'',deliveryEvidence:'',guarantorId:'',guarantorAddress:'',guarantorPhone:'',guarantorAge:'',guaranteeLimit:'',packageType:'NONE',collateralDetails:'',collateralProviderName:'',collateralProviderId:'',collateralProviderAddress:'',loanText:'',guaranteeText:'',collateralAgreementText:'',attachments:[],lenderSignature:'',witness1Signature:'',witness2Signature:'',guarantorSignature:'',collateralProviderSignature:''};
 const blank=(s:string|null|undefined)=>s?.trim()||'………………………………';
 export function thaiMoneyWords(cents:number){
  const digits=['ศูนย์','หนึ่ง','สอง','สาม','สี่','ห้า','หก','เจ็ด','แปด','เก้า'];const units=['','สิบ','ร้อย','พัน','หมื่น','แสน'];
@@ -22,6 +27,25 @@ function legalDate(value:string){
  const part=(kind:string)=>parts.find(p=>p.type===kind)?.value||"";
  return `${part("day")} เดือน ${part("month")} พ.ศ. ${part("year")}`;
 }
+export function formatDocumentBorrowerAddress(loan: DocumentLoan) {
+ const raw = loan.borrowerAddress?.trim() || '';
+ const house = loan.borrowerHouseNumber?.trim() || raw.match(/^(?:บ้านเลขที่|เลขที่)?\s*([0-9๐-๙]+(?:[\/\-][0-9๐-๙]+)*)/u)?.[1];
+ const moo = raw.match(/(?:หมู่(?:ที่)?|ม\.)\s*([0-9๐-๙]+)/u)?.[1];
+ const subdistrict = loan.borrowerSubdistrict || raw.match(/(?:ตำบล|แขวง|ต\.)\s*([^\s]+)/u)?.[1];
+ const district = loan.borrowerDistrict || raw.match(/(?:อำเภอ|เขต|อ\.)\s*([^\s]+)/u)?.[1];
+ const province = loan.borrowerProvince || raw.match(/(?:จังหวัด|จ\.)\s*([^\s]+)/u)?.[1];
+ const bangkok = province === 'กรุงเทพมหานคร';
+ return [
+  `บ้านเลขที่ ${blank(house)}`,
+  `หมู่ที่ ${blank(moo)}`,
+  loan.borrowerBuildingName && `อาคาร ${loan.borrowerBuildingName}`,
+  loan.borrowerAlley && `ซอย ${loan.borrowerAlley}`,
+  loan.borrowerRoad && `ถนน ${loan.borrowerRoad}`,
+  `${bangkok ? 'แขวง' : 'ตำบล'} ${blank(subdistrict)}`,
+  `${bangkok ? 'เขต' : 'อำเภอ'} ${blank(district)}`,
+  `จังหวัด ${blank(province)}`,
+ ].filter(Boolean).join(' ');
+}
 export function makeLoanDocument(doc:ContractDocumentSettings,loan:DocumentLoan){
  const amount=loan.principal===null?'…………':new Intl.NumberFormat('th-TH').format(loan.principal/100);const words=loan.principal===null?'……………………':thaiMoneyWords(loan.principal);
  const parties=`ทำที่ ${blank(doc.place)}\nวันที่ ${legalDate(loan.startDate)}\n\nฝ่ายที่หนึ่ง ผู้ให้กู้ (เจ้าหนี้)\nชื่อ-นามสกุล ${blank(doc.lenderName)}\nเลขประจำตัวประชาชน ${blank(doc.lenderId)}\nที่อยู่ ${blank(doc.lenderAddress)}\nโทรศัพท์ ${blank(doc.lenderPhone)}\nต่อไปนี้เรียกว่า “ผู้ให้กู้”\n\nฝ่ายที่สอง ผู้กู้ (ลูกหนี้)\nชื่อ-นามสกุล ${blank(loan.borrowerName)}\nเลขประจำตัวประชาชน ${blank(loan.borrowerId)}\nที่อยู่ ${blank(loan.borrowerAddress)}\nโทรศัพท์ ${blank(loan.borrowerPhone)}\nต่อไปนี้เรียกว่า “ผู้กู้”\n\nคู่สัญญาตกลงดังต่อไปนี้\n`;
@@ -30,16 +54,7 @@ export function makeLoanDocument(doc:ContractDocumentSettings,loan:DocumentLoan)
     const newAmount = loan.principal === null ? '…………' : new Intl.NumberFormat('th-TH', { minimumFractionDigits: 2 }).format(loan.principal / 100);
     const baht = loan.principal === null ? '…………' : new Intl.NumberFormat('th-TH').format(Math.floor(loan.principal / 100));
     const satang = loan.principal === null ? '……' : String(loan.principal % 100).padStart(2, '0');
-    const addressParts = [
-      loan.borrowerHouseNumber && `บ้านเลขที่ ${loan.borrowerHouseNumber}`,
-      loan.borrowerBuildingName && `อาคาร ${loan.borrowerBuildingName}`,
-      loan.borrowerAlley && `ตรอก/ซอย ${loan.borrowerAlley}`,
-      loan.borrowerRoad && `ถนน ${loan.borrowerRoad}`,
-      loan.borrowerSubdistrict && `ตำบล ${loan.borrowerSubdistrict}`,
-      loan.borrowerDistrict && `อำเภอ ${loan.borrowerDistrict}`,
-      loan.borrowerProvince && `จังหวัด ${loan.borrowerProvince}`,
-    ].filter(Boolean).join(' ');
-    const borrowerAddress = addressParts || loan.borrowerAddress || '………………………………';
+    const borrowerAddress = formatDocumentBorrowerAddress(loan);
     let age = '……';
     if (loan.borrowerBirthDate && /^\d{4}-\d{2}-\d{2}/.test(loan.borrowerBirthDate)) {
       const birth = new Date(`${loan.borrowerBirthDate.slice(0, 10)}T12:00:00+07:00`);
@@ -60,8 +75,8 @@ export function makeLoanDocument(doc:ContractDocumentSettings,loan:DocumentLoan)
 
 ข้าพเจ้า ${blank(loan.borrowerName)} อายุ ${age} ปี
 เลขประจำตัวประชาชน ${blank(loan.borrowerId)}
-อยู่ ${blank(borrowerAddress)} โทรศัพท์ ${blank(loan.borrowerPhone)}
-ได้ทำหนังสือสัญญากู้เงินให้ไว้แก่ ${blank(doc.lenderName)} มีข้อสัญญาดังแจ้งต่อไปนี้
+ที่อยู่ ${blank(borrowerAddress)} โทรศัพท์ ${blank(loan.borrowerPhone)}
+ได้ทำหนังสือสัญญากู้เงินให้ไว้แก่ ${blank(doc.lenderName)} เลขประจำตัว/เลขทะเบียน ${blank(doc.lenderId)} สำนักงานตั้งอยู่ที่ ${blank(doc.lenderAddress)} โทรศัพท์ ${blank(doc.lenderPhone)} มีข้อสัญญาดังแจ้งต่อไปนี้
 
 ข้อ ๑. ข้าพเจ้า ${blank(loan.borrowerName)} ได้กู้เงินของ ${blank(doc.lenderName)} เป็นจำนวนเงิน (${words}) ${baht} บาท ${satang} สตางค์ รวม ${newAmount} บาท
 ข้าพเจ้าได้รับเงินไปครบถ้วนเสร็จแล้วตั้งแต่วันทำสัญญานี้
@@ -80,21 +95,7 @@ export function makeLoanDocument(doc:ContractDocumentSettings,loan:DocumentLoan)
 
 ผู้เขียนสัญญาได้อ่านข้อสัญญาให้ข้าพเจ้าผู้กู้ฟังและเข้าใจโดยละเอียดตลอดทุกข้อแล้ว ข้าพเจ้าได้ลงลายมือชื่อไว้ต่อหน้าพยาน ณ ที่นี้
 
-ลงลายมือชื่อ ____________________________________ ผู้กู้
-(${blank(loan.borrowerName)} · ${blank(loan.borrowerCode)})
-
-ลงลายมือชื่อ ____________________________________ ผู้ให้กู้ (เจ้าของเงิน)
-(${blank(doc.lenderName)})
-
-ข้าพเจ้าพยานรับรองว่าเข้าใจข้อความในหนังสือสัญญานี้ และได้เห็นคู่สัญญาส่งมอบเงินกู้ ตกลงทำสัญญา และลงลายมือชื่อต่อหน้าข้าพเจ้า
-
-ลงลายมือชื่อ ____________________________________ พยาน
-(${blank(loan.witness1)})
-
-ลงลายมือชื่อ ____________________________________ พยาน
-(${blank(loan.witness2)})
-
-ลงลายมือชื่อ ____________________________________ ผู้เขียนและพยาน`;
+ข้าพเจ้าพยานรับรองว่าเข้าใจข้อความในหนังสือสัญญานี้ และได้เห็นคู่สัญญาส่งมอบเงินกู้ ตกลงทำสัญญา และลงลายมือชื่อต่อหน้าข้าพเจ้า`;
   }
  return `เอกสารแนบท้ายสัญญากู้ยืมเงิน\nอ้างอิงสัญญาเลขที่ ${blank(doc.originalNumber)}\n${parties}
 ข้อ 1 อ้างอิงสัญญากู้ยืมเงินเดิม
@@ -177,4 +178,75 @@ ${blank(doc.lenderName)} เลขประจำตัวประชาชน 
 ลงชื่อ ……………………………… ผู้ให้กู้ (${blank(doc.lenderName)})
 ลงชื่อ ……………………………… พยาน
 ลงชื่อ ……………………………… พยาน`;
+}
+
+export function makeCollateralAgreementDocument(doc:ContractDocumentSettings,loan:DocumentLoan,guarantor:string){
+ const amount=loan.principal===null?'…………':new Intl.NumberFormat('th-TH',{minimumFractionDigits:2}).format(loan.principal/100);
+ const words=loan.principal===null?'……………………':thaiMoneyWords(loan.principal);
+ const provider=doc.collateralProviderName.trim()||loan.borrowerName;
+ const assetDetails=blank(doc.collateralDetails);
+ const limit=doc.guaranteeLimit.trim()?`${doc.guaranteeLimit} บาท`:'………… บาท';
+ return `สัญญาค้ำประกันและข้อตกลงจัดให้มีทรัพย์สินเป็นหลักประกัน
+ครอบคลุมอสังหาริมทรัพย์และสังหาริมทรัพย์
+
+ทำที่ ${blank(doc.place)} วันที่ ${legalDate(loan.contractDate||loan.startDate)}
+
+1. คู่สัญญาและฐานะของแต่ละฝ่าย
+เจ้าหนี้/ผู้ให้กู้ ${blank(doc.lenderName)} เลขประจำตัวประชาชน/ทะเบียนนิติบุคคล ${blank(doc.lenderId)} ที่อยู่ ${blank(doc.lenderAddress)} โทรศัพท์ ${blank(doc.lenderPhone)} ซึ่งต่อไปเรียกว่า “เจ้าหนี้”
+ลูกหนี้/ผู้กู้ ${blank(loan.borrowerName)} เลขประจำตัวประชาชน ${blank(loan.borrowerId)} ที่อยู่ ${blank(loan.borrowerAddress)} โทรศัพท์ ${blank(loan.borrowerPhone)} ซึ่งต่อไปเรียกว่า “ลูกหนี้”
+ผู้ค้ำประกัน ${blank(guarantor)} เลขประจำตัวประชาชน ${blank(doc.guarantorId)} ที่อยู่ ${blank(doc.guarantorAddress)} โทรศัพท์ ${blank(doc.guarantorPhone)}
+ผู้ให้หลักประกัน ${blank(provider)} เลขประจำตัว ${blank(doc.collateralProviderId)} ที่อยู่ ${blank(doc.collateralProviderAddress)} เป็นเจ้าของทรัพย์ตามบัญชีแนบท้าย ก และ/หรือ ข โดยเป็น ${provider===loan.borrowerName?'ลูกหนี้':'บุคคลภายนอก'}
+
+2. หนี้ที่ประกันและขอบเขตจำนวนเงิน
+หนี้ตามสัญญากู้ยืมเงิน เลขที่ ${blank(loan.number)} ลงวันที่ ${legalDate(loan.contractDate||loan.startDate)} ระหว่างเจ้าหนี้กับลูกหนี้ เงินต้น ${amount} บาท (${words}) กำหนดชำระวันที่ ${legalDate(loan.dueDate)}
+ดอกเบี้ยตามสัญญาหลักอัตราร้อยละ ${loan.rate} ${loan.monthly?'ต่อเดือน':'ตามระยะเวลาสัญญา'} ทั้งนี้ ต้องไม่เกินอัตราที่กฎหมายอนุญาต
+จำนวนสูงสุดที่ค้ำประกันรวมเงินต้น ดอกเบี้ย ค่าสินไหมทดแทน และอุปกรณ์แห่งหนี้ที่ชอบด้วยกฎหมาย ไม่เกิน ${limit} โดยไม่เกินยอดหนี้ที่ลูกหนี้ต้องรับผิดจริง
+
+3. การค้ำประกันส่วนบุคคล
+ผู้ค้ำประกันตกลงชำระหนี้ตามขอบเขตที่ระบุไว้เมื่อลูกหนี้ไม่ชำระ โดยมีความรับผิดไม่เกินวงเงินและขอบเขตที่ระบุ ผู้ค้ำประกันไม่สละสิทธิหรือข้อต่อสู้ที่กฎหมายให้ไว้
+
+4. การผิดนัดและการแจ้งผู้ค้ำประกัน
+เมื่อลูกหนี้ผิดนัด เจ้าหนี้ต้องมีหนังสือบอกกล่าวไปยังผู้ค้ำประกันภายในกำหนดตามกฎหมาย การเพิ่มวงเงิน เปลี่ยนประเภทหนี้ หรือขยายขอบเขตการค้ำประกัน ต้องทำเป็นหนังสือโดยผู้ค้ำประกันยินยอมเฉพาะคราว
+
+5. อสังหาริมทรัพย์และทรัพย์ที่จดทะเบียนจำนองได้
+รายการทรัพย์ตามบัญชี ก: ${assetDetails}
+ผู้ให้หลักประกันตกลงนำทรัพย์ที่จดทะเบียนจำนองได้ไปจดทะเบียน ณ สำนักงานที่ดินหรือหน่วยงานทะเบียนที่มีอำนาจ จำนวนเงินจำนอง ${limit} เงื่อนไขเป็นไปตามสัญญาจำนองที่จดทะเบียนและกฎหมาย การส่งมอบเอกสารสิทธิเพียงอย่างเดียวไม่ทำให้เกิดสิทธิจำนอง
+
+6. สังหาริมทรัพย์ที่นำมาจำนำ
+รายการทรัพย์ตามบัญชี ข: ${assetDetails}
+การจำนำสังหาริมทรัพย์ต้องส่งมอบทรัพย์จริงและจัดทำหลักฐานรับมอบ การระบุรายการทรัพย์หรือส่งมอบสำเนาทะเบียนโดยมิได้ส่งมอบทรัพย์ไม่ทำให้การจำนำเสร็จสมบูรณ์
+
+7. การดูแลและการบังคับหลักประกัน
+ผู้ให้หลักประกันรับรองสิทธิในทรัพย์และเปิดเผยเจ้าของร่วม คู่สมรส และภาระผูกพันทั้งหมดตามบัญชี เจ้าหนี้ต้องบอกกล่าวและบังคับหลักประกันตามขั้นตอนกฎหมาย ห้ามยึดเอาทรัพย์เป็นของตนโดยอัตโนมัติหรือขายเองโดยไม่ปฏิบัติตามกฎหมาย
+
+8. การชำระหนี้ การคืนทรัพย์ และข้อตกลงทั่วไป
+เงินที่ได้รับจากลูกหนี้ ผู้ค้ำประกัน หรือการบังคับหลักประกัน ต้องนำหักหนี้เดียวกันโดยไม่เรียกเก็บซ้ำ เมื่อหนี้ที่ประกันระงับ เจ้าหนี้ต้องคืนทรัพย์จำนำและเอกสาร พร้อมร่วมดำเนินการปลดจำนองตามกฎหมาย
+
+9. การลงนามในสัญญา
+คู่สัญญาได้อ่านและเข้าใจข้อความรวมถึงบัญชีแนบท้ายที่เลือกใช้แล้ว จึงลงลายมือชื่อไว้เป็นหลักฐาน ทำสองฉบับมีข้อความตรงกัน
+ลงชื่อ _______________________ เจ้าหนี้ (${blank(doc.lenderName)})
+ลงชื่อ _______________________ ลูกหนี้ (${blank(loan.borrowerName)})
+ลงชื่อ _______________________ ผู้ค้ำประกัน (${blank(guarantor)})
+ลงชื่อ _______________________ ผู้ให้หลักประกัน (${blank(provider)}) ระบุฐานะ ${provider===loan.borrowerName?'ลูกหนี้':'บุคคลภายนอก'}
+ลงชื่อ _______________________ พยาน (${blank(loan.witness1)})
+ลงชื่อ _______________________ พยาน (${blank(loan.witness2)})
+
+บัญชี ก — อสังหาริมทรัพย์/ทรัพย์ที่จดทะเบียนจำนองได้
+ประเภททรัพย์ __________________ เจ้าของกรรมสิทธิ์ __________________ สัดส่วนกรรมสิทธิ์ __________________
+โฉนด/หนังสือแสดงสิทธิเลขที่ __________ เลขที่ดิน __________ หน้าสำรวจ __________
+ตำบล/แขวง ______________ อำเภอ/เขต ______________ จังหวัด __________________
+เนื้อที่ ______ ไร่ ______ งาน ______ ตารางวา สิ่งปลูกสร้าง/ห้องชุด __________________
+ราคาประเมิน __________ บาท ภาระผูกพัน/ผู้รับจำนองเดิม/เจ้าของร่วม __________________
+คู่สมรส/ผู้มีอำนาจให้ความยินยอม __________________ จำนวนเงินจำนอง __________ บาท
+หน่วยงานจดทะเบียน __________________ กำหนดจดทะเบียน __________ วันจดทะเบียนจริง __________
+
+บัญชี ข — สังหาริมทรัพย์ที่นำมาจำนำ
+ประเภททรัพย์ __________________ เจ้าของกรรมสิทธิ์ __________________ หลักฐานการได้มา __________________
+ยี่ห้อ/รุ่น __________________ หมายเลขเครื่อง/ตัวถัง/ทะเบียน __________________
+รายละเอียดจำแนกทรัพย์/น้ำหนัก/ขนาด/จำนวน __________________ สภาพทรัพย์และอุปกรณ์ที่ส่งมอบ __________________
+ราคาประเมินร่วมกัน __________ บาท ภาระผูกพัน/ข้อจำกัด/สิทธิบุคคลอื่น __________________
+ส่งมอบทรัพย์จริงเมื่อวันที่ __________ เวลา ______ น. ณ __________________ ผู้รับมอบ/ผู้เก็บรักษา __________________
+ลงชื่อผู้ส่งมอบ __________________ ลงชื่อผู้รับมอบ __________________ ลงชื่อเจ้าหนี้ผู้รับจำนำ __________________
+
+ข้อควรตรวจสอบก่อนใช้: กรอกข้อมูลหนี้และวงเงินให้ครบ ตรวจสิทธิในทรัพย์และอำนาจลงนาม ทำจำนองหรือส่งมอบจำนำให้ครบขั้นตอน และตรวจร่างตามข้อเท็จจริงก่อนลงนาม`;
 }

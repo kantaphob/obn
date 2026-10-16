@@ -1,9 +1,10 @@
 import { Prisma } from "@/generated/prisma/client";
 import { CompanySequenceStatus } from "@/generated/prisma/enums";
+import { isCompanyOwnerDocumentUrl } from '@/lib/company-file-storage';
 
 export const companyFields = [
   "logo",
-  "houseNo", "soi", "road", "provinceId", "districtId", "subdistrictId",
+  "houseNo", "moo", "soi", "road", "provinceId", "districtId", "subdistrictId",
   "nameTH",
   "nameEN",
   "TaxIdentificationNumber",
@@ -62,15 +63,30 @@ export function companySequenceError(error: unknown) {
 }
 
 export function parseCompanyOwner(value: Record<string, unknown>) {
-  const data: { ownerFirstName?: string | null; ownerLastName?: string | null; ownerPhone?: string | null; ownerEmail?: string | null } = {};
-  for (const key of ['ownerFirstName', 'ownerLastName', 'ownerPhone', 'ownerEmail'] as const) {
+  const data: { ownerPrefix?: string | null; ownerFirstName?: string | null; ownerLastName?: string | null; ownerPhone?: string | null; ownerEmail?: string | null; ownerNationalId?: string | null; ownerAddress?: string | null; ownerProvince?: string | null; ownerDistrict?: string | null; ownerSubdistrict?: string | null; ownerPostcode?: string | null; ownerMoo?: string | null; ownerSoi?: string | null; ownerRoad?: string | null; ownerProvinceId?: number | null; ownerDistrictId?: number | null; ownerSubdistrictId?: number | null; ownerDocumentUrl?: string | null; ownerDocumentName?: string | null } = {};
+  for (const key of ['ownerPrefix', 'ownerFirstName', 'ownerLastName', 'ownerPhone', 'ownerEmail', 'ownerDocumentUrl', 'ownerDocumentName', 'ownerNationalId', 'ownerAddress', 'ownerProvince', 'ownerDistrict', 'ownerSubdistrict', 'ownerPostcode', 'ownerMoo', 'ownerSoi', 'ownerRoad'] as const) {
     if (!(key in value)) continue;
     const raw = value[key];
     if (raw !== null && typeof raw !== 'string') return 'ข้อมูลเจ้าของไม่ถูกต้อง';
     const text = typeof raw === 'string' ? raw.trim() : '';
-    if (text.length > (key === 'ownerPhone' ? 40 : 200)) return 'ข้อมูลเจ้าของยาวเกินกำหนด';
+    if (text.length > (key === 'ownerPhone' ? 40 : key === 'ownerAddress' ? 200 : 200)) return 'ข้อมูลเจ้าของยาวเกินกำหนด';
     if (key === 'ownerEmail' && text && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(text)) return 'อีเมลเจ้าของไม่ถูกต้อง';
+    if (key === 'ownerDocumentUrl' && text && !isCompanyOwnerDocumentUrl(text)) return 'เอกสารเจ้าของไม่ถูกต้อง';
+    if (key === 'ownerNationalId' && text && !/^\d{13}$/.test(text)) return 'เลขประจำตัวประชาชนเจ้าของต้องเป็นตัวเลข 13 หลัก';
+    if (key === 'ownerPostcode' && text && !/^\d{5}$/.test(text)) return 'รหัสไปรษณีย์ไม่ถูกต้อง';
     data[key] = text || null;
+  }
+
+  for (const key of ['ownerProvinceId', 'ownerDistrictId', 'ownerSubdistrictId'] as const) {
+    if (!(key in value)) continue;
+    const raw = value[key];
+    if (raw === null || raw === '') {
+      data[key] = null;
+      continue;
+    }
+    const id = typeof raw === 'number' ? raw : typeof raw === 'string' && /^\d+$/.test(raw) ? Number(raw) : NaN;
+    if (!Number.isSafeInteger(id) || id < 1) return 'รหัสตำบล อำเภอ หรือจังหวัดไม่ถูกต้อง';
+    data[key] = id;
   }
   return data;
 }

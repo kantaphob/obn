@@ -1,6 +1,6 @@
-import { mkdir, writeFile } from 'node:fs/promises';
-import path from 'node:path';
-import { randomUUID } from 'node:crypto';
+import { prisma } from '@/lib/prisma';
+import { formatBorrowerCode } from '@/lib/borrower-code';
+import { saveBorrowerFile } from '@/lib/borrower-file-storage';
 export async function POST(request: Request) {
     const body = await request.formData().catch(() => null), file = body?.get('file');
     const types: Record<string, string> = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'application/pdf': 'pdf' };
@@ -10,9 +10,17 @@ export async function POST(request: Request) {
     const valid = file.type === 'application/pdf' ? data.subarray(0, 5).toString() === '%PDF-' : file.type === 'image/jpeg' ? data[0] === 255 && data[1] === 216 : file.type === 'image/png' ? data.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10])) : data.subarray(0, 4).toString() === 'RIFF' && data.subarray(8, 12).toString() === 'WEBP';
     if (!valid)
         return Response.json({ error: 'ชนิดไฟล์ไม่ตรงกับเนื้อหา' }, { status: 400 });
-    const filename = `${randomUUID()}.${types[file.type]}`;
-    const dir = path.join(process.cwd(), 'storage', 'contract-attachments');
-    await mkdir(dir, { recursive: true });
-    await writeFile(path.join(dir, filename), data, { flag: 'wx' });
-    return Response.json({ url: `/api/contracts/attachments/${filename}` }, { status: 201 });
+    const contractId = body?.get('contractId');
+    const borrowerId = body?.get('borrowerId');
+    const contractNumber = body?.get('contractNumber');
+    const contract = typeof contractId === 'string' && contractId
+      ? await prisma.contract.findUnique({ where: { id: contractId }, include: { debtor: { select: { borrowersCode: true } } } })
+      : null;
+    const borrower = contract?.debtor ?? (typeof borrowerId === 'string' && borrowerId
+      ? await prisma.borrowers.findUnique({ where: { id: borrowerId }, select: { borrowersCode: true } })
+      : null);
+    if (!borrower) return Response.json({ error: 'กรุณาเลือกผู้กู้ก่อนแนบเอกสาร' }, { status: 400 });
+    const resolvedContractNumber = contract?.contractNumber || (typeof contractNumber === 'string' && contractNumber.trim() ? contractNumber : 'DRAFT');
+    const saved = await saveBorrowerFile({ storageArea: 'contract-attachments', borrowerCode: formatBorrowerCode(borrower.borrowersCode), contractNumber: resolvedContractNumber, extension: types[file.type], apiRoute: '/api/contracts/attachments', data });
+    return Response.json({ url: saved.url }, { status: 201 });
 }

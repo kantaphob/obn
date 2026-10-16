@@ -10,7 +10,7 @@ type Toast = ToastInput & { id: number };
 const ToastContext = createContext<((input: ToastInput) => void) | null>(null);
 type LoadStatus = 'success' | 'error' | 'loading';
 const StatusContext = createContext<{ status: LoadStatus; report: (status: LoadStatus, key?: string) => void } | null>(null);
-const colors = { success: 'border-[#9ac9aa] bg-[#f1faf3] text-[#24683a]', error: 'border-[#e4aaaa] bg-[#fff5f5] text-[#9f3030]', info: 'border-[#a6bfd8] bg-[#f3f8ff] text-[#315d88]' };
+const colors = { success: 'border-[#9ac9aa] bg-[var(--ws-soft,#f1faf3)] text-[#24683a]', error: 'border-[#e4aaaa] bg-[#fff5f5] text-[#9f3030]', info: 'border-[#a6bfd8] bg-[var(--ws-surface,#f3f8ff)] text-[#315d88]' };
 
 function PathnameStatusProvider({
   children,

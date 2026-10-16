@@ -1,11 +1,11 @@
 import { access } from 'node:fs/promises';
-import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { prisma } from '@/lib/prisma';
 import { loanBalance, allocateRepayment, thaiDay } from '@/lib/loan-balance';
 import { isPrismaCode } from '@/lib/borrowers';
 import { formatBorrowerCode } from '@/lib/borrower-code';
 import { writeLoanLog } from '@/lib/loan-logs';
+import { isUploadUrl, storedUploadPath } from '@/lib/borrower-file-storage';
 export async function GET(request: Request) {
     const params = new URL(request.url).searchParams;
     const paidDate = params.get('date');
@@ -48,7 +48,7 @@ export async function GET(request: Request) {
         name: branch.nameTH || branch.nameEN || '',
         companyName: branch.company.nameTH || branch.company.nameEN || '',
         taxId: branch.TaxIdentificationNumber || branch.company.TaxIdentificationNumber || '',
-        address: [branch.address || [branch.houseNo && `เลขที่ ${branch.houseNo}`, branch.soi && `ซอย${branch.soi}`, branch.road && `ถนน${branch.road}`].filter(Boolean).join(' ') || branch.company.address, branch.postcode || branch.company.postcode].filter(Boolean).join(' '),
+        address: [branch.address || [branch.houseNo && `เลขที่ ${branch.houseNo}`, branch.moo && `หมู่${branch.moo}`, branch.soi && `ซอย${branch.soi}`, branch.road && `ถนน${branch.road}`].filter(Boolean).join(' ') || branch.company.address, branch.postcode || branch.company.postcode].filter(Boolean).join(' '),
         phone: branch.phone || branch.company.phone || '',
     }]));
     const branchesByCompany = new Map<string, typeof branches>();
@@ -99,11 +99,11 @@ export async function POST(request: Request) {
         : legacyDateMatch ? new Date(`${legacyDateMatch[1]}T12:00:00.000+07:00`) : new Date(NaN);
     if (typeof contractId !== 'string' || typeof requestKey !== 'string' || !/^[a-zA-Z0-9-]{16,80}$/.test(requestKey) || !Number.isSafeInteger(amount) || amount <= 0 || amount > 2147483647 || !Number.isFinite(date.getTime()) || date.getTime() > Date.now() || !['CASH', 'BANK_TRANSFER'].includes(method))
         return Response.json({ error: 'ตรวจยอดเงิน วันที่ ช่องรับชำระ และรหัสรายการ' }, { status: 400 });
-    if (evidenceUrl && (typeof evidenceUrl !== 'string' || !/^\/api\/repayments\/evidence\/[a-f0-9-]+\.(jpg|png|webp|pdf)$/.test(evidenceUrl)))
+    if (evidenceUrl && (typeof evidenceUrl !== 'string' || !isUploadUrl(evidenceUrl, '/api/repayments/evidence', ['jpg', 'png', 'webp', 'pdf'])))
         return Response.json({ error: 'หลักฐานไม่ถูกต้อง' }, { status: 400 });
     if (evidenceUrl) {
         try {
-            await access(path.join(process.cwd(), 'storage', 'repayment-evidence', evidenceUrl.split('/').pop()));
+            await access(storedUploadPath('repayment-evidence', evidenceUrl));
         }
         catch {
             return Response.json({ error: 'ไม่พบไฟล์หลักฐาน กรุณาแนบใหม่' }, { status: 400 });

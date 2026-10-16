@@ -2,6 +2,7 @@ import { prisma } from '@/lib/prisma'
 import { isPrismaCode, parseBorrowerInput, validateBorrowerPayout } from '@/lib/borrowers'
 import { formatBorrowerCode } from '@/lib/borrower-code'
 import { writeLoanLog } from '@/lib/loan-logs'
+import { finalizePendingBorrowerProfileUrl } from '@/lib/borrower-file-storage'
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -65,7 +66,14 @@ export async function POST(request: Request) {
       })
       return borrower
     })
-    return Response.json(borrower, { status: 201 })
+    const photoUrl = await finalizePendingBorrowerProfileUrl(borrower.photoUrl, borrower.borrowersCode)
+    const idCardImageUrl = borrower.idCardImageUrl === borrower.photoUrl
+      ? photoUrl
+      : await finalizePendingBorrowerProfileUrl(borrower.idCardImageUrl, borrower.borrowersCode)
+    const finalized = photoUrl !== borrower.photoUrl || idCardImageUrl !== borrower.idCardImageUrl
+      ? await prisma.borrowers.update({ where: { id: borrower.id }, data: { photoUrl, idCardImageUrl } })
+      : borrower
+    return Response.json(finalized, { status: 201 })
   } catch (error) {
     if (error instanceof Error && error.message === 'BORROWER_CODE_EXHAUSTED') return Response.json({ error: 'รหัสผู้กู้ครบ 999999 รายแล้ว' }, { status: 409 })
     if (isPrismaCode(error, 'P2002')) {

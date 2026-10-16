@@ -1,15 +1,15 @@
 import { readFile } from "node:fs/promises";
-import path from "node:path";
+import { storedUploadPath } from "@/lib/borrower-file-storage";
 
 type RouteContext = { params: Promise<{ filename: string }> };
 
 export async function GET(_request: Request, { params }: RouteContext) {
   const { filename } = await params;
-  if (!/^[0-9a-f-]{36}\.png$/i.test(filename)) {
+  if (!/^[A-Za-z0-9ก-๛._-]+\.png$/i.test(filename)) {
     return Response.json({ error: "ไม่พบลายเซ็น" }, { status: 404 });
   }
   try {
-    const image = await readFile(path.join(process.cwd(), "storage", "contract-signatures", filename));
+    const image = await readFile(storedUploadPath("contract-signatures", _request.url));
     return new Response(new Uint8Array(image), {
       headers: {
         "Content-Type": "image/png",

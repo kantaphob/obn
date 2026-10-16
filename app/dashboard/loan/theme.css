@@ -1,397 +1,368 @@
 /* Scoped purple loan theme. Shared layouts and functional forms keep their existing structure. */
 @reference "tailwindcss";
-.loan-theme { --lx-bg: #f8f3fc; --lx-surface: #fdfbff; --lx-ink: #2d1c43; --lx-muted: #776587; --lx-line: #e5d9f1; --lx-line-strong: #d2bce5; --lx-brand: #7844ad; --lx-brand-hover: #64358f; --lx-brand-soft: #f0e4fb; --text: #2d1c43; --muted: #776587; @apply min-w-0 [color:var(--lx-ink)] [accent-color:var(--lx-brand)]; }
-.loan-theme .form-field { @apply [color:#776587]; }
-.loan-theme .form-field small { @apply [color:#776587]; }
-.loan-theme .form-field input, .loan-theme .form-field textarea, .loan-theme .form-field select { @apply [border:1px_solid_#e5d9f1]; @apply [color:#2d1c43]; }
-.loan-theme .form-field input::placeholder, .loan-theme .form-field textarea::placeholder { @apply [color:#b59cc8]; }
-.loan-theme .form-field input:focus, .loan-theme .form-field textarea:focus, .loan-theme .form-field select:focus { @apply [border-color:#d2bce5]; @apply [box-shadow:0_0_0_3px_#b298c7]; }
-.loan-theme .borrowers-page { @apply [color:#2d1c43]; @apply [background:#fcfaff]; }
-.loan-theme .borrowers-topline { @apply [border-bottom:1px_solid_#e5d9f1]; }
-.loan-theme .borrowers-breadcrumb { @apply [color:#776587]; }
-.loan-theme .borrowers-breadcrumb svg { @apply [color:#b59cc8]; }
-.loan-theme .borrowers-breadcrumb strong { @apply [color:#2d1c43]; }
+.loan-theme { --lx-bg: var(--ws-surface,#f8f3fc); --lx-surface: var(--ws-surface,#fdfbff); --lx-ink: var(--ws-text,#2d1c43); --lx-muted: var(--ws-muted,#776587); --lx-line: var(--ws-border,#e5d9f1); --lx-line-strong: var(--ws-border,#d2bce5); --lx-brand: #7844ad; --lx-brand-hover: #64358f; --lx-brand-soft: #f0e4fb; --text: var(--ws-text,#2d1c43); --muted: var(--ws-muted,#776587); @apply min-w-0 [color:var(--lx-ink)] [accent-color:var(--lx-brand)]; }
+.loan-theme .form-field { @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .form-field small { @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .form-field input, .loan-theme .form-field textarea, .loan-theme .form-field select { @apply [border:1px_solid_var(--ws-border,#e5d9f1)]; @apply [color:var(--ws-text,#2d1c43)]; }
+.loan-theme .form-field input::placeholder, .loan-theme .form-field textarea::placeholder { @apply [color:var(--ws-muted,#b59cc8)]; }
+.loan-theme .form-field input:focus, .loan-theme .form-field textarea:focus, .loan-theme .form-field select:focus { @apply [border-color:var(--ws-border,#d2bce5)]; @apply [box-shadow:0_0_0_3px_#b298c7]; }
+.loan-theme .borrowers-page { @apply [color:var(--ws-text,#2d1c43)]; @apply [background:var(--ws-surface,#fcfaff)]; }
+.loan-theme .borrowers-topline { @apply [border-bottom:1px_solid_var(--ws-border,#e5d9f1)]; }
+.loan-theme .borrowers-breadcrumb { @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .borrowers-breadcrumb svg { @apply [color:var(--ws-muted,#b59cc8)]; }
+.loan-theme .borrowers-breadcrumb strong { @apply [color:var(--ws-text,#2d1c43)]; }
 .loan-theme .borrower-avatar { @apply [background:#7844ad]; }
-.loan-theme .borrowers-eyebrow { @apply [color:#776587]; }
+.loan-theme .borrowers-eyebrow { @apply [color:var(--ws-muted,#776587)]; }
 .loan-theme .borrowers-eyebrow > span:first-child { @apply [background:#7844ad]; }
-.loan-theme .borrowers-heading-row h1 { @apply [color:#2d1c43]; }
-.loan-theme .borrowers-heading-row p { @apply [color:#776587]; }
+.loan-theme .borrowers-heading-row h1 { @apply [color:var(--ws-text,#2d1c43)]; }
+.loan-theme .borrowers-heading-row p { @apply [color:var(--ws-muted,#776587)]; }
 .loan-theme .borrower-add-button { @apply [border:1px_solid_#7844ad]; @apply [background:#7844ad]; @apply [box-shadow:0_4px_12px_#60407523]; }
 .loan-theme .borrower-add-button:hover { @apply [background:#7844ad]; }
-.loan-theme .borrower-metric { @apply [border:1px_solid_#e5d9f1]; @apply [box-shadow:0_1px_3px_#60407508]; }
-.loan-theme .borrower-metric > div:nth-child(2) > span { @apply [color:#776587]; }
-.loan-theme .borrower-metric strong { @apply [color:#2d1c43]; }
-.loan-theme .borrower-metric strong small { @apply [color:#776587]; }
-.loan-theme .borrower-metric em { @apply [color:#776587]; }
-.loan-theme .borrower-list-card { @apply [border:1px_solid_#e5d9f1]; @apply [box-shadow:0_2px_6px_#60407508]; }
-.loan-theme .borrower-list-head h2 { @apply [color:#2d1c43]; }
-.loan-theme .borrower-list-head p { @apply [color:#776587]; }
-.loan-theme .borrower-search { @apply [border:1px_solid_#e5d9f1]; @apply [color:#776587]; }
-.loan-theme .borrower-search:focus-within { @apply [border-color:#d2bce5]; @apply [box-shadow:0_0_0_3px_#b298c7]; }
-.loan-theme .borrower-search input { @apply [color:#2d1c43]; }
-.loan-theme .borrower-search input::placeholder { @apply [color:#776587]; }
-.loan-theme .borrower-table thead { @apply [background:#fcfaff]; }
-.loan-theme .borrower-table th { @apply [border-top:1px_solid_#e5d9f1]; @apply [border-bottom:1px_solid_#e5d9f1]; @apply [color:#776587]; }
-.loan-theme .borrower-table td { @apply [border-bottom:1px_solid_#e5d9f1]; @apply [color:#776587]; }
-.loan-theme .borrower-row:hover { @apply [background:#fcfaff]; }
-.loan-theme .loan-amount { @apply [color:#2d1c43]; }
+.loan-theme .borrower-metric { @apply [border:1px_solid_var(--ws-border,#e5d9f1)]; @apply [box-shadow:0_1px_3px_#60407508]; }
+.loan-theme .borrower-metric > div:nth-child(2) > span { @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .borrower-metric strong { @apply [color:var(--ws-text,#2d1c43)]; }
+.loan-theme .borrower-metric strong small { @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .borrower-metric em { @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .borrower-list-card { @apply [border:1px_solid_var(--ws-border,#e5d9f1)]; @apply [box-shadow:0_2px_6px_#60407508]; }
+.loan-theme .borrower-list-head h2 { @apply [color:var(--ws-text,#2d1c43)]; }
+.loan-theme .borrower-list-head p { @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .borrower-search { @apply [border:1px_solid_var(--ws-border,#e5d9f1)]; @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .borrower-search:focus-within { @apply [border-color:var(--ws-border,#d2bce5)]; @apply [box-shadow:0_0_0_3px_#b298c7]; }
+.loan-theme .borrower-search input { @apply [color:var(--ws-text,#2d1c43)]; }
+.loan-theme .borrower-search input::placeholder { @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .borrower-table thead { @apply [background:var(--ws-surface,#fcfaff)]; }
+.loan-theme .borrower-table th { @apply [border-top:1px_solid_var(--ws-border,#e5d9f1)]; @apply [border-bottom:1px_solid_var(--ws-border,#e5d9f1)]; @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .borrower-table td { @apply [border-bottom:1px_solid_var(--ws-border,#e5d9f1)]; @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .borrower-row:hover { @apply [background:var(--ws-surface,#fcfaff)]; }
+.loan-theme .loan-amount { @apply [color:var(--ws-text,#2d1c43)]; }
 .loan-theme .borrower-status.missing { @apply [background:#f3ebfb]; }
-.loan-theme .borrower-expanded td { @apply [background:#fcfaff]; }
-.loan-theme .borrower-no-results svg { @apply [color:#776587]; }
-.loan-theme .borrower-no-results strong { @apply [color:#776587]; }
-.loan-theme .borrower-no-results span { @apply [color:#776587]; }
-.loan-theme .borrower-table-footer { @apply [border-top:1px_solid_#e5d9f1]; @apply [color:#776587]; }
-.loan-theme .borrower-table-footer > span strong { @apply [color:#776587]; }
-.loan-theme .borrower-table-footer button { @apply [border:1px_solid_#e5d9f1]; @apply [color:#776587]; }
-.loan-theme .borrower-table-footer button.current-page { @apply [border-color:#e5d9f1]; @apply [color:#776587]; @apply [background:#f3ebfb]; }
-.loan-theme .borrower-page-foot { @apply [color:#776587]; }
-.loan-theme .borrower-page-foot b { @apply [color:#b59cc8]; }
+.loan-theme .borrower-expanded td { @apply [background:var(--ws-surface,#fcfaff)]; }
+.loan-theme .borrower-no-results svg { @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .borrower-no-results strong { @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .borrower-no-results span { @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .borrower-table-footer { @apply [border-top:1px_solid_var(--ws-border,#e5d9f1)]; @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .borrower-table-footer > span strong { @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .borrower-table-footer button { @apply [border:1px_solid_var(--ws-border,#e5d9f1)]; @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .borrower-table-footer button.current-page { @apply [border-color:var(--ws-border,#e5d9f1)]; @apply [color:var(--ws-muted,#776587)]; @apply [background:var(--ws-soft,#f3ebfb)]; }
+.loan-theme .borrower-page-foot { @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .borrower-page-foot b { @apply [color:var(--ws-muted,#b59cc8)]; }
 .loan-theme .borrower-modal-backdrop { @apply [background:#4023579c]; }
-.loan-theme .borrower-modal { @apply [border:1px_solid_#e5d9f1]; @apply [background:#fcfaff]; @apply [box-shadow:0_24px_80px_#60407540]; }
-.loan-theme .borrower-modal-header { @apply [border-bottom:1px_solid_#e5d9f1]; }
-.loan-theme .borrower-modal-header h2 { @apply [color:#2d1c43]; }
-.loan-theme .borrower-modal-header p { @apply [color:#776587]; }
-.loan-theme .borrower-form-step > span { @apply [border:1px_solid_#e5d9f1]; @apply [color:#776587]; @apply [background:#f3ebfb]; }
-.loan-theme .borrower-form-step strong { @apply [color:#2d1c43]; }
-.loan-theme .borrower-form-step small { @apply [color:#776587]; }
-.loan-theme .borrower-form-step > i { @apply [background:#f3ebfb]; }
-.loan-theme .compact-field { @apply [color:#776587]; }
-.loan-theme .compact-field input, .loan-theme .compact-field select { @apply [border:1px_solid_#e5d9f1]; @apply [color:#2d1c43]; }
-.loan-theme .compact-field input::placeholder { @apply [color:#b59cc8]; }
-.loan-theme .compact-field input:focus, .loan-theme .compact-field select:focus { @apply [border-color:#d2bce5]; @apply [box-shadow:0_0_0_3px_#b298c7]; }
+.loan-theme .borrower-modal { @apply [border:1px_solid_var(--ws-border,#e5d9f1)]; @apply [background:var(--ws-surface,#fcfaff)]; @apply [box-shadow:0_24px_80px_#60407540]; }
+.loan-theme .borrower-modal-header { @apply [border-bottom:1px_solid_var(--ws-border,#e5d9f1)]; }
+.loan-theme .borrower-modal-header h2 { @apply [color:var(--ws-text,#2d1c43)]; }
+.loan-theme .borrower-modal-header p { @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .borrower-form-step > span { @apply [border:1px_solid_var(--ws-border,#e5d9f1)]; @apply [color:var(--ws-muted,#776587)]; @apply [background:var(--ws-soft,#f3ebfb)]; }
+.loan-theme .borrower-form-step strong { @apply [color:var(--ws-text,#2d1c43)]; }
+.loan-theme .borrower-form-step small { @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .borrower-form-step > i { @apply [background:var(--ws-soft,#f3ebfb)]; }
+.loan-theme .compact-field { @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .compact-field input, .loan-theme .compact-field select { @apply [border:1px_solid_var(--ws-border,#e5d9f1)]; @apply [color:var(--ws-text,#2d1c43)]; }
+.loan-theme .compact-field input::placeholder { @apply [color:var(--ws-muted,#b59cc8)]; }
+.loan-theme .compact-field input:focus, .loan-theme .compact-field select:focus { @apply [border-color:var(--ws-border,#d2bce5)]; @apply [box-shadow:0_0_0_3px_#b298c7]; }
 .loan-theme .reader-notice { @apply [border:1px_solid_#e5d9f1]; @apply [background:#fcfaff]; }
-.loan-theme .borrower-form-note { @apply [color:#776587]; @apply [background:#f3ebfb]; }
-.loan-theme .borrower-modal-footer { @apply [border-top:1px_solid_#e5d9f1]; }
-.loan-theme .borrower-modal-footer > span { @apply [color:#776587]; }
-.loan-theme .borrower-modal-footer > span svg { @apply [color:#776587]; }
-.loan-theme .cancel-button { @apply [border:1px_solid_#e5d9f1]; @apply [color:#776587]; }
+.loan-theme .borrower-form-note { @apply [color:var(--ws-muted,#776587)]; @apply [background:var(--ws-soft,#f3ebfb)]; }
+.loan-theme .borrower-modal-footer { @apply [border-top:1px_solid_var(--ws-border,#e5d9f1)]; }
+.loan-theme .borrower-modal-footer > span { @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .borrower-modal-footer > span svg { @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .cancel-button { @apply [border:1px_solid_var(--ws-border,#e5d9f1)]; @apply [color:var(--ws-muted,#776587)]; }
 .loan-theme .save-borrower-button { @apply [border:1px_solid_#7844ad]; @apply [background:#7844ad]; }
 .loan-theme .save-borrower-button:hover { @apply [background:#7844ad]; }
-.loan-theme .borrower-toast { @apply [border:1px_solid_#e5d9f1]; @apply [color:#2d1c43]; @apply [box-shadow:0_12px_35px_#6040751a]; }
-.loan-theme .borrower-toast button { @apply [color:#776587]; }
-.loan-theme .borrower-toast button:hover { @apply [background:#f3ebfb]; }
-.loan-theme .single-avatar { @apply [border:1px_solid_#e5d9f1]; @apply [color:#776587]; @apply [background:#f3ebfb]; }
-.loan-theme .borrower-id { @apply [border:1px_solid_#e5d9f1]; @apply [color:#776587]; @apply [background:#fcfaff]; }
-.loan-theme .borrower-id.id-empty { @apply [border-color:#e5d9f1]; @apply [background:#fcfaff]; }
-.loan-theme .borrower-row-actions button { @apply [color:#776587]; }
-.loan-theme .borrower-row-actions button:hover { @apply [color:#776587]; @apply [background:#f3ebfb]; }
-.loan-theme .borrower-row-actions button.delete-borrower:hover { @apply [background:#f3ebfb]; }
+.loan-theme .borrower-toast { @apply [border:1px_solid_var(--ws-border,#e5d9f1)]; @apply [color:var(--ws-text,#2d1c43)]; @apply [box-shadow:0_12px_35px_#6040751a]; }
+.loan-theme .borrower-toast button { @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .borrower-toast button:hover { @apply [background:var(--ws-soft,#f3ebfb)]; }
+.loan-theme .single-avatar { @apply [border:1px_solid_var(--ws-border,#e5d9f1)]; @apply [color:var(--ws-muted,#776587)]; @apply [background:var(--ws-soft,#f3ebfb)]; }
+.loan-theme .borrower-id { @apply [border:1px_solid_var(--ws-border,#e5d9f1)]; @apply [color:var(--ws-muted,#776587)]; @apply [background:var(--ws-surface,#fcfaff)]; }
+.loan-theme .borrower-id.id-empty { @apply [border-color:var(--ws-border,#e5d9f1)]; @apply [background:var(--ws-surface,#fcfaff)]; }
+.loan-theme .borrower-row-actions button { @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .borrower-row-actions button:hover { @apply [color:var(--ws-muted,#776587)]; @apply [background:var(--ws-soft,#f3ebfb)]; }
+.loan-theme .borrower-row-actions button.delete-borrower:hover { @apply [background:var(--ws-soft,#f3ebfb)]; }
 .loan-theme .borrowers-page-error, .loan-theme .borrowers-form-error { @apply [border:1px_solid_#e5d9f1]; @apply [background:#fcfaff]; }
 .loan-theme .reader-status { @apply [border:1px_solid_#e5d9f1]; @apply [background:#fcfaff]; }
 .loan-theme .reader-status i { @apply [box-shadow:0_0_0_1px_#b298c7,_0_0_8px_#e7817880]; }
 .loan-theme .reader-status.reading { @apply [border-color:#e5d9f1]; @apply [background:#fcfaff]; }
 .loan-theme .reader-status.reading i { @apply [box-shadow:0_0_0_2px_#b298c7,_0_0_9px_#e9ae4b80]; }
-.loan-theme .read-card-top-button.reader-reading { @apply [background:#fcfaff]; }
+.loan-theme .read-card-top-button.reader-reading { @apply [background:var(--ws-surface,#fcfaff)]; }
 .loan-theme .read-card-top-button.reader-reading i { @apply [box-shadow:0_0_0_3px_#b298c7,_0_0_10px_#e9ae4b]; }
 .loan-theme .read-card-top-button.reader-success { @apply [border-color:#d2bce5]; @apply [color:#2d1c43]; @apply [background:#fcfaff]; @apply [box-shadow:0_0_0_3px_#b298c780,_0_0_16px_#b298c770]; }
 .loan-theme .read-card-top-button.reader-success i { @apply [background:#7844ad]; @apply [box-shadow:0_0_0_3px_#b298c7,_0_0_10px_#b298c7]; }
-.loan-theme .borrower-crud-fields textarea { @apply [border:1px_solid_#e5d9f1]; @apply [color:#2d1c43]; }
-.loan-theme .borrower-crud-fields textarea:focus { @apply [border-color:#d2bce5]; @apply [box-shadow:0_0_0_3px_#b298c7]; }
-.loan-theme .borrower-crud-fields textarea::placeholder { @apply [color:#b59cc8]; }
-.loan-theme .borrower-crud-modal { @apply [background:#f3ebfb]; }
-.loan-theme .borrower-crud-modal .borrower-modal-header h2 { @apply [color:#2d1c43]; }
-.loan-theme .borrower-crud-modal .borrower-modal-header p { @apply [color:#776587]; }
-.loan-theme .borrower-form-intro { @apply [color:#776587]; }
-.loan-theme .borrower-input-section { @apply [border:1px_solid_#e5d9f1]; }
-.loan-theme .borrower-section-title > span { @apply [border:1px_solid_#e5d9f1]; @apply [color:#2d1c43]; @apply [background:#f3ebfb]; }
-.loan-theme .borrower-section-title h3 { @apply [color:#2d1c43]; }
-.loan-theme .borrower-section-title p { @apply [color:#776587]; }
-.loan-theme .borrower-crud-modal .compact-field { @apply [color:#2d1c43]; }
-.loan-theme .borrower-crud-modal .compact-field input, .loan-theme .borrower-crud-modal .compact-field select { @apply [border-color:#e5d9f1]; @apply [color:#2d1c43]; }
-.loan-theme .borrower-crud-modal .compact-field input::placeholder, .loan-theme .borrower-crud-modal .compact-field textarea::placeholder { @apply [color:#776587]; }
-.loan-theme .borrower-crud-modal .compact-field input:focus, .loan-theme .borrower-crud-modal .compact-field select:focus, .loan-theme .borrower-crud-modal .compact-field textarea:focus { @apply [border-color:#d2bce5]; @apply [box-shadow:0_0_0_3px_#b298c7]; }
-.loan-theme .borrower-crud-modal .compact-field input[readonly], .loan-theme .borrower-crud-modal .compact-field select:disabled { @apply [background:#f3ebfb]; @apply [color:#776587]; }
-.loan-theme .borrower-crud-modal .compact-field textarea { @apply [border:1px_solid_#e5d9f1]; @apply [color:#2d1c43]; }
-.loan-theme .borrower-photo-panel .photo-heading { @apply [color:#2d1c43]; }
-.loan-theme .borrower-photo-panel .photo-upload { @apply [border-color:#e5d9f1]; @apply [background:#fcfaff]; }
-.loan-theme .borrower-photo-panel .photo-placeholder small { @apply [color:#776587]; }
-.loan-theme .borrower-photo-panel > p { @apply [color:#776587]; }
-.loan-theme .borrower-card-validity { @apply [border-top:1px_solid_#e5d9f1]; }
-.loan-theme .borrower-card-validity > div:first-child { @apply [color:#776587]; }
-.loan-theme .borrower-location-group { @apply [border-top:1px_solid_#e5d9f1]; }
-.loan-theme .borrower-original-address { @apply [border-top:1px_solid_#e5d9f1]; }
-.loan-theme .borrower-original-address summary { @apply [color:#776587]; }
-.loan-theme .borrower-crud-modal .borrower-form-note { @apply [background:#f3ebfb]; @apply [color:#776587]; }
-.loan-theme .read-card-top-button.reader-disconnected { @apply [background:#fcfaff]; @apply [box-shadow:0_0_0_3px_#b298c780,_0_0_14px_#e8a49d45]; }
-.loan-theme .borrower-registration-id { @apply [color:#776587]; @apply [background:#f3ebfb]; }
-.loan-theme .borrower-limit-caption { @apply [color:#776587]; }
+.loan-theme .borrower-crud-fields textarea { @apply [border:1px_solid_var(--ws-border,#e5d9f1)]; @apply [color:var(--ws-text,#2d1c43)]; }
+.loan-theme .borrower-crud-fields textarea:focus { @apply [border-color:var(--ws-border,#d2bce5)]; @apply [box-shadow:0_0_0_3px_#b298c7]; }
+.loan-theme .borrower-crud-fields textarea::placeholder { @apply [color:var(--ws-muted,#b59cc8)]; }
+.loan-theme .borrower-crud-modal { @apply [background:var(--ws-soft,#f3ebfb)]; }
+.loan-theme .borrower-crud-modal .borrower-modal-header h2 { @apply [color:var(--ws-text,#2d1c43)]; }
+.loan-theme .borrower-crud-modal .borrower-modal-header p { @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .borrower-form-intro { @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .borrower-input-section { @apply [border:1px_solid_var(--ws-border,#e5d9f1)]; }
+.loan-theme .borrower-section-title > span { @apply [border:1px_solid_var(--ws-border,#e5d9f1)]; @apply [color:var(--ws-text,#2d1c43)]; @apply [background:var(--ws-soft,#f3ebfb)]; }
+.loan-theme .borrower-section-title h3 { @apply [color:var(--ws-text,#2d1c43)]; }
+.loan-theme .borrower-section-title p { @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .borrower-crud-modal .compact-field { @apply [color:var(--ws-text,#2d1c43)]; }
+.loan-theme .borrower-crud-modal .compact-field input, .loan-theme .borrower-crud-modal .compact-field select { @apply [border-color:var(--ws-border,#e5d9f1)]; @apply [color:var(--ws-text,#2d1c43)]; }
+.loan-theme .borrower-crud-modal .compact-field input::placeholder, .loan-theme .borrower-crud-modal .compact-field textarea::placeholder { @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .borrower-crud-modal .compact-field input:focus, .loan-theme .borrower-crud-modal .compact-field select:focus, .loan-theme .borrower-crud-modal .compact-field textarea:focus { @apply [border-color:var(--ws-border,#d2bce5)]; @apply [box-shadow:0_0_0_3px_#b298c7]; }
+.loan-theme .borrower-crud-modal .compact-field input[readonly], .loan-theme .borrower-crud-modal .compact-field select:disabled { @apply [background:var(--ws-soft,#f3ebfb)]; @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .borrower-crud-modal .compact-field textarea { @apply [border:1px_solid_var(--ws-border,#e5d9f1)]; @apply [color:var(--ws-text,#2d1c43)]; }
+.loan-theme .borrower-photo-panel .photo-heading { @apply [color:var(--ws-text,#2d1c43)]; }
+.loan-theme .borrower-photo-panel .photo-upload { @apply [border-color:var(--ws-border,#e5d9f1)]; @apply [background:var(--ws-surface,#fcfaff)]; }
+.loan-theme .borrower-photo-panel .photo-placeholder small { @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .borrower-photo-panel > p { @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .borrower-card-validity { @apply [border-top:1px_solid_var(--ws-border,#e5d9f1)]; }
+.loan-theme .borrower-card-validity > div:first-child { @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .borrower-location-group { @apply [border-top:1px_solid_var(--ws-border,#e5d9f1)]; }
+.loan-theme .borrower-original-address { @apply [border-top:1px_solid_var(--ws-border,#e5d9f1)]; }
+.loan-theme .borrower-original-address summary { @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .borrower-crud-modal .borrower-form-note { @apply [background:var(--ws-soft,#f3ebfb)]; @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .read-card-top-button.reader-disconnected { @apply [background:var(--ws-surface,#fcfaff)]; @apply [box-shadow:0_0_0_3px_#b298c780,_0_0_14px_#e8a49d45]; }
+.loan-theme .borrower-registration-id { @apply [color:var(--ws-muted,#776587)]; @apply [background:var(--ws-soft,#f3ebfb)]; }
+.loan-theme .borrower-limit-caption { @apply [color:var(--ws-muted,#776587)]; }
 .loan-theme .borrower-avatar-button:hover { @apply [box-shadow:0_0_0_3px_#b298c7]; }
-.loan-theme .borrower-avatar-button:focus-visible { @apply [outline:2px_solid_#d2bce5]; }
-.loan-theme .borrower-rank { @apply [background:#f3ebfb]; @apply [color:#2d1c43]; }
-.loan-theme .borrower-rank[data-rank="SS"], .loan-theme .borrower-rank[data-rank="S"] { @apply [background:#f3ebfb]; @apply [color:#776587]; }
-.loan-theme .borrower-rank[data-rank="A"] { @apply [background:#f3ebfb]; @apply [color:#2d1c43]; }
-.loan-theme .borrower-rank[data-rank="C"], .loan-theme .borrower-rank[data-rank="D"] { @apply [background:#f3ebfb]; }
-.loan-theme .borrower-details-dialog { @apply [border:1px_solid_#e5d9f1]; @apply [background:#fcfaff]; @apply [color:#2d1c43]; @apply [box-shadow:0_24px_80px_#60407540]; }
+.loan-theme .borrower-avatar-button:focus-visible { @apply [outline:2px_solid_var(--ws-border,#d2bce5)]; }
+.loan-theme .borrower-rank { @apply [background:var(--ws-soft,#f3ebfb)]; @apply [color:var(--ws-text,#2d1c43)]; }
+.loan-theme .borrower-rank[data-rank="SS"], .loan-theme .borrower-rank[data-rank="S"] { @apply [background:var(--ws-soft,#f3ebfb)]; @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .borrower-rank[data-rank="A"] { @apply [background:var(--ws-soft,#f3ebfb)]; @apply [color:var(--ws-text,#2d1c43)]; }
+.loan-theme .borrower-rank[data-rank="C"], .loan-theme .borrower-rank[data-rank="D"] { @apply [background:var(--ws-soft,#f3ebfb)]; }
+.loan-theme .borrower-details-dialog { @apply [border:1px_solid_var(--ws-border,#e5d9f1)]; @apply [background:var(--ws-surface,#fcfaff)]; @apply [color:var(--ws-text,#2d1c43)]; @apply [box-shadow:0_24px_80px_#60407540]; }
 .loan-theme .borrower-details-dialog::backdrop { @apply [background:#4023579c]; }
-.loan-theme .borrower-details-body dt { @apply [color:#776587]; }
-.loan-theme .borrower-details-footer { @apply [border-top:1px_solid_#e5d9f1]; }
-.loan-theme .contract-heading h1 { @apply [color:#2d1c43]; }
-.loan-theme .contract-heading p { @apply [color:#776587]; }
-.loan-theme .contract-heading-icon { @apply [border:1px_solid_#e5d9f1]; @apply [color:#776587]; @apply [background:#f3ebfb]; }
-.loan-theme .contract-steps { @apply [border:1px_solid_#e5d9f1]; }
-.loan-theme .contract-step { @apply [color:#776587]; }
-.loan-theme .contract-step:first-child::after { @apply [background:#f3ebfb]; }
-.loan-theme .contract-step-number { @apply [border:1px_solid_#e5d9f1]; @apply [color:#776587]; }
-.loan-theme .contract-step strong { @apply [color:#776587]; }
-.loan-theme .contract-step small { @apply [color:#776587]; }
-.loan-theme .contract-step.is-current .contract-step-number { @apply [border-color:#d2bce5]; @apply [background:#7844ad]; }
-.loan-theme .contract-panel, .loan-theme .contract-selected { @apply [border:1px_solid_#e5d9f1]; @apply [box-shadow:0_1px_2px_#60407509]; }
-.loan-theme .contract-panel-icon { @apply [color:#776587]; @apply [background:#f3ebfb]; }
-.loan-theme .contract-panel-heading h2, .loan-theme .contract-selected-heading h2 { @apply [color:#2d1c43]; }
-.loan-theme .contract-panel-heading p { @apply [color:#776587]; }
-.loan-theme .contract-search { @apply [border:1px_solid_#e5d9f1]; @apply [color:#776587]; }
-.loan-theme .contract-search:focus-within { @apply [border-color:#d2bce5]; @apply [box-shadow:0_0_0_3px_#b298c7]; }
-.loan-theme .contract-search input { @apply [color:#2d1c43]; }
-.loan-theme .contract-search input::placeholder { @apply [color:#776587]; }
-.loan-theme .contract-clear { @apply [color:#776587]; @apply [background:#f3ebfb]; }
-.loan-theme .contract-search-hint { @apply [color:#776587]; }
-.loan-theme .contract-empty-icon { @apply [color:#776587]; @apply [background:#f3ebfb]; }
-.loan-theme .contract-empty strong { @apply [color:#2d1c43]; }
-.loan-theme .contract-empty > span:last-child { @apply [color:#776587]; }
+.loan-theme .borrower-details-body dt { @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .borrower-details-footer { @apply [border-top:1px_solid_var(--ws-border,#e5d9f1)]; }
+.loan-theme .contract-heading h1 { @apply [color:var(--ws-text,#2d1c43)]; }
+.loan-theme .contract-heading p { @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .contract-heading-icon { @apply [border:1px_solid_var(--ws-border,#e5d9f1)]; @apply [color:var(--ws-muted,#776587)]; @apply [background:var(--ws-soft,#f3ebfb)]; }
+.loan-theme .contract-steps { @apply [border:1px_solid_var(--ws-border,#e5d9f1)]; }
+.loan-theme .contract-step { @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .contract-step:first-child::after { @apply [background:var(--ws-soft,#f3ebfb)]; }
+.loan-theme .contract-step-number { @apply [border:1px_solid_var(--ws-border,#e5d9f1)]; @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .contract-step strong { @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .contract-step small { @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .contract-step.is-current .contract-step-number { @apply [border-color:var(--ws-border,#d2bce5)]; @apply [background:#7844ad]; }
+.loan-theme .contract-panel, .loan-theme .contract-selected { @apply [border:1px_solid_var(--ws-border,#e5d9f1)]; @apply [box-shadow:0_1px_2px_#60407509]; }
+.loan-theme .contract-panel-icon { @apply [color:var(--ws-muted,#776587)]; @apply [background:var(--ws-soft,#f3ebfb)]; }
+.loan-theme .contract-panel-heading h2, .loan-theme .contract-selected-heading h2 { @apply [color:var(--ws-text,#2d1c43)]; }
+.loan-theme .contract-panel-heading p { @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .contract-search { @apply [border:1px_solid_var(--ws-border,#e5d9f1)]; @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .contract-search:focus-within { @apply [border-color:var(--ws-border,#d2bce5)]; @apply [box-shadow:0_0_0_3px_#b298c7]; }
+.loan-theme .contract-search input { @apply [color:var(--ws-text,#2d1c43)]; }
+.loan-theme .contract-search input::placeholder { @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .contract-clear { @apply [color:var(--ws-muted,#776587)]; @apply [background:var(--ws-soft,#f3ebfb)]; }
+.loan-theme .contract-search-hint { @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .contract-empty-icon { @apply [color:var(--ws-muted,#776587)]; @apply [background:var(--ws-soft,#f3ebfb)]; }
+.loan-theme .contract-empty strong { @apply [color:var(--ws-text,#2d1c43)]; }
+.loan-theme .contract-empty > span:last-child { @apply [color:var(--ws-muted,#776587)]; }
 .loan-theme .contract-error { @apply [border:1px_solid_#e5d9f1]; @apply [background:#fcfaff]; }
-.loan-theme .contract-results { @apply [border-top:1px_solid_#e5d9f1]; }
-.loan-theme .contract-results-label { @apply [color:#776587]; }
-.loan-theme .contract-results-label span { @apply [color:#776587]; }
-.loan-theme .contract-borrower { @apply [border-top:1px_solid_#e5d9f1]; @apply [color:#776587]; }
-.loan-theme .contract-borrower:hover { @apply [background:#fcfaff]; }
-.loan-theme .contract-borrower.is-selected { @apply [background:#fcfaff]; }
-.loan-theme .contract-borrower-avatar, .loan-theme .contract-selected-avatar { @apply [border:1px_solid_#e5d9f1]; @apply [color:#776587]; @apply [background:#f3ebfb]; }
-.loan-theme .contract-borrower-main strong { @apply [color:#2d1c43]; }
-.loan-theme .contract-borrower-main small { @apply [color:#776587]; }
-.loan-theme .contract-borrower-main small i { @apply [background:#e8d8f6]; }
-.loan-theme .contract-borrower-phone { @apply [color:#776587]; }
-.loan-theme .contract-borrower-action { @apply [color:#776587]; }
-.loan-theme .contract-borrower.is-selected .contract-borrower-action { @apply [color:#776587]; }
-.loan-theme .contract-selected { @apply [border-color:#e5d9f1]; }
-.loan-theme .contract-selected-heading { @apply [border-bottom:1px_solid_#e5d9f1]; }
-.loan-theme .contract-selected-kicker { @apply [color:#776587]; }
-.loan-theme .contract-change { @apply [border:1px_solid_#e5d9f1]; @apply [color:#776587]; }
-.loan-theme .contract-change:hover { @apply [border-color:#e5d9f1]; @apply [background:#fcfaff]; }
-.loan-theme .contract-selected-name strong { @apply [color:#2d1c43]; }
-.loan-theme .contract-selected-name span, .loan-theme .contract-selected-detail small { @apply [color:#776587]; }
-.loan-theme .contract-selected-detail strong { @apply [color:#776587]; }
-.loan-theme .contract-selected-foot { @apply [border-top:1px_solid_#e5d9f1]; @apply [color:#776587]; @apply [background:#fcfaff]; }
-.loan-theme .contract-form-panel { @apply [border:1px_solid_#e5d9f1]; @apply [box-shadow:0_1px_2px_#60407509]; }
-.loan-theme .contract-form-section { @apply [border-top:1px_solid_#e5d9f1]; }
-.loan-theme .contract-form-section h3 { @apply [color:#2d1c43]; }
-.loan-theme .contract-field { @apply [color:#776587]; }
-.loan-theme .contract-field input, .loan-theme .contract-field select, .loan-theme .contract-field textarea { @apply [border:1px_solid_#e5d9f1]; @apply [color:#2d1c43]; }
-.loan-theme .contract-field input:focus, .loan-theme .contract-field select:focus, .loan-theme .contract-field textarea:focus { @apply [border-color:#d2bce5]; @apply [box-shadow:0_0_0_3px_#b298c7]; }
-.loan-theme .contract-field input::placeholder, .loan-theme .contract-field textarea::placeholder { @apply [color:#b59cc8]; }
-.loan-theme .contract-form-actions { @apply [border-top:1px_solid_#e5d9f1]; @apply [background:#fcfaff]; }
+.loan-theme .contract-results { @apply [border-top:1px_solid_var(--ws-border,#e5d9f1)]; }
+.loan-theme .contract-results-label { @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .contract-results-label span { @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .contract-borrower { @apply [border-top:1px_solid_var(--ws-border,#e5d9f1)]; @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .contract-borrower:hover { @apply [background:var(--ws-surface,#fcfaff)]; }
+.loan-theme .contract-borrower.is-selected { @apply [background:var(--ws-surface,#fcfaff)]; }
+.loan-theme .contract-borrower-avatar, .loan-theme .contract-selected-avatar { @apply [border:1px_solid_var(--ws-border,#e5d9f1)]; @apply [color:var(--ws-muted,#776587)]; @apply [background:var(--ws-soft,#f3ebfb)]; }
+.loan-theme .contract-borrower-main strong { @apply [color:var(--ws-text,#2d1c43)]; }
+.loan-theme .contract-borrower-main small { @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .contract-borrower-main small i { @apply [background:var(--ws-soft,#e8d8f6)]; }
+.loan-theme .contract-borrower-phone { @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .contract-borrower-action { @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .contract-borrower.is-selected .contract-borrower-action { @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .contract-selected { @apply [border-color:var(--ws-border,#e5d9f1)]; }
+.loan-theme .contract-selected-heading { @apply [border-bottom:1px_solid_var(--ws-border,#e5d9f1)]; }
+.loan-theme .contract-selected-kicker { @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .contract-change { @apply [border:1px_solid_var(--ws-border,#e5d9f1)]; @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .contract-change:hover { @apply [border-color:var(--ws-border,#e5d9f1)]; @apply [background:var(--ws-surface,#fcfaff)]; }
+.loan-theme .contract-selected-name strong { @apply [color:var(--ws-text,#2d1c43)]; }
+.loan-theme .contract-selected-name span, .loan-theme .contract-selected-detail small { @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .contract-selected-detail strong { @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .contract-selected-foot { @apply [border-top:1px_solid_var(--ws-border,#e5d9f1)]; @apply [color:var(--ws-muted,#776587)]; @apply [background:var(--ws-surface,#fcfaff)]; }
+.loan-theme .contract-form-panel { @apply [border:1px_solid_var(--ws-border,#e5d9f1)]; @apply [box-shadow:0_1px_2px_#60407509]; }
+.loan-theme .contract-form-section { @apply [border-top:1px_solid_var(--ws-border,#e5d9f1)]; }
+.loan-theme .contract-form-section h3 { @apply [color:var(--ws-text,#2d1c43)]; }
+.loan-theme .contract-field { @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .contract-field input, .loan-theme .contract-field select, .loan-theme .contract-field textarea { @apply [border:1px_solid_var(--ws-border,#e5d9f1)]; @apply [color:var(--ws-text,#2d1c43)]; }
+.loan-theme .contract-field input:focus, .loan-theme .contract-field select:focus, .loan-theme .contract-field textarea:focus { @apply [border-color:var(--ws-border,#d2bce5)]; @apply [box-shadow:0_0_0_3px_#b298c7]; }
+.loan-theme .contract-field input::placeholder, .loan-theme .contract-field textarea::placeholder { @apply [color:var(--ws-muted,#b59cc8)]; }
+.loan-theme .contract-form-actions { @apply [border-top:1px_solid_var(--ws-border,#e5d9f1)]; @apply [background:var(--ws-surface,#fcfaff)]; }
 .loan-theme .contract-form-actions .primary-button { @apply [background:#7844ad]; }
 .loan-theme .contract-form-actions .primary-button:hover:not(:disabled) { @apply [background:#7844ad]; }
-.loan-theme .contract-saved { @apply [border:1px_solid_#e5d9f1]; @apply [color:#2d1c43]; @apply [background:#f3ebfb]; }
+.loan-theme .contract-saved { @apply [border:1px_solid_var(--ws-border,#e5d9f1)]; @apply [color:var(--ws-text,#2d1c43)]; @apply [background:var(--ws-soft,#f3ebfb)]; }
 .loan-theme .contract-saved > span { @apply [background:#7844ad]; }
-.loan-theme .contract-saved small { @apply [color:#776587]; }
-.loan-theme .contract-rate-field legend, .loan-theme .contract-document-field legend, .loan-theme .contract-signature-field legend { @apply [color:#776587]; }
-.loan-theme .contract-rate-options label, .loan-theme .contract-document-options label { @apply [border:1px_solid_#e5d9f1]; @apply [color:#776587]; }
-.loan-theme .contract-payment-options legend { @apply [color:#776587]; }
-.loan-theme .contract-payment-options label { @apply [border:1px_solid_#e5d9f1]; }
-.loan-theme .contract-payment-options label::before { @apply [border:1px_solid_#e5d9f1]; }
-.loan-theme .contract-payment-options strong { @apply [color:#2d1c43]; }
-.loan-theme .contract-payment-options small { @apply [color:#776587]; }
-.loan-theme .contract-installment-preview { @apply [border:1px_solid_#e5d9f1]; @apply [color:#776587]; @apply [background:#fcfaff]; }
-.loan-theme .contract-installment-preview span { @apply [color:#776587]; }
-.loan-theme .contract-late-fee { @apply [border:1px_solid_#e5d9f1]; @apply [background:#fcfaff]; }
-.loan-theme .contract-late-fee strong { @apply [color:#2d1c43]; }
-.loan-theme .contract-late-fee label, .loan-theme .contract-consent { @apply [color:#776587]; }
-.loan-theme .contract-late-fee input, .loan-theme .contract-consent input { @apply [accent-color:#776587]; }
-.loan-theme .contract-document-options input:focus-visible + span { @apply [outline:2px_solid_#d2bce5]; }
-.loan-theme .contract-digital-signature h4 { @apply [color:#2d1c43]; }
-.loan-theme .contract-signature-pad { @apply [border:1px_solid_#e5d9f1]; }
-.loan-theme .contract-signature-pad-footer { @apply [border-top:1px_solid_#e5d9f1]; @apply [color:#776587]; }
-.loan-theme .contract-signature-pad-footer button { @apply [color:#776587]; }
-.loan-theme .contract-signature-pad-footer button:disabled { @apply [color:#b59cc8]; }
-.loan-theme .contract-consent { @apply [border:1px_solid_#e5d9f1]; }
-.loan-theme .contract-print-sheet header { @apply [border-bottom:1px_solid_#d2bce5]; }
-.loan-theme .contract-print-sheet p { @apply [color:#2d1c43]; }
-.loan-theme .contract-print-sheet footer { @apply [color:#2d1c43]; }
-.loan-theme .borrower-ocr-button { @apply [border:1px_solid_#e5d9f1]; @apply [color:#2d1c43]; }
-.loan-theme .borrower-ocr-review { @apply [border:1px_solid_#e5d9f1]; }
-.loan-theme .borrower-crud-modal .borrower-icon-button:focus-visible { @apply [outline:2px_solid_#d2bce5]; }
-.loan-theme .borrower-exit-dialog { @apply [border:1px_solid_#e5d9f1]; @apply [color:#2d1c43]; @apply [box-shadow:0_24px_80px_#60407540]; }
+.loan-theme .contract-saved small { @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .contract-rate-field legend, .loan-theme .contract-document-field legend, .loan-theme .contract-signature-field legend { @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .contract-rate-options label, .loan-theme .contract-document-options label { @apply [border:1px_solid_var(--ws-border,#e5d9f1)]; @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .contract-payment-options legend { @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .contract-payment-options label { @apply [border:1px_solid_var(--ws-border,#e5d9f1)]; }
+.loan-theme .contract-payment-options label::before { @apply [border:1px_solid_var(--ws-border,#e5d9f1)]; }
+.loan-theme .contract-payment-options strong { @apply [color:var(--ws-text,#2d1c43)]; }
+.loan-theme .contract-payment-options small { @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .contract-installment-preview { @apply [border:1px_solid_var(--ws-border,#e5d9f1)]; @apply [color:var(--ws-muted,#776587)]; @apply [background:var(--ws-surface,#fcfaff)]; }
+.loan-theme .contract-installment-preview span { @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .contract-late-fee { @apply [border:1px_solid_var(--ws-border,#e5d9f1)]; @apply [background:var(--ws-surface,#fcfaff)]; }
+.loan-theme .contract-late-fee strong { @apply [color:var(--ws-text,#2d1c43)]; }
+.loan-theme .contract-late-fee label, .loan-theme .contract-consent { @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .contract-late-fee input, .loan-theme .contract-consent input { @apply [accent-color:var(--ws-muted,#776587)]; }
+.loan-theme .contract-document-options input:focus-visible + span { @apply [outline:2px_solid_var(--ws-border,#d2bce5)]; }
+.loan-theme .contract-digital-signature h4 { @apply [color:var(--ws-text,#2d1c43)]; }
+.loan-theme .contract-signature-pad { @apply [border:1px_solid_var(--ws-border,#e5d9f1)]; }
+.loan-theme .contract-signature-pad-footer { @apply [border-top:1px_solid_var(--ws-border,#e5d9f1)]; @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .contract-signature-pad-footer button { @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .contract-signature-pad-footer button:disabled { @apply [color:var(--ws-muted,#b59cc8)]; }
+.loan-theme .contract-consent { @apply [border:1px_solid_var(--ws-border,#e5d9f1)]; }
+.loan-theme .contract-print-sheet header { @apply [border-bottom:1px_solid_var(--ws-border,#d2bce5)]; }
+.loan-theme .contract-print-sheet p { @apply [color:var(--ws-text,#2d1c43)]; }
+.loan-theme .contract-print-sheet footer { @apply [color:var(--ws-text,#2d1c43)]; }
+.loan-theme .borrower-ocr-button { @apply [border:1px_solid_var(--ws-border,#e5d9f1)]; @apply [color:var(--ws-text,#2d1c43)]; }
+.loan-theme .borrower-ocr-review { @apply [border:1px_solid_var(--ws-border,#e5d9f1)]; }
+.loan-theme .borrower-crud-modal .borrower-icon-button:focus-visible { @apply [outline:2px_solid_var(--ws-border,#d2bce5)]; }
+.loan-theme .borrower-exit-dialog { @apply [border:1px_solid_var(--ws-border,#e5d9f1)]; @apply [color:var(--ws-text,#2d1c43)]; @apply [box-shadow:0_24px_80px_#60407540]; }
 .loan-theme .borrower-exit-dialog::backdrop { @apply [background:#4023579c]; }
-.loan-theme .borrower-exit-dialog p { @apply [color:#776587]; }
-.loan-theme .borrower-discard-button { @apply [background:#fcfaff]; }
-.loan-theme .loan-payment-page { @apply [color:#2d1c43]; }
-.loan-theme .loan-payment-card { @apply [border:1px_solid_#e5d9f1]; }
-.loan-theme .loan-payment-card input, .loan-theme .loan-payment-card select, .loan-theme .loan-payment-card textarea { @apply [border:1px_solid_#e5d9f1]; }
-.loan-theme .loan-payment-totals article { @apply [background:#f3ebfb]; }
-.loan-theme .loan-payment-page button { @apply [border:1px_solid_#e5d9f1]; }
-.loan-theme .loan-payment-history th, .loan-theme .loan-payment-history td { @apply [border-bottom:1px_solid_#e5d9f1]; }
+.loan-theme .borrower-exit-dialog p { @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .borrower-discard-button { @apply [background:var(--ws-surface,#fcfaff)]; }
+.loan-theme .loan-payment-page { @apply [color:var(--ws-text,#2d1c43)]; }
+.loan-theme .loan-payment-card { @apply [border:1px_solid_var(--ws-border,#e5d9f1)]; }
+.loan-theme .loan-payment-card input, .loan-theme .loan-payment-card select, .loan-theme .loan-payment-card textarea { @apply [border:1px_solid_var(--ws-border,#e5d9f1)]; }
+.loan-theme .loan-payment-totals article { @apply [background:var(--ws-soft,#f3ebfb)]; }
+.loan-theme .loan-payment-page button { @apply [border:1px_solid_var(--ws-border,#e5d9f1)]; }
+.loan-theme .loan-payment-history th, .loan-theme .loan-payment-history td { @apply [border-bottom:1px_solid_var(--ws-border,#e5d9f1)]; }
 .loan-theme .loan-payment-success, .loan-theme .loan-payment-breakdown { @apply [background:#f3ebfb]; @apply [color:#2d1c43]; }
-.loan-theme .loan-payment-receipt dl > div { @apply [border-bottom:1px_solid_#e5d9f1]; }
-.loan-theme .loan-payment-page { @apply [color:#2d1c43]; }
-.loan-theme .loan-payment-page .payment-header p { @apply [color:#776587]; }
-.loan-theme .loan-payment-page .loan-payment-card { @apply [border-color:#e5d9f1]; @apply [box-shadow:0_3px_12px_#60407508]; }
-.loan-theme .loan-payment-card .payment-picker-fields label { @apply [color:#2d1c43]; }
-.loan-theme .loan-payment-card .payment-picker-fields input, .loan-theme .loan-payment-card .payment-picker-fields select { @apply [border-color:#e5d9f1]; @apply [background-color:#fcfaff]; @apply [color:#2d1c43]; }
-.loan-theme .loan-payment-page .loan-payment-totals article { @apply [border:1px_solid_#e5d9f1]; @apply [background:#fcfaff]; }
-.loan-theme .loan-payment-page .loan-payment-totals span { @apply [color:#776587]; }
-.loan-theme .loan-payment-page .loan-payment-totals .payment-total-due { @apply [border-color:#e5d9f1]; @apply [background:#f3ebfb]; }
-.loan-theme .loan-payment-page .payment-total-due span { @apply [color:#2d1c43]; }
-.loan-theme .loan-payment-page .payment-total-due strong { @apply [color:#2d1c43]; }
-.loan-theme .loan-payment-page .loan-payment-grid label { @apply [color:#2d1c43]; }
-.loan-theme .loan-payment-page .loan-payment-card input:not([type="file"]), .loan-theme .loan-payment-page .loan-payment-card select, .loan-theme .loan-payment-page .loan-payment-card textarea { @apply [border-color:#e5d9f1]; }
-.loan-theme .loan-payment-page .payment-note-field { @apply [color:#2d1c43]; }
-.loan-theme .loan-payment-page .payment-waiver { @apply [border:1px_solid_#e5d9f1]; @apply [background:#fcfaff]; }
-.loan-theme .loan-payment-page .payment-waiver input { @apply [accent-color:#2d1c43]; }
-.loan-theme .loan-payment-page .payment-waiver-copy strong { @apply [color:#2d1c43]; }
-.loan-theme .loan-payment-page .payment-waiver-copy small { @apply [color:#776587]; }
-.loan-theme .loan-payment-page .loan-payment-breakdown { @apply [border:1px_solid_#e5d9f1]; @apply [color:#2d1c43]; }
+.loan-theme .loan-payment-receipt dl > div { @apply [border-bottom:1px_solid_var(--ws-border,#e5d9f1)]; }
+.loan-theme .loan-payment-page { @apply [color:var(--ws-text,#2d1c43)]; }
+.loan-theme .loan-payment-page .payment-header p { @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .loan-payment-page .loan-payment-card { @apply [border-color:var(--ws-border,#e5d9f1)]; @apply [box-shadow:0_3px_12px_#60407508]; }
+.loan-theme .loan-payment-card .payment-picker-fields label { @apply [color:var(--ws-text,#2d1c43)]; }
+.loan-theme .loan-payment-card .payment-picker-fields input, .loan-theme .loan-payment-card .payment-picker-fields select { @apply [border-color:var(--ws-border,#e5d9f1)]; @apply [background-color:var(--ws-surface,#fcfaff)]; @apply [color:var(--ws-text,#2d1c43)]; }
+.loan-theme .loan-payment-page .loan-payment-totals article { @apply [border:1px_solid_var(--ws-border,#e5d9f1)]; @apply [background:var(--ws-surface,#fcfaff)]; }
+.loan-theme .loan-payment-page .loan-payment-totals span { @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .loan-payment-page .loan-payment-totals .payment-total-due { @apply [border-color:var(--ws-border,#e5d9f1)]; @apply [background:var(--ws-soft,#f3ebfb)]; }
+.loan-theme .loan-payment-page .payment-total-due span { @apply [color:var(--ws-text,#2d1c43)]; }
+.loan-theme .loan-payment-page .payment-total-due strong { @apply [color:var(--ws-text,#2d1c43)]; }
+.loan-theme .loan-payment-page .loan-payment-grid label { @apply [color:var(--ws-text,#2d1c43)]; }
+.loan-theme .loan-payment-page .loan-payment-card input:not([type="file"]), .loan-theme .loan-payment-page .loan-payment-card select, .loan-theme .loan-payment-page .loan-payment-card textarea { @apply [border-color:var(--ws-border,#e5d9f1)]; }
+.loan-theme .loan-payment-page .payment-note-field { @apply [color:var(--ws-text,#2d1c43)]; }
+.loan-theme .loan-payment-page .payment-waiver { @apply [border:1px_solid_var(--ws-border,#e5d9f1)]; @apply [background:var(--ws-surface,#fcfaff)]; }
+.loan-theme .loan-payment-page .payment-waiver input { @apply [accent-color:var(--ws-text,#2d1c43)]; }
+.loan-theme .loan-payment-page .payment-waiver-copy strong { @apply [color:var(--ws-text,#2d1c43)]; }
+.loan-theme .loan-payment-page .payment-waiver-copy small { @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .loan-payment-page .loan-payment-breakdown { @apply [border:1px_solid_var(--ws-border,#e5d9f1)]; @apply [color:var(--ws-text,#2d1c43)]; }
 .loan-theme .loan-payment-page .payment-save-button { @apply [background:#7844ad]; }
 .loan-theme .loan-payment-page .payment-save-button:disabled { @apply [background:#c58af9]; }
-.loan-theme .loan-payment-history { @apply [border:1px_solid_#e5d9f1]; }
-.loan-theme .loan-payment-history th { @apply [background:#fcfaff]; @apply [color:#776587]; }
-.loan-theme .loan-payment-history td { @apply [color:#2d1c43]; }
-.loan-theme .loan-payment-history td button { @apply [color:#2d1c43]; }
-.loan-theme .loan-payment-page .payment-archive-search { @apply [background:#fcfaff]; }
+.loan-theme .loan-payment-history { @apply [border:1px_solid_var(--ws-border,#e5d9f1)]; }
+.loan-theme .loan-payment-history th { @apply [background:var(--ws-surface,#fcfaff)]; @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .loan-payment-history td { @apply [color:var(--ws-text,#2d1c43)]; }
+.loan-theme .loan-payment-history td button { @apply [color:var(--ws-text,#2d1c43)]; }
+.loan-theme .loan-payment-page .payment-archive-search { @apply [background:var(--ws-surface,#fcfaff)]; }
 .loan-theme .loan-payment-page .loan-payment-error { @apply [background:#fcfaff]; }
-.loan-theme .contract-dropdown-results { @apply [border:1px_solid_#e5d9f1]; @apply [box-shadow:0_12px_36px_#60407520]; }
-.loan-theme .contract-dropdown-results .contract-borrower:focus-visible { @apply [outline:2px_solid_#d2bce5]; }
-.loan-theme .contract-dropdown-toggle { @apply [color:#776587]; }
-.loan-theme .contract-section-number { @apply [background:#f3ebfb]; @apply [color:#776587]; }
-.loan-theme .contract-section-caption { @apply [color:#776587]; }
-.loan-theme .contract-form-section { @apply [border:1px_solid_#e5d9f1]; }
-.loan-theme .contract-money-summary article { @apply [border:1px_solid_#e5d9f1]; @apply [background:#fcfaff]; }
-.loan-theme .contract-money-summary span { @apply [color:#776587]; }
-.loan-theme .contract-money-summary strong { @apply [color:#2d1c43]; }
-.loan-theme .contract-money-summary .is-net { @apply [background:#f3ebfb]; @apply [border-color:#e5d9f1]; }
-.loan-theme .lx-btn:hover:not(:disabled) { @apply [background:#f3ebfb]; }
-.loan-theme .lx-icon-btn:hover { @apply [background:#f3ebfb]; }
-.loan-theme .lx-field input[readonly] { @apply [background:#f3ebfb]; }
-.loan-theme .lx-field select:disabled { @apply [background:#f3ebfb]; }
+.loan-theme .contract-dropdown-results { @apply [border:1px_solid_var(--ws-border,#e5d9f1)]; @apply [box-shadow:0_12px_36px_#60407520]; }
+.loan-theme .contract-dropdown-results .contract-borrower:focus-visible { @apply [outline:2px_solid_var(--ws-border,#d2bce5)]; }
+.loan-theme .contract-dropdown-toggle { @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .contract-section-number { @apply [background:var(--ws-soft,#f3ebfb)]; @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .contract-section-caption { @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .contract-form-section { @apply [border:1px_solid_var(--ws-border,#e5d9f1)]; }
+.loan-theme .contract-money-summary article { @apply [border:1px_solid_var(--ws-border,#e5d9f1)]; @apply [background:var(--ws-surface,#fcfaff)]; }
+.loan-theme .contract-money-summary span { @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .contract-money-summary strong { @apply [color:var(--ws-text,#2d1c43)]; }
+.loan-theme .contract-money-summary .is-net { @apply [background:var(--ws-soft,#f3ebfb)]; @apply [border-color:var(--ws-border,#e5d9f1)]; }
+.loan-theme .lx-btn:hover:not(:disabled) { @apply [background:var(--ws-soft,#f3ebfb)]; }
+.loan-theme .lx-icon-btn:hover { @apply [background:var(--ws-soft,#f3ebfb)]; }
+.loan-theme .lx-field input[readonly] { @apply [background:var(--ws-soft,#f3ebfb)]; }
+.loan-theme .lx-field select:disabled { @apply [background:var(--ws-soft,#f3ebfb)]; }
 .loan-theme .lx-notice { @apply [color:#2d1c43]; }
-.loan-theme .lx-seg { @apply [background:#f3ebfb]; }
-.loan-theme .lx-table tbody tr:hover { @apply [background:#fcfaff]; }
-.loan-theme .lx-photo-box { @apply [background:#fcfaff]; }
-.loan-theme .lx-picked small { @apply [color:#2d1c43]; }
-.loan-theme .lx-saved { @apply [color:#2d1c43]; }
-.loan-theme .contract-company-card { @apply [background:#fcfaff]; }
+.loan-theme .lx-seg { @apply [background:var(--ws-soft,#f3ebfb)]; }
+.loan-theme .lx-table tbody tr:hover { @apply [background:var(--ws-surface,#fcfaff)]; }
+.loan-theme .lx-photo-box { @apply [background:var(--ws-surface,#fcfaff)]; }
+.loan-theme .lx-picked small { @apply [color:var(--ws-text,#2d1c43)]; }
+.loan-theme .lx-saved { @apply [color:var(--ws-text,#2d1c43)]; }
+.loan-theme .contract-company-card { @apply [background:var(--ws-surface,#fcfaff)]; }
 .loan-theme .lx-contract-status { @apply [background:#f3ebfb]; @apply [color:#2d1c43]; }
-.loan-theme .lx-contract-status.is-reserved { @apply [background:#f3ebfb]; @apply [color:#776587]; }
-.loan-theme .lx-contract-status.is-closed { @apply [background:#f3ebfb]; @apply [color:#776587]; }
-.loan-theme .contract-signed-document-note { @apply [border:1px_solid_#e5d9f1]; @apply [background:#f3ebfb]; @apply [color:#2d1c43]; }
-.loan-theme .contract-document-dialog { @apply [background:#f3ebfb]; }
+.loan-theme .lx-contract-status.is-reserved { @apply [background:#f3ebfb]; @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .lx-contract-status.is-closed { @apply [background:#f3ebfb]; @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .contract-signed-document-note { @apply [border:1px_solid_var(--ws-border,#e5d9f1)]; @apply [background:var(--ws-soft,#f3ebfb)]; @apply [color:var(--ws-text,#2d1c43)]; }
+.loan-theme .contract-document-dialog { @apply [background:var(--ws-soft,#f3ebfb)]; }
 .loan-theme .contract-document-dialog::backdrop { @apply [background:#40235799]; }
-.loan-theme .contract-document-dialog > header { @apply [border-bottom:1px_solid_#e5d9f1]; }
-.loan-theme .contract-document-dialog > header p { @apply [color:#776587]; }
-.loan-theme .contract-document-dialog > header button { @apply [border:1px_solid_#e5d9f1]; }
-.loan-theme .contract-a4-document { @apply [color:#2d1c43]; }
-.loan-theme .contract-a4-footnote { @apply [color:#776587]; }
-.loan-theme .contract-preview-attachments { @apply [border-top:1px_solid_#e5d9f1]; }
-.loan-theme .lx-page .contract-review-card, .loan-theme .lx-page .contract-deferred { @apply [border:1px_solid_var(--lx-line,#e5d9f1)]; @apply [background:#fcfaff]; }
-.loan-theme .lx-page .contract-review-card h4 { @apply [color:#2d1c43]; }
-.loan-theme .ap-table th { @apply [background:#fcfaff]; }
-.loan-theme .ap-terms-grid > div { @apply [background:#f3ebfb]; }
+.loan-theme .contract-document-dialog > header { @apply [border-bottom:1px_solid_var(--ws-border,#e5d9f1)]; }
+.loan-theme .contract-document-dialog > header p { @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .contract-document-dialog > header button { @apply [border:1px_solid_var(--ws-border,#e5d9f1)]; }
+.loan-theme .contract-a4-document { @apply [color:var(--ws-text,#2d1c43)]; }
+.loan-theme .contract-a4-footnote { @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .contract-preview-attachments { @apply [border-top:1px_solid_var(--ws-border,#e5d9f1)]; }
+.loan-theme .lx-page .contract-review-card, .loan-theme .lx-page .contract-deferred { @apply [border:1px_solid_var(--lx-line,var(--ws-border,#e5d9f1))]; @apply [background:var(--ws-surface,#fcfaff)]; }
+.loan-theme .lx-page .contract-review-card h4 { @apply [color:var(--ws-text,#2d1c43)]; }
+.loan-theme .ap-table th { @apply [background:var(--ws-surface,#fcfaff)]; }
+.loan-theme .ap-terms-grid > div { @apply [background:var(--ws-soft,#f3ebfb)]; }
 .loan-theme .ap-old-contract-warning { @apply [background:#f3ebfb]; }
-.loan-theme .ar-summary .ar-summary-primary { @apply [background:#402357]; @apply [border-color:#7844ad]; }
-.loan-theme .ar-section-heading > span { @apply [background:#f3ebfb]; }
-.loan-theme .ar-meter { @apply [background:#f3ebfb]; }
+.loan-theme .ar-summary .ar-summary-primary { @apply [background:#402357]; @apply [border-color:var(--ws-muted,#7844ad)]; }
+.loan-theme .ar-section-heading > span { @apply [background:var(--ws-soft,#f3ebfb)]; }
+.loan-theme .ar-meter { @apply [background:var(--ws-soft,#f3ebfb)]; }
 .loan-theme .ar-meter span { @apply [background:#7844ad]; }
-.loan-theme .ar-table th { @apply [background:#fcfaff]; }
-.loan-theme .ar-table td { @apply [border-bottom:1px_solid_#e5d9f1]; }
-.loan-theme .ar-table tbody tr:hover { @apply [background:#fcfaff]; }
-.loan-theme .ar-empty svg { @apply [color:#776587]; }
-.loan-theme .ar-footnotes { @apply [background:#fcfaff]; }
-.loan-theme .ar-footnotes strong { @apply [color:#2d1c43]; }
-.loan-theme .approvals-summary-icon { @apply [background:#f3ebfb]; }
-.loan-theme .approvals-tabs button span { @apply [background:#f3ebfb]; }
-.loan-theme .approvals-upload { @apply [border-color:#e5d9f1]; }
-.loan-theme .approvals-no-action { @apply [color:#776587]; }
-.loan-theme .overdue-table th { @apply [background:#fcfaff]; }
-.loan-theme .company-ledger-page { @apply [background:#f3ebfb]; @apply [color:#2d1c43]; }
+.loan-theme .ar-table th { @apply [background:var(--ws-surface,#fcfaff)]; }
+.loan-theme .ar-table td { @apply [border-bottom:1px_solid_var(--ws-border,#e5d9f1)]; }
+.loan-theme .ar-table tbody tr:hover { @apply [background:var(--ws-surface,#fcfaff)]; }
+.loan-theme .ar-empty svg { @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .ar-footnotes { @apply [background:var(--ws-surface,#fcfaff)]; }
+.loan-theme .ar-footnotes strong { @apply [color:var(--ws-text,#2d1c43)]; }
+.loan-theme .approvals-summary-icon { @apply [background:var(--ws-soft,#f3ebfb)]; }
+.loan-theme .approvals-tabs button span { @apply [background:var(--ws-soft,#f3ebfb)]; }
+.loan-theme .approvals-upload { @apply [border-color:var(--ws-border,#e5d9f1)]; }
+.loan-theme .approvals-no-action { @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .overdue-table th { @apply [background:var(--ws-surface,#fcfaff)]; }
+.loan-theme .company-ledger-page { @apply [background:var(--ws-soft,#f3ebfb)]; @apply [color:var(--ws-text,#2d1c43)]; }
 .loan-theme .company-ledger-page :focus-visible { @apply [outline:2px_solid_#7844ad]; }
-.loan-theme .cl-breadcrumb { @apply [color:#776587]; }
-.loan-theme .cl-breadcrumb strong { @apply [color:#2d1c43]; }
-.loan-theme .cl-header p { @apply [color:#776587]; }
-.loan-theme .cl-eyebrow { @apply [color:#776587]; }
-.loan-theme .cl-button { @apply [border:1px_solid_#e5d9f1]; @apply [color:#2d1c43]; }
-.loan-theme .cl-button:hover:not(:disabled) { @apply [background:#fcfaff]; @apply [border-color:#e5d9f1]; }
-.loan-theme .cl-button.primary { @apply [background:#7844ad]; @apply [border-color:#7844ad]; }
+.loan-theme .cl-breadcrumb { @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .cl-breadcrumb strong { @apply [color:var(--ws-text,#2d1c43)]; }
+.loan-theme .cl-header p { @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .cl-eyebrow { @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .cl-button { @apply [border:1px_solid_var(--ws-border,#e5d9f1)]; @apply [color:var(--ws-text,#2d1c43)]; }
+.loan-theme .cl-button:hover:not(:disabled) { @apply [background:var(--ws-surface,#fcfaff)]; @apply [border-color:var(--ws-border,#e5d9f1)]; }
+.loan-theme .cl-button.primary { @apply [background:#7844ad]; @apply [border-color:var(--ws-muted,#7844ad)]; }
 .loan-theme .cl-button.primary:hover:not(:disabled) { @apply [background:#402357]; }
-.loan-theme .cl-summary-card { @apply [border:1px_solid_#e5d9f1]; @apply [box-shadow:0_2px_7px_#60407510]; }
-.loan-theme .cl-summary-label { @apply [color:#776587]; }
-.loan-theme .cl-summary-icon.income { @apply [color:#2d1c43]; @apply [background:#f3ebfb]; }
-.loan-theme .cl-summary-icon.expense { @apply [background:#f3ebfb]; }
-.loan-theme .cl-summary-icon.net { @apply [color:#776587]; @apply [background:#f3ebfb]; }
-.loan-theme .cl-summary-card > small { @apply [color:#776587]; }
-.loan-theme .cl-summary-card.period-net { @apply [border-color:#e5d9f1]; @apply [background:#fcfaff]; }
-.loan-theme .cl-panel { @apply [border:1px_solid_#e5d9f1]; @apply [box-shadow:0_2px_7px_#6040750a]; }
-.loan-theme .cl-toolbar { @apply [border-bottom:1px_solid_#e5d9f1]; }
-.loan-theme .cl-tabs { @apply [background:#f3ebfb]; }
-.loan-theme .cl-tabs button { @apply [color:#776587]; }
-.loan-theme .cl-tabs button.active { @apply [color:#2d1c43]; }
-.loan-theme .cl-search { @apply [color:#776587]; }
-.loan-theme .cl-search input { @apply [border:1px_solid_#e5d9f1]; @apply [color:#2d1c43]; }
-.loan-theme .cl-search input::placeholder { @apply [color:#776587]; }
-.loan-theme .cl-date-range { @apply [color:#776587]; }
-.loan-theme .cl-date-range > span { @apply [color:#776587]; }
-.loan-theme .cl-date-range input { @apply [border:1px_solid_#e5d9f1]; @apply [color:#2d1c43]; }
-.loan-theme .cl-table th { @apply [background:#fcfaff]; @apply [border-bottom:1px_solid_#e5d9f1]; @apply [color:#776587]; }
-.loan-theme .cl-table td { @apply [border-bottom:1px_solid_#e5d9f1]; @apply [color:#2d1c43]; }
-.loan-theme .cl-table tbody tr:hover:not(:has(.cl-empty)):not(:has(.cl-loading)) { @apply [background:#fcfaff]; }
-.loan-theme .cl-date { @apply [color:#776587]!; }
-.loan-theme .cl-entry-icon.income { @apply [color:#2d1c43]; @apply [background:#f3ebfb]; }
-.loan-theme .cl-entry-icon.expense { @apply [background:#f3ebfb]; }
-.loan-theme .cl-entry-title strong { @apply [color:#2d1c43]; }
-.loan-theme .cl-entry-title small { @apply [color:#776587]; }
-.loan-theme .cl-category { @apply [background:#f3ebfb]; @apply [color:#776587]; }
-.loan-theme .cl-muted { @apply [color:#776587]!; }
-.loan-theme .cl-table-footer { @apply [border-top:1px_solid_#e5d9f1]; @apply [color:#776587]; }
-.loan-theme .cl-pagination button { @apply [border:1px_solid_#e5d9f1]; @apply [color:#2d1c43]; }
-.loan-theme .cl-pagination button:hover:not(:disabled) { @apply [border-color:#e5d9f1]; @apply [background:#fcfaff]; }
-.loan-theme .cl-empty > span { @apply [background:#f3ebfb]; @apply [color:#776587]; }
-.loan-theme .cl-empty strong { @apply [color:#2d1c43]; }
-.loan-theme .cl-empty p { @apply [color:#776587]; }
-.loan-theme .cl-loading { @apply [color:#776587]; }
-.loan-theme .cl-spinner { @apply [border:2px_solid_#e5d9f1]; @apply [border-top-color:#7844ad]; }
-.loan-theme .cl-footnote { @apply [color:#776587]; }
+.loan-theme .cl-summary-card { @apply [border:1px_solid_var(--ws-border,#e5d9f1)]; @apply [box-shadow:0_2px_7px_#60407510]; }
+.loan-theme .cl-summary-label { @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .cl-summary-icon.income { @apply [color:var(--ws-text,#2d1c43)]; @apply [background:var(--ws-soft,#f3ebfb)]; }
+.loan-theme .cl-summary-icon.expense { @apply [background:var(--ws-soft,#f3ebfb)]; }
+.loan-theme .cl-summary-icon.net { @apply [color:var(--ws-muted,#776587)]; @apply [background:var(--ws-soft,#f3ebfb)]; }
+.loan-theme .cl-summary-card > small { @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .cl-summary-card.period-net { @apply [border-color:var(--ws-border,#e5d9f1)]; @apply [background:var(--ws-surface,#fcfaff)]; }
+.loan-theme .cl-panel { @apply [border:1px_solid_var(--ws-border,#e5d9f1)]; @apply [box-shadow:0_2px_7px_#6040750a]; }
+.loan-theme .cl-toolbar { @apply [border-bottom:1px_solid_var(--ws-border,#e5d9f1)]; }
+.loan-theme .cl-tabs { @apply [background:var(--ws-soft,#f3ebfb)]; }
+.loan-theme .cl-tabs button { @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .cl-tabs button.active { @apply [color:var(--ws-text,#2d1c43)]; }
+.loan-theme .cl-search { @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .cl-search input { @apply [border:1px_solid_var(--ws-border,#e5d9f1)]; @apply [color:var(--ws-text,#2d1c43)]; }
+.loan-theme .cl-search input::placeholder { @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .cl-date-range { @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .cl-date-range > span { @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .cl-date-range input { @apply [border:1px_solid_var(--ws-border,#e5d9f1)]; @apply [color:var(--ws-text,#2d1c43)]; }
+.loan-theme .cl-table th { @apply [background:var(--ws-surface,#fcfaff)]; @apply [border-bottom:1px_solid_var(--ws-border,#e5d9f1)]; @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .cl-table td { @apply [border-bottom:1px_solid_var(--ws-border,#e5d9f1)]; @apply [color:var(--ws-text,#2d1c43)]; }
+.loan-theme .cl-table tbody tr:hover:not(:has(.cl-empty)):not(:has(.cl-loading)) { @apply [background:var(--ws-surface,#fcfaff)]; }
+.loan-theme .cl-date { @apply [color:var(--ws-muted,#776587)]!; }
+.loan-theme .cl-entry-icon.income { @apply [color:var(--ws-text,#2d1c43)]; @apply [background:var(--ws-soft,#f3ebfb)]; }
+.loan-theme .cl-entry-icon.expense { @apply [background:var(--ws-soft,#f3ebfb)]; }
+.loan-theme .cl-entry-title strong { @apply [color:var(--ws-text,#2d1c43)]; }
+.loan-theme .cl-entry-title small { @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .cl-category { @apply [background:var(--ws-soft,#f3ebfb)]; @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .cl-muted { @apply [color:var(--ws-muted,#776587)]!; }
+.loan-theme .cl-table-footer { @apply [border-top:1px_solid_var(--ws-border,#e5d9f1)]; @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .cl-pagination button { @apply [border:1px_solid_var(--ws-border,#e5d9f1)]; @apply [color:var(--ws-text,#2d1c43)]; }
+.loan-theme .cl-pagination button:hover:not(:disabled) { @apply [border-color:var(--ws-border,#e5d9f1)]; @apply [background:var(--ws-surface,#fcfaff)]; }
+.loan-theme .cl-empty > span { @apply [background:var(--ws-soft,#f3ebfb)]; @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .cl-empty strong { @apply [color:var(--ws-text,#2d1c43)]; }
+.loan-theme .cl-empty p { @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .cl-loading { @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .cl-spinner { @apply [border:2px_solid_var(--ws-border,#e5d9f1)]; @apply [border-top-color:var(--ws-muted,#7844ad)]; }
+.loan-theme .cl-footnote { @apply [color:var(--ws-muted,#776587)]; }
 .loan-theme .cl-overlay { @apply [background:#40235770]; }
-.loan-theme .cl-drawer { @apply [background:#fcfaff]; @apply [box-shadow:-16px_0_55px_#60407525]; }
-.loan-theme .cl-drawer-head { @apply [border-bottom:1px_solid_#e5d9f1]; }
-.loan-theme .cl-drawer-head h2 { @apply [color:#2d1c43]; }
-.loan-theme .cl-close { @apply [background:#f3ebfb]; @apply [color:#776587]; }
-.loan-theme .cl-type-toggle legend { @apply [color:#2d1c43]; }
-.loan-theme .cl-type-toggle label { @apply [border:1px_solid_#e5d9f1]; @apply [color:#776587]; }
-.loan-theme .cl-type-toggle label.selected.income { @apply [border-color:#d2bce5]; @apply [background:#f3ebfb]; @apply [color:#2d1c43]; @apply [box-shadow:inset_0_0_0_1px_#b298c7]; }
-.loan-theme .cl-type-toggle label.selected.expense { @apply [background:#fcfaff]; }
-.loan-theme .cl-field { @apply [color:#2d1c43]; }
-.loan-theme .cl-field-heading a { @apply [color:#2d1c43]; }
-.loan-theme .cl-field input, .loan-theme .cl-field select, .loan-theme .cl-field textarea { @apply [border:1px_solid_#e5d9f1]; @apply [color:#2d1c43]; }
-.loan-theme .cl-field input:focus, .loan-theme .cl-field select:focus, .loan-theme .cl-field textarea:focus { @apply [border-color:#d2bce5]; @apply [box-shadow:0_0_0_3px_#b298c7]; }
-.loan-theme .cl-money-input > span { @apply [color:#776587]; }
-.loan-theme .cl-drawer-foot { @apply [border-top:1px_solid_#e5d9f1]; }
-.loan-theme .loan-overview-metric { @apply [background:linear-gradient(135deg,_#fcfaff,_#f3ebfb)]; @apply [box-shadow:5px_6px_14px_#b298c733,_inset_1px_1px_3px_#fff9]; }
-.loan-theme .loan-overview-metric:hover { @apply [box-shadow:7px_9px_18px_#b298c744,_inset_1px_1px_3px_#fff9]; }
-.loan-theme .loan-overview-metric-top { @apply [color:#776587]; }
-.loan-theme .loan-overview-metric strong { @apply [color:#2d1c43]; }
-.loan-theme .loan-overview-metric small { @apply [color:#776587]; }
-.loan-theme .loan-overview-metric.violet .loan-overview-metric-top i { @apply [color:#776587]; @apply [background:#f3ebfb]; }
-.loan-theme .loan-overview-panel { @apply [background:linear-gradient(135deg,_#fcfaff,_#f3ebfb)]; @apply [box-shadow:5px_6px_14px_#b298c733,_inset_1px_1px_3px_#fff9]; }
-.loan-theme .loan-overview-panel > header { @apply [border-bottom:1px_solid_#e5d9f133]; }
-.loan-theme .loan-overview-panel > header h2 svg { @apply [color:#776587]; }
-.loan-theme .loan-overview-panel > header p { @apply [color:#776587]; }
-.loan-theme .loan-overview-panel > header > a { @apply [color:#776587]; }
-.loan-theme .loan-overview-panel li { @apply [border-bottom:1px_solid_#e5d9f126]; }
-.loan-theme .loan-overview-row-copy strong { @apply [color:#2d1c43]; }
-.loan-theme .loan-overview-row-copy small, .loan-theme .loan-overview-row-value small { @apply [color:#776587]; }
-.loan-theme .loan-overview-row-value strong { @apply [color:#2d1c43]; }
-.loan-theme .loan-overview-empty { @apply [color:#776587]; }
-.loan-theme .loan-cashflow { @apply [background:linear-gradient(135deg,_#fcfaff,_#f3ebfb)]; @apply [box-shadow:5px_6px_14px_#b298c733,_inset_1px_1px_3px_#fff9]; }
-.loan-theme .loan-cashflow-heading p { @apply [color:#776587]; }
-.loan-theme .loan-cashflow-heading h2 { @apply [color:#2d1c43]; }
-.loan-theme .loan-cashflow-heading > a { @apply [color:#776587]; }
-.loan-theme .loan-cashflow-kpis article { @apply [border:1px_solid_#e5d9f12a]; @apply [background:#fcfaff80]; }
-.loan-theme .loan-cashflow-kpis article > span { @apply [color:#776587]; }
-.loan-theme .loan-cashflow-kpis article > strong { @apply [color:#2d1c43]; }
-.loan-theme .loan-cashflow-kpis article > small { @apply [color:#776587]; }
-.loan-theme .loan-cashflow-kpis article > small svg { @apply [color:#776587]; }
-.loan-theme .loan-cashflow-chart-wrap { @apply [background:#fcfaff80]; }
-.loan-theme .loan-cashflow-legend { @apply [color:#776587]; }
-.loan-theme .loan-cashflow-chart { @apply [border-bottom:1px_solid_#e5d9f14a]; }
-.loan-theme .loan-cashflow-month-label { @apply [color:#776587]; }
+.loan-theme .cl-drawer { @apply [background:var(--ws-surface,#fcfaff)]; @apply [box-shadow:-16px_0_55px_#60407525]; }
+.loan-theme .cl-drawer-head { @apply [border-bottom:1px_solid_var(--ws-border,#e5d9f1)]; }
+.loan-theme .cl-drawer-head h2 { @apply [color:var(--ws-text,#2d1c43)]; }
+.loan-theme .cl-close { @apply [background:var(--ws-soft,#f3ebfb)]; @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .cl-type-toggle legend { @apply [color:var(--ws-text,#2d1c43)]; }
+.loan-theme .cl-type-toggle label { @apply [border:1px_solid_var(--ws-border,#e5d9f1)]; @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .cl-type-toggle label.selected.income { @apply [border-color:var(--ws-border,#d2bce5)]; @apply [background:var(--ws-soft,#f3ebfb)]; @apply [color:var(--ws-text,#2d1c43)]; @apply [box-shadow:inset_0_0_0_1px_#b298c7]; }
+.loan-theme .cl-type-toggle label.selected.expense { @apply [background:var(--ws-surface,#fcfaff)]; }
+.loan-theme .cl-field { @apply [color:var(--ws-text,#2d1c43)]; }
+.loan-theme .cl-field-heading a { @apply [color:var(--ws-text,#2d1c43)]; }
+.loan-theme .cl-field input, .loan-theme .cl-field select, .loan-theme .cl-field textarea { @apply [border:1px_solid_var(--ws-border,#e5d9f1)]; @apply [color:var(--ws-text,#2d1c43)]; }
+.loan-theme .cl-field input:focus, .loan-theme .cl-field select:focus, .loan-theme .cl-field textarea:focus { @apply [border-color:var(--ws-border,#d2bce5)]; @apply [box-shadow:0_0_0_3px_#b298c7]; }
+.loan-theme .cl-money-input > span { @apply [color:var(--ws-muted,#776587)]; }
+.loan-theme .cl-drawer-foot { @apply [border-top:1px_solid_var(--ws-border,#e5d9f1)]; }
 .loan-theme :is(input, select, textarea) { @apply [accent-color:var(--lx-brand)]; }
 .loan-theme :is(input, select, textarea):focus-visible { @apply [outline-color:var(--lx-brand)]; }
 .loan-theme input::file-selector-button { @apply rounded-lg border-0 [background:var(--lx-brand-soft)] px-3 py-2 [color:var(--lx-brand)] [font:inherit]; }

@@ -24,7 +24,20 @@ export type CompanyLedgerRow = {
   reference: string;
   note: string;
   source: "MANUAL" | "LOAN";
+  loanReceiptBreakdown?: { principal: number; interest: number; penalty: number };
 };
+
+function contractCompanySource(documentData: string | null) {
+  try {
+    const data = documentData ? JSON.parse(documentData) as Record<string, unknown> : {};
+    return {
+      companyCode: typeof data.companyCode === "string" ? data.companyCode : null,
+      branchCode: typeof data.branchCode === "string" ? data.branchCode : null,
+    };
+  } catch {
+    return { companyCode: null, branchCode: null };
+  }
+}
 
 const loanPaymentLabels: Record<string, { type: CompanyLedgerRow["type"]; title: string; categoryCode: string }> = {
   DISBURSEMENT: { type: "EXPENSE", title: "จ่ายเงินกู้", categoryCode: "LOAN_DISBURSEMENT" },
@@ -52,6 +65,7 @@ export async function getCompanyLedgerRows(from: Date | null, to: Date | null): 
         contract: {
           select: {
             contractNumber: true,
+            documentData: true,
             debtor: { select: { borrowersCode: true, firstName: true, lastName: true, nickname: true } },
           },
         },
@@ -64,6 +78,7 @@ export async function getCompanyLedgerRows(from: Date | null, to: Date | null): 
         contract: {
           select: {
             contractNumber: true,
+            documentData: true,
             debtor: { select: { borrowersCode: true, firstName: true, lastName: true, nickname: true } },
           },
         },
@@ -88,6 +103,7 @@ export async function getCompanyLedgerRows(from: Date | null, to: Date | null): 
   });
   const repaymentRows: CompanyLedgerRow[] = repayments.map((repayment) => {
     const borrower = repayment.contract.debtor;
+    const source = contractCompanySource(repayment.contract.documentData);
     const borrowerName = [borrower.firstName || borrower.nickname, borrower.lastName].filter(Boolean).join(" ");
     return {
       id: `repayment-${repayment.id}`,
@@ -95,6 +111,7 @@ export async function getCompanyLedgerRows(from: Date | null, to: Date | null): 
       title: `รับชำระสัญญา · ${repayment.contract.contractNumber}`,
       category: categoryByCode.get("LOAN_RECEIPT") ?? "รับชำระเงินกู้",
       categoryCode: "LOAN_RECEIPT",
+      loanReceiptBreakdown: { principal: repayment.principalPaid, interest: repayment.interestPaid, penalty: repayment.penaltyPaid },
       financeCategoryId: null,
       amount: repayment.amount,
       baseAmount: null,
@@ -105,8 +122,8 @@ export async function getCompanyLedgerRows(from: Date | null, to: Date | null): 
       transactionDate: repayment.paidAt,
       timeRecorded: repayment.timeRecorded,
       documentNumber: null,
-      companyCode: null,
-      branchCode: null,
+      companyCode: source.companyCode,
+      branchCode: source.branchCode,
       party: [formatBorrowerCode(borrower.borrowersCode), borrowerName].filter(Boolean).join(" · "),
       method: repayment.method,
       reference: repayment.receiptNumber,
@@ -122,6 +139,7 @@ export async function getCompanyLedgerRows(from: Date | null, to: Date | null): 
     if (!label) return [];
     const contract = payment.contract;
     const borrower = contract?.debtor;
+    const source = contractCompanySource(contract?.documentData ?? null);
     const borrowerName = borrower ? [borrower.firstName || borrower.nickname, borrower.lastName].filter(Boolean).join(" ") : "";
     const party = contract ? [borrower ? formatBorrowerCode(borrower.borrowersCode) : null, borrowerName].filter(Boolean).join(" · ") : "";
     const title = contract ? `${label.title} · ${contract.contractNumber}` : label.title;
@@ -141,8 +159,8 @@ export async function getCompanyLedgerRows(from: Date | null, to: Date | null): 
       transactionDate: payment.paidAt,
       timeRecorded: payment.timeRecorded,
       documentNumber: null,
-      companyCode: null,
-      branchCode: null,
+      companyCode: source.companyCode,
+      branchCode: source.branchCode,
       party,
       method: payment.method,
       reference: payment.type === "DISBURSEMENT" ? payment.note?.match(/^เลขอ้างอิงการจ่าย (.+)$/)?.[1] ?? "" : "",

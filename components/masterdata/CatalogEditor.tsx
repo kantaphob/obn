@@ -5,7 +5,7 @@ import { useToast, useTrackedFetch } from '@/components/ui/ToastProvider';
 import type { CatalogItem, CatalogKind, CatalogResult } from '@/lib/reference-catalog-types';
 
 export type CatalogEditState = { mode: 'create' | 'edit' | 'delete'; item?: CatalogItem };
-const inputClass = 'mt-1.5 w-full rounded-lg border border-[#d7d9d0] bg-white px-3 py-2.5 text-sm disabled:bg-[#eeece5]';
+const inputClass = 'mt-1.5 w-full rounded-lg border border-[#d7d9d0] bg-white px-3 py-2.5 text-sm disabled:bg-[var(--ws-soft,#eeece5)]';
 const buttonClass = 'inline-flex h-10 shrink-0 items-center justify-center whitespace-nowrap rounded-xl border border-[#d7d9d0] px-4 text-xs leading-none disabled:opacity-50';
 const names = { units: 'หน่วยนับ', materials: 'วัสดุ', classifiers: 'ลักษณนาม' };
 
@@ -84,7 +84,7 @@ export default function CatalogEditor({ kind, state, categories, onClose, onDone
     ...(kind === 'units' ? [{ key: 'symbol', label: 'สัญลักษณ์ / ตัวย่อ', max: 40, required: true }, { key: 'standard', label: 'มาตรฐาน / ประเภทหน่วย', max: 80, required: false }] : []),
   ];
 
-  return <dialog ref={dialog} aria-labelledby={`${id}-title`} className="fixed inset-0 m-auto w-[min(560px,calc(100%_-_32px))] max-h-[90dvh] overflow-y-auto rounded-2xl border border-[#d7d9d0] bg-[#faf9f5] p-6 text-[#272b29] shadow-xl backdrop:bg-black/40" onCancel={(event) => { event.preventDefault(); if (!saving) onClose(); }}>
+  return <dialog ref={dialog} aria-labelledby={`${id}-title`} className="fixed inset-0 m-auto w-[min(560px,calc(100%_-_32px))] max-h-[90dvh] overflow-y-auto rounded-2xl border border-[#d7d9d0] bg-[var(--ws-surface,#faf9f5)] p-6 text-[#272b29] shadow-xl backdrop:bg-black/40" onCancel={(event) => { event.preventDefault(); if (!saving) onClose(); }}>
     <div className="mb-5 flex items-center justify-between gap-4"><h2 id={`${id}-title`} className="text-xl font-medium">{title}</h2><button type="button" aria-label="ปิดฟอร์ม" disabled={saving} onClick={onClose} className={`${buttonClass} w-10 px-0!`}>×</button></div>
     <form onSubmit={submit}>
       {deleting ? <p className="mb-5 leading-relaxed">ยืนยันลบ “{item?.nameTh}” ({item?.code})? ข้อมูลจะถูกลบออกจากฐานข้อมูล</p> : <fieldset disabled={saving} className="grid gap-4">
@@ -99,7 +99,7 @@ export default function CatalogEditor({ kind, state, categories, onClose, onDone
         </label> : null}
       </fieldset>}
       {unitsError && !deleting ? <div role="alert" className="mt-4 text-sm text-red-700">{unitsError}<button type="button" className={`${buttonClass} ml-2`} onClick={() => setRetry((value) => value + 1)}>ลองใหม่</button></div> : null}
-      <div className="mt-6 flex justify-end gap-3"><button type="button" className={`${buttonClass} w-32`} disabled={saving} onClick={onClose}>ยกเลิก</button><button type="submit" disabled={saving || (!deleting && kind === 'materials' && !unitsReady)} className={`${buttonClass} w-32 ${deleting ? 'bg-red-700 text-white' : 'bg-[#355a4b] text-white'}`}>{saving ? 'กำลังบันทึก…' : deleting ? 'ยืนยันลบ' : 'บันทึก'}</button></div>
+      <div className="mt-6 flex justify-end gap-3"><button type="button" className={`${buttonClass} w-32`} disabled={saving} onClick={onClose}>ยกเลิก</button><button type="submit" disabled={saving || (!deleting && kind === 'materials' && !unitsReady)} className={`${buttonClass} w-32 ${deleting ? 'bg-red-700 text-white' : 'bg-[var(--ws-accent-soft,#355a4b)] text-white'}`}>{saving ? 'กำลังบันทึก…' : deleting ? 'ยืนยันลบ' : 'บันทึก'}</button></div>
     </form>
   </dialog>;
 }

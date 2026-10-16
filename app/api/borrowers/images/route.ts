@@ -1,6 +1,5 @@
-import { mkdir, writeFile } from 'node:fs/promises'
-import path from 'node:path'
-import { randomUUID } from 'node:crypto'
+import { prisma } from '@/lib/prisma'
+import { saveBorrowerFile } from '@/lib/borrower-file-storage'
 
 const acceptedTypes: Record<string, string> = {
   'image/jpeg': '.jpg',
@@ -18,9 +17,17 @@ export async function POST(request: Request) {
     return Response.json({ error: 'รูปภาพต้องมีขนาดไม่เกิน 5 MB' }, { status: 400 })
   }
 
-  const filename = `${randomUUID()}${acceptedTypes[image.type]}`
-  const directory = path.join(process.cwd(), 'storage', 'borrower-images')
-  await mkdir(directory, { recursive: true })
-  await writeFile(path.join(directory, filename), Buffer.from(await image.arrayBuffer()), { flag: 'wx' })
-  return Response.json({ url: `/api/borrowers/images/${filename}` }, { status: 201 })
+  const borrowerId = formData?.get('borrowerId')
+  const borrower = typeof borrowerId === 'string'
+    ? await prisma.borrowers.findUnique({ where: { id: borrowerId }, select: { borrowersCode: true } })
+    : null
+  const saved = await saveBorrowerFile({
+    storageArea: 'borrower-images',
+    borrowerCode: borrower?.borrowersCode || 'PENDING',
+    contractNumber: 'PROFILE',
+    extension: acceptedTypes[image.type].slice(1),
+    apiRoute: '/api/borrowers/images',
+    data: Buffer.from(await image.arrayBuffer()),
+  })
+  return Response.json({ url: saved.url }, { status: 201 })
 }

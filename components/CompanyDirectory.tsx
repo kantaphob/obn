@@ -67,14 +67,14 @@ export default function CompanyDirectory() {
           { label: "หมวดธุรกิจ", value: categoryCount, icon: Layers3 },
           { label: "เมนูงาน", value: menuCount, icon: ChevronRight },
         ].map(({ label, value, icon: Icon }) => (
-          <div key={label} className="flex items-center gap-3 rounded-2xl border border-white/70 bg-[#efeee8] px-4 py-3 shadow-[inset_1px_1px_2px_#fff8,3px_4px_9px_#9da19424] max-[560px]:gap-2 max-[560px]:px-3">
+          <div key={label} className="flex items-center gap-3 rounded-2xl border border-white/70 bg-[var(--ws-soft,#efeee8)] px-4 py-3 shadow-[inset_1px_1px_2px_#fff8,3px_4px_9px_#9da19424] max-[560px]:gap-2 max-[560px]:px-3">
             <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-white/70 text-[#5f765f]"><Icon size={18} strokeWidth={1.7} aria-hidden="true" /></span>
             <span className="min-w-0"><span className="block text-[10px] text-[#7d847a]">{label}</span><strong className="text-[20px] font-medium leading-tight text-[#2f3830]">{value}</strong></span>
           </div>
         ))}
       </section>
 
-      <section aria-label="ค้นหาและกรองหมวดบริษัท" className="mb-6 rounded-2xl border border-white/70 bg-[#f2f1eb] p-4 shadow-[inset_1px_1px_2px_#fff8,3px_4px_9px_#9da19420] max-[560px]:p-3">
+      <section aria-label="ค้นหาและกรองหมวดบริษัท" className="mb-6 rounded-2xl border border-white/70 bg-[var(--ws-soft,#f2f1eb)] p-4 shadow-[inset_1px_1px_2px_#fff8,3px_4px_9px_#9da19420] max-[560px]:p-3">
         
         <div className="mt-3 flex flex-wrap gap-2" aria-label="ตัวกรองหมวดธุรกิจ">
           {["ทั้งหมด", ...categories].map((category) => {
@@ -85,7 +85,7 @@ export default function CompanyDirectory() {
                 type="button"
                 onClick={() => setActiveCategory(category)}
                 aria-pressed={selected}
-                className={`rounded-full border px-3 py-1.5 text-[10px] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#57745d] ${selected ? "border-[#526b56] bg-[#526b56] text-white" : "border-[#d9ded5] bg-white/65 text-[#6c756a] hover:bg-white"}`}
+                className={`rounded-full border px-3 py-1.5 text-[10px] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#57745d] ${selected ? "border-[#526b56] bg-[var(--ws-accent-soft,#526b56)] text-white" : "border-[#d9ded5] bg-white/65 text-[#6c756a] hover:bg-white"}`}
               >
                 {category}
               </button>
@@ -131,7 +131,7 @@ export default function CompanyDirectory() {
                       </div>
                       <div className="flex flex-wrap gap-1.5">
                         {group.items.map(({ href, label, icon: ItemIcon }) => (
-                          <Link key={href} href={href} className="inline-flex min-h-8 items-center gap-1.5 rounded-lg border border-[#e4e6df] bg-[#fbfbf8]/80 px-2.5 py-1.5 text-[10px] text-[#626b60] transition hover:border-[#b9c6b6] hover:bg-white hover:text-[#3e5d44]">
+                          <Link key={href} href={href} className="inline-flex min-h-8 items-center gap-1.5 rounded-lg border border-[#e4e6df] bg-[var(--ws-surface,#fbfbf8)]/80 px-2.5 py-1.5 text-[10px] text-[#626b60] transition hover:border-[#b9c6b6] hover:bg-white hover:text-[#3e5d44]">
                             <ItemIcon size={13} strokeWidth={1.7} aria-hidden="true" />
                             {label}
                             <ArrowUpRight size={11} className="text-[#a2a99f]" aria-hidden="true" />

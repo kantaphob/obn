@@ -24,7 +24,7 @@ export async function PATCH(request: Request, { params }: Context) {
     return Response.json(await prisma.branchCodeSequence.update({
       where: { id },
       data: { ...data, companycode, branchcode, type: CompanySequenceType.BRANCH },
-      include: { company: { select: { nameTH: true, nameEN: true } } },
+      include: { company: { select: { owner: true, nameTH: true, nameEN: true, TaxIdentificationNumber: true, address: true, postcode: true, phone: true } } },
     }));
   } catch (error) {
     return companySequenceError(error);

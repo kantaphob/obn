@@ -111,6 +111,8 @@ model Province {
   nameTh    String     @map("name_th")
   nameEn    String     @map("name_en")
   districts District[]
+  ownerCompanies CompanySequence[] @relation("CompanyOwnerProvince")
+  companyOwners CompanyOwner[] @relation("CompanyOwnerPostcodeProvince")
 
   @@map("province")
 }
@@ -122,6 +124,8 @@ model District {
   nameEn       String        @map("name_en")
   province     Province      @relation(fields: [provinceId], references: [id])
   subdistricts Subdistrict[]
+  ownerCompanies CompanySequence[] @relation("CompanyOwnerDistrict")
+  companyOwners CompanyOwner[] @relation("CompanyOwnerPostcodeDistrict")
 
   @@index([provinceId])
   @@map("district")
@@ -137,6 +141,8 @@ model Subdistrict {
   postcode   String?  @map("zipcode")
   district   District @relation(fields: [districtId], references: [id])
   borrowers  borrowers[]
+  ownerCompanies CompanySequence[] @relation("CompanyOwnerSubdistrict")
+  companyOwners CompanyOwner[] @relation("CompanyOwnerPostcodeSubdistrict")
 
   @@index([districtId])
   @@index([postcode])
@@ -550,12 +556,30 @@ enum CompanySequenceStatus {
 }
 
 model CompanySequence {
+  owner CompanyOwner?
+  ownerNationalId String?
+  ownerAddress String?
+  ownerDocumentUrl String?
+  ownerDocumentName String?
   ownerFirstName String?
   ownerLastName String?
   ownerPhone String?
   ownerEmail String?
+  ownerProvince String?
+  ownerDistrict String?
+  ownerSubdistrict String?
+  ownerMoo String?
+  ownerSoi String?
+  ownerRoad String?
+  ownerProvinceId Int?
+  ownerDistrictId Int?
+  ownerSubdistrictId Int?
+  ownerProvinceRef Province? @relation("CompanyOwnerProvince", fields: [ownerProvinceId], references: [id], onDelete: SetNull)
+  ownerDistrictRef District? @relation("CompanyOwnerDistrict", fields: [ownerDistrictId], references: [id], onDelete: SetNull)
+  ownerSubdistrictRef Subdistrict? @relation("CompanyOwnerSubdistrict", fields: [ownerSubdistrictId], references: [id], onDelete: SetNull)
 
   houseNo String?
+  moo String?
   soi String?
   road String?
   provinceId String?
@@ -576,10 +600,50 @@ model CompanySequence {
   type                    CompanySequenceType
   status                  CompanySequenceStatus @default(ACTIVE)
   branches                BranchCodeSequence[]
+
+  @@index([ownerProvinceId])
+  @@index([ownerDistrictId])
+  @@index([ownerSubdistrictId])
+}
+
+model CompanyOwner {
+  id String @id @default(cuid())
+  companyCode String @unique
+  company CompanySequence @relation(fields: [companyCode], references: [companycode], onDelete: Cascade, onUpdate: Cascade)
+
+  ownerNationalId String?
+  ownerPrefix String?
+  ownerFirstName String?
+  ownerLastName String?
+  ownerPhone String?
+  ownerEmail String?
+  ownerAddress String?
+  ownerMoo String?
+  ownerSoi String?
+  ownerRoad String?
+  ownerProvince String?
+  ownerDistrict String?
+  ownerSubdistrict String?
+  ownerPostcode String?
+  ownerProvinceId Int?
+  ownerDistrictId Int?
+  ownerSubdistrictId Int?
+  ownerProvinceRef Province? @relation("CompanyOwnerPostcodeProvince", fields: [ownerProvinceId], references: [id], onDelete: SetNull)
+  ownerDistrictRef District? @relation("CompanyOwnerPostcodeDistrict", fields: [ownerDistrictId], references: [id], onDelete: SetNull)
+  ownerSubdistrictRef Subdistrict? @relation("CompanyOwnerPostcodeSubdistrict", fields: [ownerSubdistrictId], references: [id], onDelete: SetNull)
+  ownerDocumentUrl String?
+  ownerDocumentName String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([ownerProvinceId])
+  @@index([ownerDistrictId])
+  @@index([ownerSubdistrictId])
 }
 
 model BranchCodeSequence {
   houseNo String?
+  moo String?
   soi String?
   road String?
   provinceId String?
@@ -603,4 +667,13 @@ model BranchCodeSequence {
   company                 CompanySequence       @relation(fields: [companycode], references: [companycode], onDelete: Cascade, onUpdate: Cascade)
 
   @@index([companycode])
+}
+//---------------------------------------------------
+// Role
+//---------------------------------------------------
+model Role {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

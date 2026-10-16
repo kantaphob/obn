@@ -32,14 +32,8 @@ export default function Sidebar() {
     { label: "เครือข่ายออนไลน์", active: online === true, color: "bg-[#79d8a0] shadow-[0_0_9px_#79d8a0]" },
   ];
   const Icon = system.icon;
-  const admin = system.key === "admin";
-  const theme = admin
-    ? "[--surface:#272b2a] [--text:#f4f5f2] [--muted:#c1c6be]"
-    : system.key === "dashboard"
-      ? "[--surface:#f5f3ed] [--text:#272b29] [--muted:#626862]"
-      : "[--surface:color-mix(in_srgb,var(--accent)_12%,#d5d6d3)]";
 
-  return <aside style={{ "--accent": system.color } as CSSProperties} className={`${styles.sidebar} ${sidebarCollapsed ? "min-[761px]:w-[76px]! min-[761px]:px-3!" : ""} ${theme} text-[color:var(--text)] ${admin ? "backdrop-blur-xl [background:linear-gradient(135deg,#303735dd,#161a19ee)]" : ""}`} aria-label={`เมนู${system.label}`}>
+  return <aside data-system={system.key} style={{ "--accent": system.color } as CSSProperties} className={`${styles.sidebar} ${sidebarCollapsed ? "min-[761px]:w-[76px]! min-[761px]:px-3!" : ""} text-[color:var(--text)]`} aria-label={`เมนู${system.label}`}>
     <div className={`${styles.windowBar} ${sidebarCollapsed ? "min-[761px]:flex-col min-[761px]:gap-3" : ""}`}><span role="status" aria-label={connectionLabel} title={`${connectionLabel} (สถานะจากเบราว์เซอร์)`} className="flex shrink-0 items-center gap-1.5">{lights.map(light => <span key={light.label} aria-hidden="true" className={`size-2.5 rounded-full border border-white/35 ${light.active ? light.color : "bg-[#92988f]/30"}`} />)}</span><button type="button" onClick={() => setSidebarCollapsed(value => !value)} aria-expanded={!sidebarCollapsed} aria-controls="sidebar-content" aria-label={sidebarCollapsed ? "ขยาย Sidebar" : "ยุบ Sidebar"} title={sidebarCollapsed ? "ขยาย Sidebar" : "ยุบ Sidebar"} className="grid size-9 place-items-center rounded-lg border border-current/20 text-[color:var(--text)] hover:bg-white/15 focus-visible:outline-current"><PanelLeft size={20} aria-hidden="true" /></button></div>
     {sidebarCollapsed && <nav aria-label={`ไอคอนเมนู${system.label}`} className="hidden min-[761px]:block">
       {system.groups.map(group => <div key={group.title} className="mb-3 grid gap-2 border-b border-current/15 pb-3">
@@ -51,7 +45,7 @@ export default function Sidebar() {
     </nav>}
     <div id="sidebar-content" className={sidebarCollapsed ? "min-[761px]:hidden" : undefined}>
     <div className={styles.profile}>
-      <span className="grid size-[45px] shrink-0 place-items-center rounded-full border-2 border-black/30 bg-[var(--accent)] text-[#272b29] shadow-[3px_4px_7px_#0003]"><Icon size={25} strokeWidth={1.6} aria-hidden="true" /></span>
+      <span className="grid size-[45px] shrink-0 place-items-center rounded-full border border-[#e2e8f0] bg-[var(--ws-accent-soft)] text-[#273244] shadow-sm"><Icon size={25} strokeWidth={1.6} aria-hidden="true" /></span>
       <div><strong>{system.label}</strong><span>OBNITHI Group</span></div>
       <button type="button" className={styles.mobileToggle} onClick={() => setMobileOpen(value => !value)} aria-expanded={mobileOpen} aria-controls="workspace-menu" aria-label={mobileOpen ? "ปิดเมนู" : "เปิดเมนู"}>{mobileOpen ? <X size={20} /> : <Menu size={20} />}</button>
     </div>

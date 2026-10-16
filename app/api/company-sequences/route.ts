@@ -10,7 +10,7 @@ import {
 export async function GET() {
   try {
     return Response.json(await prisma.companySequence.findMany({
-      include: { _count: { select: { branches: true } } },
+      include: { owner: true, _count: { select: { branches: true } } },
       orderBy: { companycode: "asc" },
     }), { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
@@ -29,9 +29,10 @@ export async function POST(request: Request) {
     const data = parseCompanyRecord(input);
     if (typeof data === "string") return Response.json({ error: data }, { status: 400 });
 
+    const ownerData = Object.values(owner).some((value) => value !== null && value !== '') ? owner : null;
     return Response.json(await prisma.companySequence.create({
-      data: { ...data, ...owner, companycode, type: CompanySequenceType.COMPANY },
-      include: { _count: { select: { branches: true } } },
+      data: { ...data, companycode, type: CompanySequenceType.COMPANY, ...(ownerData ? { owner: { create: ownerData } } : {}) },
+      include: { owner: true, _count: { select: { branches: true } } },
     }), { status: 201 });
   } catch (error) {
     return companySequenceError(error);

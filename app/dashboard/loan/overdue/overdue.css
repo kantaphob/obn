@@ -16,11 +16,11 @@
 .overdue-search:focus-within { @apply [border-color:var(--lx-brand)]; @apply [outline:2px_solid_var(--lx-brand-soft)]; }
 .overdue-search input { @apply [width:100%]; @apply [min-width:0]; @apply [border:0]; @apply [outline:0]; @apply [background:transparent]; @apply [font-size:14px]; }
 .overdue-period { @apply grid; @apply [gap:4px]; @apply [min-width:180px]; @apply [color:var(--lx-muted)]; @apply [font-size:12px]; }
-.overdue-period select { @apply [height:42px]; @apply [border:1px_solid_var(--lx-line-strong)]; @apply [border-radius:10px]; @apply [background:#fff]; @apply [padding:0_32px_0_11px]; @apply [color:var(--lx-ink)]; @apply [font-size:14px]; }
+.overdue-period select { @apply [height:42px]; @apply [border:1px_solid_var(--lx-line-strong)]; @apply [border-radius:10px]; @apply [background:var(--ws-surface,#fff)]; @apply [padding:0_32px_0_11px]; @apply [color:var(--lx-ink)]; @apply [font-size:14px]; }
 .overdue-result-count { @apply [min-width:80px]; @apply [padding-bottom:10px]; @apply [color:var(--lx-muted)]; @apply [font-size:13px]; @apply text-right; }
 .overdue-table-wrap { @apply [width:100%]; @apply overflow-auto; }
 .overdue-table { @apply [width:100%]; @apply border-collapse; @apply text-left; @apply whitespace-nowrap; }
-.overdue-table th { @apply [padding:12px_16px]; @apply [background:#f7f9f7]; @apply [color:var(--lx-muted)]; @apply [font-size:12px]; @apply [font-weight:500]; }
+.overdue-table th { @apply [padding:12px_16px]; @apply [background:var(--ws-surface,#f7f9f7)]; @apply [color:var(--lx-muted)]; @apply [font-size:12px]; @apply [font-weight:500]; }
 .overdue-table td { @apply [padding:15px_16px]; @apply [border-top:1px_solid_var(--lx-line)]; @apply [font-size:13px]; @apply [vertical-align:middle]; }
 .overdue-table td:first-child { @apply [min-width:220px]; }
 .overdue-table td:first-child strong, .overdue-table td:first-child span { @apply block; }

@@ -647,6 +647,13 @@ export default function Borrowers() {
     }));
   }
 
+  function addBorrowerUploadContext(body: FormData, values: Partial<BorrowerForm> = form) {
+    if (editing) body.set('borrowerId', editing.id);
+    body.set('prefixTH', values.prefixTH || form.prefixTH || '');
+    body.set('firstName', values.firstName || form.firstName || '');
+    body.set('lastName', values.lastName || form.lastName || '');
+  }
+
   async function saveBorrower(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (saveInFlightRef.current || ocrBusy || readerState === "reading") return;
@@ -835,6 +842,7 @@ export default function Borrowers() {
         const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
         const blob = new Blob([bytes], { type: "image/jpeg" });
         const fileData = new FormData();
+        addBorrowerUploadContext(fileData, next);
         fileData.append(
           "image",
           new File([blob], "card-photo.jpg", { type: "image/jpeg" }),
@@ -904,7 +912,7 @@ export default function Borrowers() {
       if (session !== importSessionRef.current) return;
       if (!text.trim()) throw new Error("ไม่พบข้อความในภาพ กรุณาใช้ภาพบัตรที่ชัดเจน");
       const fields = parseIdCardOcr(text);
-      const body = new FormData(); body.append('image', file);
+      const body = new FormData(); addBorrowerUploadContext(body, fields); body.append('image', file);
       const response = await trackedFetch('/api/borrowers/images', { method: 'POST', body });
       const saved = await response.json();
       if (!response.ok) throw new Error(saved.error || 'บันทึกภาพบัตรไม่สำเร็จ');
@@ -927,6 +935,7 @@ export default function Borrowers() {
     setError("");
     try {
       const body = new FormData();
+      addBorrowerUploadContext(body);
       body.append("image", file);
       const response = await trackedFetch("/api/borrowers/images", {
         method: "POST",

@@ -38,8 +38,8 @@ const definitions = {
   },
 };
 
-const fieldClass = 'mt-2 w-full rounded-xl border border-[#d7d9d0] bg-[#faf9f5] px-3 py-2.5 text-sm';
-const buttonClass = 'inline-flex h-10 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-[#d7d9d0] bg-[#faf9f5] px-3 text-xs leading-none [&_svg]:shrink-0 transition-colors hover:bg-[#e9ede3] disabled:opacity-40 disabled:cursor-not-allowed';
+const fieldClass = 'mt-2 w-full rounded-xl border border-[#d7d9d0] bg-[var(--ws-surface,#faf9f5)] px-3 py-2.5 text-sm';
+const buttonClass = 'inline-flex h-10 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-[#d7d9d0] bg-[var(--ws-surface,#faf9f5)] px-3 text-xs leading-none [&_svg]:shrink-0 transition-colors hover:bg-[var(--ws-soft,#e9ede3)] disabled:opacity-40 disabled:cursor-not-allowed';
 
 export default function ReferenceCatalog({ kind }: { kind: CatalogKind }) {
   const trackedFetch = useTrackedFetch();
@@ -97,7 +97,7 @@ export default function ReferenceCatalog({ kind }: { kind: CatalogKind }) {
         <h1 className="flex items-center gap-3"><Icon size={28} aria-hidden="true" />{definition.title}</h1>
         <p className="max-w-xl text-[13px] text-[#626862]">{definition.description}</p>
       </div>
-      <div className="flex flex-wrap gap-2"><button className={`${buttonClass} w-36 bg-[#355a4b]! text-white`} onClick={() => { setEditor({ mode: 'create' }); }}><Plus size={16} aria-hidden="true" />เพิ่ม{definition.title}</button>
+      <div className="flex flex-wrap gap-2"><button className={`${buttonClass} w-36 bg-[var(--ws-accent-soft,#355a4b)]! text-white`} onClick={() => { setEditor({ mode: 'create' }); }}><Plus size={16} aria-hidden="true" />เพิ่ม{definition.title}</button>
       <Link href={definition.otherHref} className={`${buttonClass} w-36`}>{definition.otherLabel}<ArrowUpRight size={15} aria-hidden="true" /></Link></div>
     </header>
 
@@ -107,7 +107,7 @@ export default function ReferenceCatalog({ kind }: { kind: CatalogKind }) {
       <div className={styles.stat}><span>{isClassifiers ? 'การใช้งาน' : 'มาตรฐานอ้างอิง'}</span><strong className="text-[22px]!">{definition.standard}</strong><small>{isClassifiers ? 'เลือกตามสิ่งของและบริบท' : isUnits ? 'รหัสหน่วยและบรรจุภัณฑ์' : 'รหัสจัดประเภท 8 หลัก'}</small></div>
     </div>
 
-    <div className="mb-5 rounded-2xl border border-[#ddded5] bg-[#eeece5] p-5">
+    <div className="mb-5 rounded-2xl border border-[#ddded5] bg-[var(--ws-soft,#eeece5)] p-5">
       <div className="grid gap-4 min-[1100px]:grid-cols-[2fr_1fr]">
         <label className="text-xs text-[#626862]">ค้นหาข้อมูล
           <div className="relative"><Search size={16} aria-hidden="true" className="absolute left-3 top-5" />
@@ -129,16 +129,16 @@ export default function ReferenceCatalog({ kind }: { kind: CatalogKind }) {
 
     {error ? <div role="alert" className="rounded-2xl border border-red-200 bg-red-50 p-6 text-red-800">
       <p>{error}</p><button className={`${buttonClass} mt-3`} onClick={() => setRevision((value) => value + 1)}>ลองใหม่</button>
-    </div> : <div className="overflow-hidden rounded-2xl border border-[#ddded5] bg-[#faf9f5]" aria-busy={loading}>
+    </div> : <div className="overflow-hidden rounded-2xl border border-[#ddded5] bg-[var(--ws-surface,#faf9f5)]" aria-busy={loading}>
       <div className="overflow-x-auto">
         <table className="w-full min-w-[660px] text-left text-sm">
           <caption className="sr-only">รายการ{definition.title}จากฐานข้อมูล</caption>
-          <thead className="bg-[#e9e8df] text-xs text-[#626862]"><tr>
+          <thead className="bg-[var(--ws-soft,#e9e8df)] text-xs text-[#626862]"><tr>
             {[isClassifiers ? 'รหัส' : isUnits ? 'รหัสหน่วย' : 'รหัสวัสดุ', isClassifiers ? 'ลักษณนาม' : isUnits ? 'ชื่อหน่วย' : 'ชื่อวัสดุ', 'หมวดหมู่', isClassifiers ? 'ตัวอย่างการใช้' : isUnits ? 'สัญลักษณ์ / ตัวย่อ' : 'หน่วยแนะนำ', ...(isUnits ? ['มาตรฐาน'] : []), 'จัดการ'].map((label) => <th scope="col" key={label} className="px-5 py-4 font-medium whitespace-nowrap">{label}</th>)}
           </tr></thead>
           <tbody className="divide-y divide-[#e5e5dc]">
-            {loading ? <tr><td colSpan={isUnits ? 6 : 5} className="p-12 text-center text-[#626862]">กำลังโหลดข้อมูล…</td></tr> : !result?.items.length ? <tr><td colSpan={isUnits ? 6 : 5} className="p-12 text-center text-[#626862]">ไม่พบข้อมูล ลองเปลี่ยนคำค้นหาหรือล้างตัวกรอง</td></tr> : result.items.map((item) => <tr key={item.code} className="hover:bg-[#f0f0e8]">
-              <td className="px-5 py-4 align-top"><span className="inline-block rounded-md bg-[#e5ece3] px-2.5 py-1 font-mono text-xs font-semibold text-[#355a4b]">{item.code}</span></td>
+            {loading ? <tr><td colSpan={isUnits ? 6 : 5} className="p-12 text-center text-[#626862]">กำลังโหลดข้อมูล…</td></tr> : !result?.items.length ? <tr><td colSpan={isUnits ? 6 : 5} className="p-12 text-center text-[#626862]">ไม่พบข้อมูล ลองเปลี่ยนคำค้นหาหรือล้างตัวกรอง</td></tr> : result.items.map((item) => <tr key={item.code} className="hover:bg-[var(--ws-soft,#f0f0e8)]">
+              <td className="px-5 py-4 align-top"><span className="inline-block rounded-md bg-[var(--ws-soft,#e5ece3)] px-2.5 py-1 font-mono text-xs font-semibold text-[#355a4b]">{item.code}</span></td>
               <td className="px-5 py-4"><span className="font-medium">{item.nameTh}</span><span className="mt-1 block text-xs text-[#73796f]">{item.nameEn}</span></td>
               <td className="px-5 py-4 text-xs text-[#626862]">{item.category}</td>
               <td className="px-5 py-4">{isClassifiers ? <span className="text-xs leading-relaxed text-[#626862]">{item.examples}</span> : isUnits ? <span className="font-mono">{item.symbol}</span> : item.recommendedUnit ? <><span>{item.recommendedUnit.nameTh}</span><span className="mt-1 block font-mono text-xs text-[#73796f]">{item.recommendedUnit.code}</span></> : <span className="text-xs text-[#73796f]">เลือกตามสินค้า</span>}</td>
