@@ -174,3 +174,64 @@
 @media print { [data-payment-entry] { @apply [position:absolute]; @apply [inset:0]; @apply [max-height:none]; @apply [width:100%]; @apply [overflow:visible]; @apply [border:0]; @apply [box-shadow:none]; } }
 
 @media (max-width: 560px) { .ph-summary { @apply p-4; } .ph-summary dl { @apply w-full gap-3; } .ph-summary dd { @apply text-sm; } .ph-summary dl > div:first-child dd { @apply text-lg; } }
+
+/* Borrower details open on demand so the workspace stays focused on search. */
+.ph-page .ph-layout { grid-template-columns: minmax(280px, 380px) minmax(0, 1fr); gap: 22px; }
+.ph-page .ph-borrowers { position: static; }
+.ph-page .ph-borrowers ul { max-height: min(62vh, 680px); }
+.ph-page .ph-pick-hint { min-height: 260px; align-content: center; }
+.ph-page .ph-pick-hint p { color: var(--ph-muted); }
+.ph-page .ph-borrower-modal { z-index: 50; padding: 24px; }
+.ph-page .ph-borrower-dialog {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: min(1080px, 100%);
+  max-height: min(90vh, 980px);
+  overflow: hidden;
+  border: 1px solid var(--ph-line);
+  border-radius: 22px;
+  background: var(--ph-bg);
+  box-shadow: 0 24px 80px rgba(35, 24, 50, .2);
+}
+.ph-page .ph-dialog-header { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 22px 28px; border-bottom: 1px solid var(--ph-line); background: var(--ph-surface); }
+.ph-page .ph-dialog-header > div > span { color: var(--ph-muted); font-size: .85rem; }
+.ph-page .ph-dialog-header h2 { margin: 2px 0; font-size: 1.4rem; line-height: 1.35; }
+.ph-page .ph-dialog-header p { color: var(--ph-muted); }
+.ph-page .ph-dialog-close { position: static; flex: none; width: 42px; height: 42px; }
+.ph-page .ph-borrower-dialog > .ph-detail { overflow: auto; padding: 24px 28px 30px; }
+.ph-page .ph-detail { display: grid; gap: 20px; }
+.ph-page .ph-summary { padding: 18px 22px; }
+.ph-page .ph-contracts { min-width: 0; padding: 18px; border: 1px solid var(--ph-line); border-radius: 18px; background: var(--ph-surface); }
+.ph-page .ph-contracts-heading { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 14px; }
+.ph-page .ph-contracts-heading h3 { font-size: 1.05rem; }
+.ph-page .ph-contracts-heading p { margin-top: 3px; color: var(--ph-muted); font-size: .9rem; }
+.ph-page .ph-contract-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.ph-page .ph-contract-card { min-width: 0; padding: 16px; border: 1px solid var(--ph-line); border-radius: 14px; background: var(--ws-surface, #fff); transition: border-color .15s, box-shadow .15s; }
+.ph-page .ph-contract-card.is-filtered { border-color: var(--ph-green); box-shadow: 0 0 0 2px color-mix(in srgb, var(--ph-green) 12%, transparent); }
+.ph-page .ph-contract-card-top, .ph-page .ph-contract-card-meta, .ph-page .ph-contract-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.ph-page .ph-contract-card-top > div, .ph-page .ph-contract-card-meta > div { display: grid; gap: 3px; min-width: 0; }
+.ph-page .ph-contract-card-top > div > span, .ph-page .ph-contract-card-meta > div > span { color: var(--ph-muted); font-size: .82rem; }
+.ph-page .ph-contract-card-top > div > strong { overflow-wrap: anywhere; font-size: 1.05rem; }
+.ph-page .ph-contract-status { display: inline-flex; flex: none; align-items: center; gap: 5px; padding: 5px 9px; border-radius: 99px; font-size: .8rem; font-weight: 600; }
+.ph-page .ph-contract-card-meta { justify-content: flex-start; margin: 14px 0; padding-top: 12px; border-top: 1px solid var(--ph-line); }
+.ph-page .ph-contract-card-meta > div { flex: 1; }
+.ph-page .ph-contract-card-meta > div > strong { font-size: .94rem; font-variant-numeric: tabular-nums; }
+.ph-page .ph-contract-actions { justify-content: flex-start; flex-wrap: wrap; }
+.ph-page .ph-contract-actions .is-current { border-color: var(--ph-green); background: var(--ph-green-soft); }
+.ph-page .ph-month { margin-top: 0; }
+.ph-page .ph-receipt-modal { z-index: 60; }
+@media (max-width: 900px) {
+  .ph-page .ph-layout { grid-template-columns: 1fr; }
+  .ph-page .ph-borrowers ul { max-height: 42vh; }
+  .ph-page .ph-pick-hint { min-height: 180px; }
+  .ph-page .ph-borrower-dialog > .ph-detail { padding: 18px; }
+}
+@media (max-width: 640px) {
+  .ph-page .ph-borrower-modal { padding: 8px; }
+  .ph-page .ph-borrower-dialog { max-height: 96vh; border-radius: 16px; }
+  .ph-page .ph-dialog-header { padding: 16px; }
+  .ph-page .ph-contract-grid { grid-template-columns: 1fr; }
+  .ph-page .ph-contracts { padding: 14px; }
+  .ph-page .ph-contracts-heading { align-items: flex-start; }
+}

@@ -4,6 +4,7 @@ import { isCompanyOwnerDocumentUrl } from '@/lib/company-file-storage';
 
 export const companyFields = [
   "logo",
+  "paymentBankCode", "paymentAccountNumber", "paymentAccountName", "paymentQrUrl",
   "houseNo", "moo", "soi", "road", "provinceId", "districtId", "subdistrictId",
   "nameTH",
   "nameEN",
@@ -36,6 +37,10 @@ export function parseCompanyRecord(value: unknown): CompanyRecordInput | string 
     data[field] = typeof raw === "string" && raw.trim() ? raw.trim() : null;
   }
 
+  if (data.paymentBankCode && !/^\d{3}$/.test(data.paymentBankCode)) return 'รหัสธนาคารไม่ถูกต้อง';
+  if (data.paymentAccountNumber && !/^[0-9 -]{5,40}$/.test(data.paymentAccountNumber)) return 'เลขบัญชีต้องเป็นตัวเลข ไม่เกิน 40 ตัวอักษร';
+  if (data.paymentAccountName && data.paymentAccountName.length > 200) return 'ชื่อบัญชียาวเกินกำหนด';
+  if (data.paymentQrUrl && !data.paymentQrUrl.startsWith('/api/company-payment-qrs/')) return 'QR Code ไม่ถูกต้อง';
   const status = input.status ?? CompanySequenceStatus.ACTIVE;
   if (status !== CompanySequenceStatus.ACTIVE && status !== CompanySequenceStatus.INACTIVE) {
     return "สถานะไม่ถูกต้อง";

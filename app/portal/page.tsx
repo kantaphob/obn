@@ -25,7 +25,7 @@ const portals = [
     tone: "emerald",
     links: [
       { label: "ผู้กู้ใหม่", detail: "อ่านข้อมูลจากบัตรประชาชน", href: "/portal/loan/new-borrower", menuHref: "/dashboard/loan/borrowers", icon: ScanLine, permission: "borrowers:write" },
-      { label: "ผู้กู้เดิม", detail: "อัปเดตข้อมูลและยืนยันบัญชี", href: "/dashboard/loan/borrowers", icon: CircleUserRound, permission: "borrowers:write" },
+      { label: "ผู้กู้เดิม", detail: "อัปเดตข้อมูลและยืนยันบัญชี", href: "/portal/loan/update-borrower", menuHref: "/dashboard/loan/borrowers", icon: CircleUserRound, permission: "borrowers:write" },
     ],
   },
   {

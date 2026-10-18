@@ -6,7 +6,6 @@ import { FileText, Paperclip, RefreshCw, Search, UserRound, X, ChevronDown, Circ
 import '@/app/dashboard/loan/payment-history/payment-history.css';
 import { useTrackedFetch } from '@/components/ui/ToastProvider';
 import LoanReceipt from '@/components/loan/LoanReceipt';
-import ContractRegisterTable from '@/components/loan/ContractRegisterTable';
 import { formatBorrowerCode } from '@/lib/borrower-code';
 
 type Receipt = {
@@ -99,6 +98,7 @@ export default function PaymentHistory({ onReceivePayment, revision = 0 }: {
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [query, setQuery] = useState('');
   const [selectedCode, setSelectedCode] = useState('');
+  const [borrowerDialog, setBorrowerDialog] = useState(false);
   const [contractFilter, setContractFilter] = useState('');
   const [openId, setOpenId] = useState('');
   const [preview, setPreview] = useState<{ receipt: Receipt; contract: Contract } | null>(null);
@@ -126,11 +126,15 @@ export default function PaymentHistory({ onReceivePayment, revision = 0 }: {
   }, [load, revision]);
 
   useEffect(() => {
-    if (!preview) return;
-    const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') setPreview(null); };
+    if (!preview && !borrowerDialog) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      if (preview) setPreview(null);
+      else setBorrowerDialog(false);
+    };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [preview]);
+  }, [preview, borrowerDialog]);
 
   const borrowers = useMemo(() => {
     const byCode = new Map<string, { sample: Contract; count: number }>();
@@ -150,7 +154,7 @@ export default function PaymentHistory({ onReceivePayment, revision = 0 }: {
       .includes(needle) || contracts.some(contract=>contract.debtor.borrowersCode===sample.debtor.borrowersCode && `${contract.contractNumber} ${contract.previousContractNumber||''} ${contract.requestNumber||''} ${contract.losNumber||''} ${contract.debtor.phone||''}`.toLocaleLowerCase('th-TH').includes(needle)),
   );
 
-  const activeCode = selectedCode || filteredBorrowers[0]?.sample.debtor.borrowersCode || '';
+  const activeCode = selectedCode;
   const selected = filteredBorrowers.find(({ sample }) => sample.debtor.borrowersCode === activeCode)?.sample;
   const borrowerContracts = contracts.filter(contract => contract.debtor.borrowersCode === activeCode);
 
@@ -202,6 +206,7 @@ export default function PaymentHistory({ onReceivePayment, revision = 0 }: {
     setContractFilter('');
     setOpenId('');
     setPreview(null);
+    setBorrowerDialog(true);
   };
 
   return (
@@ -212,7 +217,7 @@ export default function PaymentHistory({ onReceivePayment, revision = 0 }: {
           <p>ค้นหาผู้กู้ ดูประวัติรับชำระ และบันทึกรับเงินได้ในหน้าเดียว</p>
         </div>
         <div className="ph-actions">
-          {onReceivePayment ? <button type="button" disabled={loading} className="ph-btn ph-btn-primary" onClick={() => onReceivePayment(selected?.debtor.borrowersCode || '', borrowerContracts.find(contract => contract.contractNumber === contractFilter)?.id)}>รับชำระ</button> : <Link href="/dashboard/loan/payments" className="ph-btn ph-btn-primary">รับชำระ</Link>}
+          {onReceivePayment ? <button type="button" disabled={loading || !selected} className="ph-btn ph-btn-primary" onClick={() => onReceivePayment(selected!.debtor.borrowersCode, borrowerContracts.find(contract => contract.contractNumber === contractFilter)?.id)}>รับชำระ</button> : <Link href="/dashboard/loan/payments" className="ph-btn ph-btn-primary">รับชำระ</Link>}
           <button type="button" className="ph-btn" disabled={loading} onClick={() => void load()}>
             <RefreshCw size={16} className={loading ? 'ph-spin' : ''} /> โหลดใหม่
           </button>
@@ -231,6 +236,7 @@ export default function PaymentHistory({ onReceivePayment, revision = 0 }: {
               onChange={(event) => {
                 setQuery(event.target.value);
                 setSelectedCode('');
+                setBorrowerDialog(false);
                 setContractFilter('');
                 setOpenId('');
                 setPreview(null);
@@ -259,7 +265,20 @@ export default function PaymentHistory({ onReceivePayment, revision = 0 }: {
           </ul>
         </aside>
 
-        {/* ขวา: ประวัติ */}
+        <div className="ph-empty ph-pick-hint">
+          <UserRound size={34} aria-hidden />
+          <h2>ค้นหาแล้วเลือกผู้กู้</h2>
+          <p>กดชื่อผู้กู้เพื่อเปิดสัญญาและประวัติการรับชำระ</p>
+        </div>
+      </div>
+
+      {borrowerDialog && selected && (
+        <div className="ph-modal ph-borrower-modal" role="dialog" aria-modal="true" aria-label={`ข้อมูลผู้กู้ ${borrowerName(selected)}`} onClick={() => setBorrowerDialog(false)}>
+          <article className="ph-borrower-dialog" onClick={(event) => event.stopPropagation()}>
+            <header className="ph-dialog-header">
+              <div><span>ข้อมูลผู้กู้</span><h2>{borrowerName(selected)}</h2><p>รหัส {formatBorrowerCode(selected.debtor.borrowersCode)}</p></div>
+              <button type="button" className="ph-close ph-dialog-close" aria-label="ปิดรายละเอียดผู้กู้" onClick={() => setBorrowerDialog(false)}><X size={20} /></button>
+            </header>
         <section className="ph-detail">
           {!selected && (
             <div className="ph-empty">
@@ -283,23 +302,35 @@ export default function PaymentHistory({ onReceivePayment, revision = 0 }: {
                 </dl>
               </div>
 
-              <section style={{margin:'24px 0',border:'1px solid var(--ph-line,#e9e3ef)',borderRadius:16,overflow:'hidden'}} aria-label="รายการสัญญาของผู้กู้"><h3 style={{padding:'16px 18px',margin:0,fontSize:15}}>รายการสัญญาและการชำระ</h3><ContractRegisterTable rows={borrowerContracts} renderActions={contract=><>{onReceivePayment && ['ACTIVE','OVERDUE'].includes(contract.status) && <button type="button" className="lx-btn sm" onClick={()=>onReceivePayment(contract.debtor.borrowersCode,contract.id)}>รับชำระ</button>}<button type="button" className="lx-btn sm" onClick={()=>{setContractFilter(contract.contractNumber);setOpenId('');}}>ดูประวัติ</button></>}/></section>
-
-              {borrowerContracts.length > 1 && (
-                <div className="ph-chips" role="group" aria-label="กรองตามสัญญา">
-                  <button type="button" className={!contractFilter ? 'is-active' : ''} onClick={() => setContractFilter('')}>ทุกสัญญา</button>
-                  {borrowerContracts.map((contract) => (
-                    <button
-                      type="button"
-                      key={contract.id}
-                      className={contractFilter === contract.contractNumber ? 'is-active' : ''}
-                      onClick={() => setContractFilter(contract.contractNumber)}
-                    >
-                      {contract.contractNumber}
-                    </button>
-                  ))}
+              <section className="ph-contracts" aria-label="รายการสัญญาของผู้กู้">
+                <div className="ph-contracts-heading">
+                  <div><h3>สัญญาของผู้กู้</h3><p>เลือกดูประวัติ หรือบันทึกรับชำระตามสัญญา</p></div>
+                  {contractFilter && <button type="button" className="ph-btn ph-btn-sm" onClick={() => setContractFilter('')}>ดูทุกสัญญา</button>}
                 </div>
-              )}
+                <div className="ph-contract-grid">
+                  {borrowerContracts.map((contract) => {
+                    const status = currentContractStatus(contract);
+                    const StatusIcon = status.Icon;
+                    const filtered = contractFilter === contract.contractNumber;
+                    return (
+                      <article key={contract.id} className={`ph-contract-card${filtered ? ' is-filtered' : ''}`}>
+                        <div className="ph-contract-card-top">
+                          <div><span>เลขที่สัญญา</span><strong>{contract.contractNumber}</strong></div>
+                          <span className="ph-contract-status" style={{color:status.color,background:status.background}}><StatusIcon size={14}/>{status.label}</span>
+                        </div>
+                        <div className="ph-contract-card-meta">
+                          <div><span>ยอดคงเหลือ</span><strong>{baht(contract.balance?.total ?? 0)}</strong></div>
+                          <div><span>วันครบกำหนด</span><strong>{contract.dueDate ? dateLabel(contract.dueDate) : '—'}</strong></div>
+                        </div>
+                        <div className="ph-contract-actions">
+                          <button type="button" className={`ph-btn ph-btn-sm${filtered ? ' is-current' : ''}`} onClick={() => {setContractFilter(filtered ? '' : contract.contractNumber);setOpenId('');}}>{filtered ? 'กำลังดูประวัติ' : 'ดูประวัติ'}</button>
+                          {onReceivePayment && ['ACTIVE','OVERDUE'].includes(contract.status) && <button type="button" className="ph-btn ph-btn-sm ph-btn-primary" onClick={() => onReceivePayment(contract.debtor.borrowersCode,contract.id)}>รับชำระ</button>}
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
+              </section>
 
               {entries.length === 0 && <p className="ph-none-detail">ยังไม่มีรายการรับชำระ{contractFilter ? `ในสัญญา ${contractFilter}` : 'ของผู้กู้รายนี้'}</p>}
 
@@ -376,10 +407,12 @@ export default function PaymentHistory({ onReceivePayment, revision = 0 }: {
             </>
           )}
         </section>
-      </div>
+          </article>
+        </div>
+      )}
 
       {preview && (
-        <div className="ph-modal" role="dialog" aria-modal="true" aria-label="ใบรับชำระเงิน" onClick={() => setPreview(null)}>
+        <div className="ph-modal ph-receipt-modal" role="dialog" aria-modal="true" aria-label="ใบรับชำระเงิน" onClick={() => setPreview(null)}>
           <article className="ph-receipt" onClick={(event) => event.stopPropagation()}>
             <button type="button" className="ph-close" aria-label="ปิด" onClick={() => setPreview(null)}><X size={18} /></button>
             <LoanReceipt

@@ -54,3 +54,5 @@ next-env.d.ts
 # Local integration status and service-account credentials
 /storage/integrations/
 /secrets/
+
+/storage/company-payment-qrs/

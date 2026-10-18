@@ -20,9 +20,9 @@ export async function saveCompanyFile({
   apiRoute,
   data,
 }: {
-  storageArea: 'company-logos' | 'company-owner-documents';
+  storageArea: 'company-logos' | 'company-owner-documents' | 'company-payment-qrs';
   entityCode: string;
-  label: 'LOGO' | 'OWNER';
+  label: 'LOGO' | 'OWNER' | 'PAYMENT';
   extension: string;
   apiRoute: string;
   data: Buffer;
@@ -44,7 +44,7 @@ export async function saveCompanyFile({
   throw new Error('ไม่สามารถตั้งชื่อไฟล์ที่ไม่ซ้ำได้');
 }
 
-export function companyFilePath(storageArea: 'company-logos' | 'company-owner-documents', request: Request, filename: string) {
+export function companyFilePath(storageArea: 'company-logos' | 'company-owner-documents' | 'company-payment-qrs', request: Request, filename: string) {
   if (!filename || filename !== path.basename(filename)) throw new Error('Invalid upload filename');
   const folder = new URL(request.url).searchParams.get('folder');
   if (folder) {

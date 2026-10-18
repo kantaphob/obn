@@ -18,6 +18,7 @@ type CompanyOwner = {
   ownerProvinceId?: number | null; ownerDistrictId?: number | null; ownerSubdistrictId?: number | null;
 };
 type Company = {
+  paymentBankCode?: string | null; paymentAccountNumber?: string | null; paymentAccountName?: string | null; paymentQrUrl?: string | null;
   owner?: CompanyOwner | null;
   houseNo: string | null; moo: string | null; soi: string | null; road: string | null;
   provinceId: string | null; districtId: string | null; subdistrictId: string | null;
@@ -136,6 +137,21 @@ function Editor({
   const [ownerDocumentUrl, setOwnerDocumentUrl] = useState(item?.owner?.ownerDocumentUrl ?? '');
   const [ownerDocumentName, setOwnerDocumentName] = useState(item?.owner?.ownerDocumentName ?? '');
   const [ownerDocument, setOwnerDocument] = useState<File | null>(null);
+  const [banks, setBanks] = useState<{ bankCode: string; bankNameTH: string }[]>([]);
+  const [bankError, setBankError] = useState('');
+  const [bankRetry, setBankRetry] = useState(0);
+  const [paymentQrUrl, setPaymentQrUrl] = useState(item?.paymentQrUrl ?? '');
+  const [paymentQrFile, setPaymentQrFile] = useState<File | null>(null);
+  const [paymentPreview, setPaymentPreview] = useState('');
+  useEffect(() => { return () => { if (paymentPreview) URL.revokeObjectURL(paymentPreview); }; }, [paymentPreview]);
+  useEffect(() => {
+    const controller = new AbortController();
+    void fetch('/api/banking', { signal: controller.signal }).then(async response => {
+      if (!response.ok) throw new Error('โหลดธนาคารไม่สำเร็จ');
+      const rows = await response.json(); if (!controller.signal.aborted) { setBanks(rows); setBankError(''); }
+    }).catch(error => { if (!controller.signal.aborted) setBankError(error.message); });
+    return () => controller.abort();
+  }, [bankRetry]);
   const [logo, setLogo] = useState(item?.logo ?? '');
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [preview, setPreview] = useState('');
@@ -180,6 +196,16 @@ function Editor({
           setPreview('');
         }
         data.logo = savedLogo;
+        let qrUrl = paymentQrUrl;
+        if (paymentQrFile) {
+          const upload = new FormData(); upload.set('file', paymentQrFile);
+          upload.set('entityCode', String(data[isBranch ? 'branchcode' : 'companycode'] ?? ''));
+          const response = await trackedFetch('/api/company-payment-qrs', { method: 'POST', body: upload });
+          const result = await response.json();
+          if (!response.ok) throw new Error(result.error ?? 'อัปโหลด QR Code ไม่สำเร็จ');
+          qrUrl = result.url; setPaymentQrUrl(qrUrl); setPaymentQrFile(null); setPaymentPreview('');
+        }
+        data.paymentQrUrl = qrUrl;
         if (!isBranch) {
           let documentUrl = ownerDocumentUrl;
           let documentName = ownerDocumentName;
@@ -343,6 +369,18 @@ function Editor({
                   </div>
                 </Section>
 
+                <Section title="บัญชีรับชำระเงินและ QR Code" hint={`ข้อมูลรับชำระของ${noun}นี้ บันทึกแยกจากรายการอื่น`}>
+                  <label className={labelClass}>ธนาคาร<select name="paymentBankCode" defaultValue={item?.paymentBankCode ?? ''} disabled={busy} className={fieldClass}><option value="">เลือกธนาคาร</option>{item?.paymentBankCode && !banks.some(bank => bank.bankCode === item.paymentBankCode) && <option value={item.paymentBankCode}>{item.paymentBankCode}</option>}{banks.map(bank => <option key={bank.bankCode} value={bank.bankCode}>{bank.bankCode} · {bank.bankNameTH}</option>)}</select></label>
+                  <label className={labelClass}>เลขบัญชี<input name="paymentAccountNumber" defaultValue={item?.paymentAccountNumber ?? ''} maxLength={40} inputMode="numeric" disabled={busy} className={fieldClass} /></label>
+                  <label className={`${labelClass} sm:col-span-2`}>ชื่อบัญชี<input name="paymentAccountName" defaultValue={item?.paymentAccountName ?? ''} maxLength={200} disabled={busy} className={fieldClass} /></label>
+                  {bankError && <p role="alert" className="text-sm text-red-700">{bankError} <button type="button" onClick={() => setBankRetry(value => value + 1)}>ลองใหม่</button></p>}
+                  <label className={`${labelClass} sm:col-span-2`}>รูป QR Code รับชำระเงิน<input key={paymentQrUrl} type="file" accept="image/png,image/jpeg,image/webp" disabled={busy} className={fieldClass} onChange={event => { const file = event.target.files?.[0]; if (!file) return; if (!['image/png','image/jpeg','image/webp'].includes(file.type) || file.size < 1 || file.size > 5 * 1024 * 1024) { setError('เลือก PNG, JPG หรือ WebP ไม่เกิน 5 MB'); event.target.value = ''; return; } setPaymentQrFile(file); setPaymentPreview(URL.createObjectURL(file)); setError(''); }} /><span className="text-xs text-[#6b7773]">PNG, JPG หรือ WebP ไม่เกิน 5 MB</span></label>
+                  {(paymentPreview || paymentQrUrl) && <div className="sm:col-span-2">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={paymentPreview || paymentQrUrl} alt={`QR Code รับชำระของ${noun}`} className="mb-3 h-48 w-48 border bg-white object-contain p-2" />
+                    <button type="button" disabled={busy} className={btnSecondary} onClick={() => { setPaymentQrUrl(''); setPaymentQrFile(null); setPaymentPreview(''); }}>นำ QR Code ออก</button>
+                  </div>}
+                </Section>
                 <Section title="ข้อมูลติดต่อและภาษี">{infoFields.map(renderField)}</Section>
                 <Section title="ที่อยู่"><CompanyAddressFields item={item} disabled={busy} fieldClass={fieldClass} labelClass={labelClass} /></Section>
                 <Section title="รายละเอียดเพิ่มเติม">{textFields.map(renderField)}</Section>
