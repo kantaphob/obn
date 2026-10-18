@@ -1,5 +1,6 @@
 export type ContractDocumentPackage = 'NONE'|'LOAN_WITNESS'|'LOAN_GUARANTEE_WITNESS'|'LOAN_GUARANTEE_COLLATERAL'|'LOAN_GUARANTEE_WITNESS_COLLATERAL';
 export type ContractDocumentSettings = {
+ requestType:string; losNumber:string;
  witnessCount:string;
  documentFont:string; documentFontSize:string; documentHeadingSize:string;
  lenderType:'COMPANY'|'PERSON'; lenderDocumentUrl:string; lenderDocumentName:string;
@@ -11,7 +12,7 @@ export type ContractDocumentSettings = {
  loanText:string; guaranteeText:string; collateralAgreementText:string; attachments:{url:string;name:string}[];
  lenderSignature:string; witness1Signature:string; witness2Signature:string; guarantorSignature:string; collateralProviderSignature:string;
 };
-export const emptyDocumentSettings:ContractDocumentSettings={witnessCount:"2",documentFont:"TH Sarabun New",documentFontSize:"14",documentHeadingSize:"14",lenderType:'COMPANY',lenderDocumentUrl:'',lenderDocumentName:'',collateral:'',branchCode:'',witness1Id:'',witness1Phone:'',witness1Address:'',witness2Id:'',witness2Phone:'',witness2Address:'',kind:'NEW_LOAN',place:'',companyCode:'',lenderName:'',lenderId:'',lenderAddress:'',lenderPhone:'',annualRate:'',originalDate:'',originalNumber:'',principalPaid:'',lawfulInterest:'',deliveryEvidence:'',guarantorId:'',guarantorAddress:'',guarantorPhone:'',guarantorAge:'',guaranteeLimit:'',packageType:'NONE',collateralDetails:'',collateralProviderName:'',collateralProviderId:'',collateralProviderAddress:'',loanText:'',guaranteeText:'',collateralAgreementText:'',attachments:[],lenderSignature:'',witness1Signature:'',witness2Signature:'',guarantorSignature:'',collateralProviderSignature:''};
+export const emptyDocumentSettings:ContractDocumentSettings={requestType:"LOAN",losNumber:"",witnessCount:"2",documentFont:"TH Sarabun New",documentFontSize:"14",documentHeadingSize:"14",lenderType:'COMPANY',lenderDocumentUrl:'',lenderDocumentName:'',collateral:'',branchCode:'',witness1Id:'',witness1Phone:'',witness1Address:'',witness2Id:'',witness2Phone:'',witness2Address:'',kind:'NEW_LOAN',place:'',companyCode:'',lenderName:'',lenderId:'',lenderAddress:'',lenderPhone:'',annualRate:'',originalDate:'',originalNumber:'',principalPaid:'',lawfulInterest:'',deliveryEvidence:'',guarantorId:'',guarantorAddress:'',guarantorPhone:'',guarantorAge:'',guaranteeLimit:'',packageType:'NONE',collateralDetails:'',collateralProviderName:'',collateralProviderId:'',collateralProviderAddress:'',loanText:'',guaranteeText:'',collateralAgreementText:'',attachments:[],lenderSignature:'',witness1Signature:'',witness2Signature:'',guarantorSignature:'',collateralProviderSignature:''};
 const blank=(s:string|null|undefined)=>s?.trim()||'………………………………';
 export function thaiMoneyWords(cents:number){
  const digits=['ศูนย์','หนึ่ง','สอง','สาม','สี่','ห้า','หก','เจ็ด','แปด','เก้า'];const units=['','สิบ','ร้อย','พัน','หมื่น','แสน'];

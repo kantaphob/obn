@@ -1,9 +1,12 @@
+import { authorizeApiRequest } from "@/lib/authorization";
 import { prisma } from '@/lib/prisma'
 import { loanBalance } from '@/lib/loan-balance'
 
 type RouteContext = { params: Promise<{ id: string }> }
 
 export async function GET(_request: Request, { params }: RouteContext) {
+  const denied = await authorizeApiRequest("borrowers", "read");
+  if (denied) return denied;
   const { id } = await params
   const borrower = await prisma.borrowers.findUnique({
     where: { id },

@@ -82,6 +82,10 @@ export default function AP() {
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [selectedContract, setSelectedContract] = useState<ReservedContract | null>(null);
+  const [cancellingContract, setCancellingContract] = useState<ReservedContract | null>(null);
+  const [cancellationReason, setCancellationReason] = useState('');
+  const [cancellationError, setCancellationError] = useState('');
+  const [cancelling, setCancelling] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'CASH' | 'BANK_TRANSFER'>('BANK_TRANSFER');
   const [paymentDate, setPaymentDate] = useState(() => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Bangkok' }).format(new Date()));
   const [paymentTime, setPaymentTime] = useState(() => new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Bangkok', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date()));
@@ -211,7 +215,46 @@ export default function AP() {
     }
   }
 
+  async function submitCancellation(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!cancellingContract || cancelling) return;
+    setCancelling(true);
+    setCancellationError('');
+    try {
+      const response = await fetch(`/api/contracts/${encodeURIComponent(cancellingContract.id)}/cancel`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason: cancellationReason }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'ยกเลิกสัญญาไม่สำเร็จ');
+      setCancellingContract(null);
+      setCancellationReason('');
+      setMessage(`ยกเลิกสัญญา ${data.contractNumber} แล้ว และบันทึกเหตุผลไว้ในประวัติสัญญา`);
+      await loadContracts();
+    } catch (cause) {
+      setCancellationError(cause instanceof Error ? cause.message : 'ยกเลิกสัญญาไม่สำเร็จ');
+    } finally {
+      setCancelling(false);
+    }
+  }
+
   return <main className="lx-page ap-page">
+    {cancellingContract && <div className="ap-modal-backdrop ap-cancel-backdrop">
+      <section className="ap-cancel-modal" role="dialog" aria-modal="true" aria-labelledby="ap-cancel-title">
+        <header className="ap-modal-head">
+          <div><span className="ap-eyebrow">บันทึกการยกเลิก</span><h2 id="ap-cancel-title">ยกเลิกสัญญา {cancellingContract.contractNumber}</h2></div>
+          <button className="lx-icon-btn" type="button" aria-label="ปิด" disabled={cancelling} onClick={() => { setCancellingContract(null); setCancellationError(''); }}> <X size={20} /></button>
+        </header>
+        <form className="ap-cancel-form" onSubmit={submitCancellation}>
+          <div className="ap-cancel-contract"><span>ผู้กู้</span><strong>{borrowerName(cancellingContract)}</strong><span>ยอดเงินต้น</span><strong>{baht(cancellingContract.principal)}</strong></div>
+          <p className="ap-not-ready-notice">สัญญาจะถูกทำเครื่องหมายว่ายกเลิกและจะไม่แสดงในรายการจ่ายเงิน ข้อมูลสัญญาจะยังเก็บไว้ตรวจสอบย้อนหลัง</p>
+          <label className="lx-field"><span>เหตุผลการยกเลิก <b className="lx-req">*</b></span><textarea required minLength={5} maxLength={500} rows={3} value={cancellationReason} onChange={event => setCancellationReason(event.target.value)} placeholder="เช่น ผู้กู้แจ้งยกเลิกก่อนวันเริ่มสัญญา" /></label>
+          {cancellationError && <p className="lx-notice error" role="alert">{cancellationError}</p>}
+          <footer className="ap-modal-actions"><button className="lx-btn" type="button" disabled={cancelling} onClick={() => { setCancellingContract(null); setCancellationError(''); }}>กลับ</button><button className="lx-btn danger" type="submit" disabled={cancelling || cancellationReason.trim().length < 5}>{cancelling ? 'กำลังบันทึก…' : 'ยืนยันยกเลิกสัญญา'}</button></footer>
+        </form>
+      </section>
+    </div>}
     {selectedContract && <div className="ap-modal-backdrop" onMouseDown={event => { if (event.target === event.currentTarget && !paying && !savingTerms) setSelectedContract(null); }}>
       <section className="ap-payout-modal" role="dialog" aria-modal="true" aria-labelledby="ap-payout-title">
         <header className="ap-modal-head">
@@ -332,7 +375,7 @@ export default function AP() {
                 <td>{dateLabel(row.startDate)}</td>
                 <td>{dateLabel(row.dueDate)}</td>
                 <td><span className={`lx-contract-status ${row.status === 'READY' ? 'is-ready' : 'is-reserved'}`}>{row.status === 'READY' ? 'ถึงกำหนดจ่าย' : 'จองสัญญา'}</span></td>
-                <td className="ap-action-cell">{row.status === 'READY' ? <button className="lx-btn primary sm" type="button" onClick={() => openContract(row)}>จ่ายเงินให้</button> : <button className="lx-btn sm" type="button" onClick={() => openContract(row)}>เลือกสัญญา</button>}</td>
+                <td className="ap-action-cell"><div className="ap-row-actions">{row.status === 'READY' ? <button className="lx-btn primary sm" type="button" onClick={() => openContract(row)}>จ่ายเงินให้</button> : <button className="lx-btn sm" type="button" onClick={() => openContract(row)}>เลือกสัญญา</button>}<button className="lx-btn danger sm" type="button" onClick={() => { setCancellationReason(''); setCancellationError(''); setCancellingContract(row); }}>ยกเลิกสัญญา</button></div></td>
               </tr>)}</tbody>
             </table>
           </div>}

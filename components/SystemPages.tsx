@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { ArrowRight, ArrowUpRight, FolderOpen } from "lucide-react";
-import { SYSTEMS, type System } from "@/lib/nav";
+import { type System } from "@/lib/nav";
 import { workspaceStyles as styles } from "./ui/workspace-styles";
+import { Suspense } from "react";
+import LoanDashboardSummary from "./loan/LoanDashboardSummary";
 import CompanyDirectory from "./CompanyDirectory";
 
 export function SystemHome({ system }: { system: System }) {
@@ -20,5 +22,5 @@ export function SubPage({ system, group, label }: { system: System; group: strin
 }
 
 export function GroupOverview() {
-  return <CompanyDirectory />;
+  return <CompanyDirectory><Suspense fallback={<div className="mb-6 rounded-2xl bg-white/70 p-6 text-sm text-slate-500" role="status">กำลังโหลดสรุปบริษัท Loan…</div>}><LoanDashboardSummary /></Suspense></CompanyDirectory>;
 }

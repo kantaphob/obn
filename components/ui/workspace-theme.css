@@ -123,3 +123,120 @@
 @media (prefers-reduced-transparency: reduce) {
   [data-workspace-theme="glass-dark"] :is(#workspace-content, aside[aria-label^="เมนู"], [data-app-shortcuts], dialog, [data-glass-surface]) { @apply [background:#14212d]! backdrop-filter-none!; }
 }
+
+/* Dashboard + four companies. Revert by selecting theme="white" in its layout. */
+[data-workspace-theme="modern-white"] {
+  --ws-background: #f3f4f6;
+  --ws-surface: #ffffff;
+  --ws-soft: #f8fafc;
+  --ws-border: #e5e7eb;
+  --ws-text: #202832;
+  --ws-muted: #697586;
+  --ws-primary: #263731;
+  --ws-accent-soft: #f1f4f3;
+  --status-success: #15803d;
+  --status-warning: #b45309;
+  --status-error: #dc2626;
+  --status-info: #0369a1;
+  @apply gap-3! p-4! text-sm! max-[760px]:p-2! max-[760px]:gap-2!;
+}
+[data-workspace-theme="modern-white"] #workspace-content {
+  @apply rounded-2xl! bg-[#f8f9fb]! border-slate-200! p-6! shadow-none! min-[1400px]:p-8! max-[760px]:p-4!;
+}
+[data-workspace-theme="modern-white"] aside[aria-label^="เมนู"] {
+  @apply rounded-2xl! border-slate-200! shadow-none!;
+}
+[data-workspace-theme="modern-white"] aside section { @apply border-slate-100! shadow-none!; }
+[data-workspace-theme="modern-white"] aside :is(a, button)[aria-current="page"],
+[data-workspace-theme="modern-white"] aside ul button[aria-expanded="true"] {
+  @apply bg-slate-100! text-slate-900! border-transparent! shadow-none!;
+}
+[data-workspace-theme="modern-white"] aside a:hover { @apply bg-slate-50!; }
+[data-workspace-theme="modern-white"] aside :is(a, button):focus-visible {
+  @apply outline-2! outline-solid! outline-slate-500! -outline-offset-2!;
+}
+[data-workspace-theme="modern-white"] aside nav > section > button {
+  @apply bg-transparent! rounded-lg! pb-2! mb-2!;
+}
+[data-workspace-theme="modern-white"] aside nav > section > ul { @apply gap-1.5!; }
+[data-workspace-theme="modern-white"] aside button > span > span[aria-hidden="true"] { @apply bg-slate-300! ring-0!; }
+[data-workspace-theme="modern-white"] [data-app-shortcuts] {
+  @apply rounded-2xl! shadow-none! ring-1! data-[load-status=loading]:ring-2! data-[load-status=error]:ring-2!;
+}
+[data-workspace-theme="modern-white"] [data-app-shortcuts] nav { @apply rounded-xl! border-0! bg-slate-50! shadow-none!; }
+[data-workspace-theme="modern-white"] [data-app-shortcuts] nav a {
+  @apply border-transparent! bg-transparent! shadow-none! hover:bg-white!;
+}
+[data-workspace-theme="modern-white"] [data-app-shortcuts] nav a[aria-current="page"] {
+  @apply border-slate-300! bg-white! shadow-sm!;
+}
+[data-workspace-theme="modern-white"] :is([data-glass-surface], [data-directory-summary]) {
+  @apply rounded-xl! border border-slate-200! bg-white! shadow-[0_1px_3px_#0f172a06]!;
+}
+[data-workspace-theme="modern-white"] [data-glass-surface="action"]:hover {
+  @apply border-slate-300! bg-slate-50!;
+}
+[data-workspace-theme="modern-white"] [data-company-directory] > header h1 { @apply text-[28px]! font-semibold! tracking-tight!; }
+[data-workspace-theme="modern-white"] [data-company-directory] :is(p, footer) { @apply text-slate-500!; }
+[data-workspace-theme="modern-white"] [data-company-directory] > section[aria-label="ค้นหาและกรองหมวดบริษัท"] {
+  @apply rounded-xl! border-slate-200! bg-white! shadow-none!;
+}
+[data-workspace-theme="modern-white"] [data-company-directory] button[aria-pressed="true"] {
+  @apply border-slate-700! bg-slate-700! text-white!;
+}
+[data-workspace-theme="modern-white"] [data-company-directory] button[aria-pressed="false"] {
+  @apply border-slate-200! bg-white! text-slate-600! hover:bg-slate-50!;
+}
+[data-workspace-theme="modern-white"] [data-company-card] {
+  @apply rounded-xl! border-slate-200! bg-white! bg-none! shadow-[0_1px_3px_#0f172a06]!;
+}
+[data-workspace-theme="modern-white"] [data-company-card] > :is(header, footer) { @apply border-slate-100!; }
+[data-workspace-theme="modern-white"] [data-company-card] > header > span {
+  @apply border-0! bg-slate-50! shadow-none!;
+}
+[data-workspace-theme="modern-white"] [data-company-card] section { @apply rounded-lg! border-slate-100! bg-slate-50/70!; }
+[data-workspace-theme="modern-white"] [data-company-card] a {
+  @apply border-slate-200! bg-white! text-slate-600! hover:border-slate-300! hover:bg-slate-50!;
+}
+/* Functional pages inherit neutral surfaces; status indicators keep their semantic colors. */
+[data-workspace-theme="modern-white"] .loan-theme {
+  --lx-brand: #334155;
+  --lx-brand-hover: #1e293b;
+  --lx-brand-soft: #f1f5f9;
+}
+[data-workspace-theme="modern-white"] :is(input, select, textarea):not([type="checkbox"]):not([type="radio"]):not([type="file"]) {
+  @apply rounded-lg! border-slate-200! bg-white! text-slate-800! shadow-none!;
+}
+[data-workspace-theme="modern-white"] :is(input, select, textarea):focus-visible {
+  @apply outline-2! outline-offset-2! outline-slate-400! shadow-none!;
+}
+[data-workspace-theme="modern-white"] :is(.lx-btn.primary, .save-borrower-button, .ph-btn-primary, .cl-button.primary, .save-payment-button, .borrower-add-button) {
+  @apply border-slate-700! bg-slate-700! text-white! shadow-none! hover:bg-slate-800!;
+}
+[data-workspace-theme="modern-white"] :is(.borrower-list-card, .borrower-metric, .cl-panel, .cl-summary-card, .lx-card, .ph-sidebar, .ph-summary) {
+  @apply rounded-xl! border-slate-200! bg-white! shadow-[0_1px_3px_#0f172a06]!;
+}
+[data-workspace-theme="modern-white"] :is(th, thead) { @apply border-slate-200! bg-slate-50! text-slate-500!; }
+[data-workspace-theme="modern-white"] td { @apply border-slate-100!; }
+[data-workspace-theme="modern-white"] tbody tr:hover { @apply bg-slate-50!; }
+[data-workspace-theme="modern-white"] :is(dialog, .borrower-modal, .cl-drawer) {
+  @apply rounded-2xl! border border-slate-200! bg-white! text-slate-800! shadow-[0_24px_80px_#0f172a26]!;
+}
+[data-workspace-theme="modern-white"] dialog::backdrop { @apply bg-slate-950/35! backdrop-blur-sm; }
+@media print {
+  [data-workspace-theme="modern-white"] #workspace-content { @apply bg-white! border-0! p-0!; }
+}
+[data-workspace-theme="modern-white"] :is(.lx-contract-status.is-ready, .borrower-status.complete, [data-status="success"]) { @apply bg-green-50! text-green-700! border-green-200!; }
+[data-workspace-theme="modern-white"] :is(.lx-contract-status.is-reserved, .borrower-status.missing, [data-status="warning"]) { @apply bg-amber-50! text-amber-700! border-amber-200!; }
+[data-workspace-theme="modern-white"] :is(.lx-contract-status.is-overdue, [data-status="error"]) { @apply bg-red-50! text-red-700! border-red-200!; }
+[data-workspace-theme="modern-white"] :is(.lx-contract-status.is-active, [data-status="loading"], [data-status="info"]) { @apply bg-sky-50! text-sky-700! border-sky-200!; }
+[data-workspace-theme="modern-white"] :is(.lx-contract-status.is-draft, .lx-contract-status.is-closed) { @apply bg-slate-100! text-slate-600! border-slate-200!; }
+[data-workspace-theme="modern-white"] aside #sidebar-content > div:first-child > span { @apply shadow-none! border-slate-200! bg-slate-50!; }
+[data-workspace-theme="modern-white"] aside button { @apply shadow-none!; }
+
+/* Decoration stays neutral; only actual status indicators use semantic colors. */
+[data-workspace-theme="modern-white"] [data-company-card] { @apply bg-none! bg-white!; }
+[data-workspace-theme="modern-white"] [data-company-directory] :is(h1, h2, h3, h4, strong) { @apply text-slate-800!; }
+[data-workspace-theme="modern-white"] [data-company-directory] :is([data-directory-summary] > span:first-child, [data-company-card] > header > span) { @apply text-slate-600!; }
+[data-workspace-theme="modern-white"] [data-app-shortcuts] nav a { @apply text-slate-600!; }
+[data-workspace-theme="modern-white"] [data-app-shortcuts] nav a[aria-current="page"] { @apply text-slate-900!; }

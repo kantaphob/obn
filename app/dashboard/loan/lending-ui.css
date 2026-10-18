@@ -441,3 +441,8 @@
 .contract-create-dialog .contract-heading p { font-size: 13px; }
 .contract-create-dialog .contract-modal-close { flex: 0 0 auto; }
 @media(max-width:720px) { .contract-create-dialog { width: calc(100vw - 16px); max-height: calc(100dvh - 16px); border-radius: 14px; }.contract-create-dialog > .contract-page { padding: 14px 10px 22px; }.contract-create-dialog .contract-heading h1 { font-size: 19px; } }
+
+.lx-page .borrower-sort {display:flex;align-items:center;gap:8px;order:3;font-size:13px;white-space:nowrap;}
+.lx-page .borrower-sort select {height:42px;padding:0 12px;border:1px solid var(--lx-line,#e2e8e3);border-radius:10px;background:var(--surface,#fff);color:inherit;font:inherit;}
+.lx-page .borrower-sort select:focus-visible {outline:2px solid currentColor;outline-offset:2px;}
+@media(max-width:600px){.lx-page .borrower-sort {width:100%;}.lx-page .borrower-sort select {flex:1;min-width:0;}}

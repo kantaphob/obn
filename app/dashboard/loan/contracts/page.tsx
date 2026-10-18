@@ -1,15 +1,23 @@
 'use client';
 
+import LoanActionButton from "@/components/loan/LoanActionButton";
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import ContractDocumentPreview from '@/components/loan/ContractDocumentPreview';
 import ContractForm from '@/components/loan/ContractForm';
+import LoanApplicationEditor from '@/components/loan/LoanApplicationEditor';
+import ContractRegisterTable from '@/components/loan/ContractRegisterTable';
+import ContractEvidenceManager from '@/components/loan/ContractEvidenceManager';
+import GoogleSheetsSync from '@/components/loan/GoogleSheetsSync';
 import ConfirmDelete from '@/components/ui/ConfirmDelete';
-import { Trash2 } from 'lucide-react';
+import { Plus, Search, FileText, Clock3, CircleCheck, Wallet, ArrowDownWideNarrow, FilePenLine, ChevronDown } from 'lucide-react';
 import { emptyDocumentSettings, type ContractDocumentSettings } from '@/lib/contract-document';
 import '../lending-ui.css';
+import './contracts.css';
 
 type Row = {
+  previousContractNumber?:string|null;
+  requestNumber?:string|null;losNumber?:string|null;requestType?:string|null;
   contractType?: string;
   documentData?: string | null;
   signatureUrl?: string | null;
@@ -32,12 +40,28 @@ type Row = {
   dueDate?: string | null;
   lateFeePerDay?: number;
   lateFeeWaived?: boolean;
+  cancelledAt?: string | null;
+  cancellationReason?: string | null;
   disbursement?: { id: string; amount: number; paidAt: string; method: string; reference: string | null } | null;
   repayments?: { receiptNumber: string; amount: number; paidAt: string; interestPaid: number; penaltyPaid: number; principalPaid: number; receiptVerified: boolean }[];
-  debtor?: { borrowersCode: string; firstName: string; nickname: string | null };
-  borrower?: { borrowersCode: string; firstName: string; nickname: string | null };
+  debtor?: { borrowersCode: string; firstName: string; lastName?:string|null; phone?:string|null; nickname: string | null };
+  borrower?: { borrowersCode: string; firstName: string; lastName?:string|null; phone?:string|null; nickname: string | null };
   data?: { contract?: { principal?: string } };
 };
+
+type ContractEvidence = { url:string; name?:string; reference?:string };
+function contractEvidence(row:Row):ContractEvidence[] {
+  try {
+    const doc=JSON.parse(row.documentData||"{}");
+    const records:ContractEvidence[]=Array.isArray(doc.deliveryEvidenceRecords)?doc.deliveryEvidenceRecords:[];
+    const attachments:ContractEvidence[]=Array.isArray(doc.attachments)?doc.attachments:[];
+    const known=new Set<string>();
+    return [...records,...attachments.filter(file=>/^หลักฐานโอนเงินเดิม/.test(file?.name||""))].filter(file=>{
+      if(typeof file?.url!=="string" || !file.url.startsWith("/api/contracts/attachments/") || known.has(file.url))return false;
+      known.add(file.url);return true;
+    });
+  } catch {return [];}
+}
 
 type EditValues = { principal: string; interestRate: string; customInterestRate: string; repayType: string; interestMode: string; installmentMonths: string; periodDays: string; startDate: string; dueDate: string; lateFeePerDay: string; lateFeeWaived: boolean; reason: string; confirm: boolean };
 const dateInput = (value?: string | null) => value ? new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Bangkok', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(value)) : '';
@@ -46,12 +70,9 @@ const initialEdit = (row: Row): EditValues => ({ principal: String((row.principa
 
 const statusLabels: Record<string, string> = {
   DRAFT: 'ร่าง', RESERVED: 'จองสัญญา', AWAITING_DOCUMENT: 'รอเอกสารลงนาม', READY: 'พร้อมจ่ายเงิน',
-  ACTIVE: 'กำลังดำเนินการ', OVERDUE: 'เกินกำหนดชำระ', CLOSED: 'ปิดสัญญา',
+  ACTIVE: 'กำลังดำเนินการ', OVERDUE: 'เกินกำหนดชำระ', CLOSED: 'ปิดสัญญา', CANCELLED: 'ยกเลิกสัญญา',
 };
-const statusClasses: Record<string, string> = {
-  DRAFT: 'is-draft', RESERVED: 'is-reserved', AWAITING_DOCUMENT: 'is-waiting', READY: 'is-ready',
-  ACTIVE: 'is-active', OVERDUE: 'is-overdue', CLOSED: 'is-closed',
-};
+
 const newestFirst = (rows: Row[]) => [...rows].sort((a, b) => {
   const updated = Date.parse(b.updatedAt) - Date.parse(a.updatedAt);
   if (Number.isFinite(updated) && updated !== 0) return updated;
@@ -63,6 +84,7 @@ export default function Contracts() {
   const [drafts, setDrafts] = useState<Row[]>([]);
   const [contracts, setContracts] = useState<Row[]>([]);
   const [contractStatusFilter, setContractStatusFilter] = useState('ALL');
+  const [searchQuery, setSearchQuery] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
   const [deletingDraft, setDeletingDraft] = useState('');
@@ -73,6 +95,7 @@ export default function Contracts() {
   const [editingContract, setEditingContract] = useState<Row | null>(null);
   const [editValues, setEditValues] = useState<EditValues | null>(null);
   const [savingEdit, setSavingEdit] = useState(false);
+  const [evidenceBusy,setEvidenceBusy]=useState(false);
   const editDialog = useRef<HTMLDialogElement>(null);
   const createDialog = useRef<HTMLDialogElement>(null);
   const previewDocument: ContractDocumentSettings | null = preview?.documentData
@@ -87,9 +110,16 @@ export default function Contracts() {
     const received = (editingContract.repayments || []).reduce((sum, receipt) => sum + receipt.amount, 0);
     return { interest, total, received, remaining: Math.max(0, total - received) };
   })() : null;
-  const visibleContracts = [...contracts]
-    .sort((a, b) => Date.parse(b.createdAt || b.updatedAt) - Date.parse(a.createdAt || a.updatedAt) || b.id.localeCompare(a.id))
-    .filter(row => contractStatusFilter === 'ALL' || row.status === contractStatusFilter);
+  const needle = searchQuery.trim().toLocaleLowerCase('th-TH');
+  const visibleContracts = newestFirst(contracts)
+    .filter(row => contractStatusFilter === 'ALL' || row.status === contractStatusFilter)
+    .filter(row => {const person=row.borrower||row.debtor;return `${row.requestNumber||''} ${row.losNumber||''} ${row.previousContractNumber||''} ${row.contractNumber||''} ${person?.borrowersCode||''} ${person?.firstName||''} ${person?.lastName||''} ${person?.phone||''} ${person?.nickname||''}`.toLocaleLowerCase('th-TH').includes(needle);});
+  const metrics = [
+    {label:'สัญญาทั้งหมด',value:contracts.length,filter:'ALL',Icon:FileText,tone:'purple'},
+    {label:'รอชำระคืน',value:contracts.filter(row=>row.status==='ACTIVE').length,filter:'ACTIVE',Icon:Wallet,tone:'blue'},
+    {label:'เกินกำหนด',value:contracts.filter(row=>row.status==='OVERDUE').length,filter:'OVERDUE',Icon:Clock3,tone:'red'},
+    {label:'ปิดสัญญาแล้ว',value:contracts.filter(row=>row.status==='CLOSED').length,filter:'CLOSED',Icon:CircleCheck,tone:'green'},
+  ];
 
   const loadRows = useCallback(async () => {
     const responses = await Promise.all([
@@ -126,9 +156,6 @@ export default function Contracts() {
     if (!editingContract && dialog.open) dialog.close();
   }, [editingContract]);
 
-  const date = (value: string) => new Intl.DateTimeFormat('th-TH', {
-    timeZone: 'Asia/Bangkok', dateStyle: 'medium', timeStyle: 'short',
-  }).format(new Date(value));
 
   async function deleteDraft(row: Row) {
     if (deletingDraft) return;
@@ -151,9 +178,17 @@ export default function Contracts() {
     }
   }
 
+  async function refreshContractEvidence() {
+    const response=await fetch('/api/contracts/list',{cache:'no-store'});
+    const rows=await response.json();
+    if(!response.ok)throw new Error(rows.error||'โหลดหลักฐานใหม่ไม่สำเร็จ');
+    setContracts(newestFirst(rows));
+    setEditingContract(current=>current?rows.find((row:Row)=>row.id===current.id)||current:null);
+  }
+
   async function saveContractEdit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!editingContract || !editValues || savingEdit) return;
+    if (!editingContract || !editValues || savingEdit || evidenceBusy) return;
     setSavingEdit(true); setError('');
     try {
       const response = await fetch(`/api/contracts/${encodeURIComponent(editingContract.id)}/terms`, {
@@ -169,41 +204,19 @@ export default function Contracts() {
   }
 
   function table(rows: Row[], draft: boolean) {
-    return <div className="lx-table-wrap">
-      <table className="lx-table">
-        <thead><tr><th>เลขสัญญา</th><th>ผู้กู้</th><th>สถานะ</th><th>ยอดเงินต้น</th><th>แก้ไขล่าสุด</th><th>จัดการ</th></tr></thead>
-        <tbody>{rows.map(row => {
-          const borrower = row.borrower || row.debtor;
-          const status = draft ? 'DRAFT' : row.status;
-          return <tr key={row.id}>
-            <td>{draft ? 'ร่าง (ยังไม่ออกเลขสัญญา)' : row.contractNumber}</td>
-            <td>{borrower?.borrowersCode} · {borrower?.firstName || borrower?.nickname || '—'}</td>
-            <td>
-              <span className={`lx-contract-status ${row.disbursement ? 'is-active' : statusClasses[status] || 'is-draft'}`}>{row.disbursement ? 'จ่ายเงินแล้ว' : statusLabels[status] || status}</span>
-              {row.disbursement && <small style={{ display: 'block', marginTop: 5, color: 'var(--lx-muted)', lineHeight: 1.5 }}>
-                {new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB' }).format(row.disbursement.amount / 100)} · {date(row.disbursement.paidAt)} · {row.disbursement.method === 'BANK_TRANSFER' ? 'โอนเงิน' : 'เงินสด'}
-                {row.disbursement.reference ? <><br />อ้างอิง {row.disbursement.reference}</> : null}
-              </small>}
-            </td>
-            <td>{draft ? row.data?.contract?.principal || '—' : new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB' }).format((row.principal || 0) / 100)}</td>
-            <td>{date(row.updatedAt)}</td>
-            <td><div className="lx-table-actions">
+    return <ContractRegisterTable rows={rows} draft={draft} emptyLabel={draft?'ยังไม่มีร่าง':'ไม่พบสัญญาตามเงื่อนไขที่เลือก'} renderActions={row=>{
+      const borrower=row.borrower||row.debtor;
+      return <>
               {draft
-                ? <button type="button" className="lx-btn sm" onClick={() => { setEditingDraftId(row.id); setCreating(true); }}>แก้ไขร่าง</button>
-                : <><button type="button" className="lx-btn sm" onClick={() => { setEditingContract(row); setEditValues(initialEdit(row)); }}>แก้ไขสัญญา</button><Link className="lx-btn sm" href="/dashboard/loan/payments">ดูการชำระ</Link></>}
-              {draft && <button type="button" className="lx-btn sm danger" disabled={!!deletingDraft} onClick={() => setConfirmingDraft(row)} aria-label={`ลบร่างของ ${borrower?.borrowersCode || 'ผู้กู้'}`} title="ลบร่าง">
-                {deletingDraft === row.id ? 'กำลังลบ…' : <><Trash2 size={15} aria-hidden="true" /> ลบร่าง</>}
-              </button>}
+                ? <LoanActionButton action="edit" aria-label="แก้ไขร่าง" onClick={() => { setEditingDraftId(row.id); setCreating(true); }} />
+                : <><LoanActionButton action="edit" aria-label="แก้ไขสัญญา" onClick={() => { setEditingContract(row); setEditValues(initialEdit(row)); }} /><Link className="lx-btn sm" href="/dashboard/loan/payments">ดูการชำระ</Link></>}
+              {draft && <LoanActionButton action="delete" disabled={!!deletingDraft} busy={deletingDraft === row.id} onClick={() => setConfirmingDraft(row)} aria-label={`ลบร่างของ ${borrower?.borrowersCode || 'ผู้กู้'}`} />}
               {!draft && row.documentData && row.contractType !== 'NONE' && <button type="button" className="lx-btn sm" onClick={() => setPreview(row)}>เอกสาร A4</button>}
-            </div></td>
-          </tr>;
-        })}</tbody>
-      </table>
-      {!rows.length && <p className="lx-empty">{draft ? 'ยังไม่มีร่าง' : 'ยังไม่มีสัญญาที่บันทึก'}</p>}
-    </div>;
+            </>;
+    }}/>;
   }
 
-  return <main className="lx-page">
+  return <main className="lx-page contracts-workspace">
     {confirmingDraft && <ConfirmDelete
       name={`ร่างสัญญาของ ${(confirmingDraft.borrower || confirmingDraft.debtor)?.borrowersCode || 'ผู้กู้'}`}
       busy={deletingDraft === confirmingDraft.id}
@@ -227,9 +240,9 @@ export default function Contracts() {
     <dialog ref={createDialog} className="contract-create-dialog" aria-label="สร้างสัญญากู้" onCancel={event => event.preventDefault()}>
       {creating && <ContractForm embedded draftId={editingDraftId || undefined} onClose={() => { setCreating(false); setEditingDraftId(null); }} onSaved={() => { void loadRows().catch(cause => setError(cause instanceof Error ? cause.message : 'โหลดสัญญาไม่สำเร็จ')); }} />}
     </dialog>
-    <dialog ref={editDialog} className="contract-create-dialog" aria-label="แก้ไขสัญญากู้" onCancel={event => { event.preventDefault(); if (!savingEdit) { setEditingContract(null); setEditValues(null); } }}>
+    <dialog ref={editDialog} className="contract-create-dialog" aria-label="แก้ไขสัญญากู้" onCancel={event => { event.preventDefault(); if (!savingEdit && !evidenceBusy) { setEditingContract(null); setEditValues(null); } }}>
       {editingContract && editValues && <form className="contract-page" onSubmit={saveContractEdit}>
-        <div className="contract-heading"><div><h1>แก้ไขสัญญา {editingContract.contractNumber}</h1><p>ระบบจะคำนวณการตัดชำระย้อนหลังใหม่ทั้งหมดตามเงื่อนไขนี้</p></div><button type="button" className="lx-btn" onClick={() => { if (!savingEdit) { setEditingContract(null); setEditValues(null); } }}>ปิด</button></div>
+        <div className="contract-heading"><div><h1>แก้ไขสัญญา {editingContract.contractNumber}</h1><p>ระบบจะคำนวณการตัดชำระย้อนหลังใหม่ทั้งหมดตามเงื่อนไขนี้</p></div><button type="button" className="lx-btn" onClick={() => { if (!savingEdit && !evidenceBusy) { setEditingContract(null); setEditValues(null); } }}>ปิด</button></div>
         <div className="lx-notice warn">การแก้ไขนี้จะอัปเดตการแบ่งเงินต้น ดอกเบี้ย และค่าปรับของใบรับชำระเก่าทุกรายการเป็นธุรกรรมเดียว เอกสารที่เซ็นแล้วจะเก็บเป็นหลักฐานเดิม</div>
         {editSummary && <div className="lx-grid c3" style={{ marginTop: 14 }}>
           <div className="lx-panel lx-panel-body"><small>ดอกเบี้ยตามเงื่อนไขใหม่</small><strong>{new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB' }).format(editSummary.interest / 100)}</strong></div>
@@ -258,25 +271,27 @@ export default function Contracts() {
           </div>
           <label className="lx-field" style={{ marginTop: 14 }}><span>เหตุผลที่แก้ไข <b className="lx-req">*</b></span><textarea required maxLength={500} rows={3} value={editValues.reason} onChange={e => setEditValues({ ...editValues, reason: e.target.value })} placeholder="เช่น แก้ยอดเงินและเงื่อนไขการตัดชำระ" /></label>
           <label className="lx-check" style={{ marginTop: 14 }}><input required type="checkbox" checked={editValues.confirm} onChange={e => setEditValues({ ...editValues, confirm: e.target.checked })} /> ยืนยันให้คำนวณรายการรับชำระย้อนหลังใหม่ทั้งหมด</label>
+          <LoanApplicationEditor key={`application-${editingContract.id}`} contractId={editingContract.id} requestNumber={editingContract.requestNumber} requestType={editingContract.requestType} losNumber={editingContract.losNumber} onChanged={refreshContractEvidence}/>
+          <ContractEvidenceManager key={editingContract.id} contractId={editingContract.id} evidence={contractEvidence(editingContract)} onChanged={refreshContractEvidence} onBusyChange={setEvidenceBusy}/>
           <h2 className="lx-subhead">ตรวจสอบใบเสร็จรับชำระ</h2>
           {editingContract.repayments?.length ? <div className="lx-table-wrap"><table className="lx-table"><thead><tr><th>เลขที่ใบเสร็จ</th><th>วันที่รับชำระ</th><th>ยอดรับ</th><th>ผลตรวจรายการ</th></tr></thead><tbody>{editingContract.repayments.map(receipt => <tr key={receipt.receiptNumber}><td>{receipt.receiptNumber}</td><td>{new Intl.DateTimeFormat('th-TH', { timeZone: 'Asia/Bangkok', dateStyle: 'medium' }).format(new Date(receipt.paidAt))}</td><td>{new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB' }).format(receipt.amount / 100)}</td><td><span className={`lx-contract-status ${receipt.receiptVerified ? 'is-ready' : 'is-overdue'}`}>{receipt.receiptVerified ? 'ผูกรายการรับเงินแล้ว' : 'ไม่พบรายการรับเงินที่ตรงกัน'}</span></td></tr>)}</tbody></table></div> : <p className="lx-empty">ยังไม่มีใบเสร็จรับชำระที่ผูกกับสัญญานี้</p>}
         </div>
-        <div className="lx-table-actions" style={{ justifyContent: 'flex-end', marginTop: 14 }}><button type="button" className="lx-btn" disabled={savingEdit} onClick={() => { setEditingContract(null); setEditValues(null); }}>ยกเลิก</button><button type="submit" className="lx-btn primary" disabled={savingEdit || !editValues.confirm}>{savingEdit ? 'กำลังคำนวณ…' : 'บันทึกและคำนวณย้อนหลัง'}</button></div>
+        <div className="lx-table-actions" style={{ justifyContent: 'flex-end', marginTop: 14 }}><button type="button" className="lx-btn" disabled={savingEdit || evidenceBusy} onClick={() => { setEditingContract(null); setEditValues(null); }}>ยกเลิก</button><button type="submit" className="lx-btn primary" disabled={savingEdit || evidenceBusy || !editValues.confirm}>{savingEdit ? 'กำลังคำนวณ…' : 'บันทึกและคำนวณย้อนหลัง'}</button></div>
       </form>}
     </dialog>
     <div className="lx-wrap">
-      <header className="lx-head">
-        <div><h1>สัญญากู้</h1><p>ร่างที่เก็บอัตโนมัติและสัญญาที่บันทึกแล้ว</p></div>
-        <button type="button" className="lx-btn primary" onClick={() => { setEditingDraftId(null); setCreating(true); }}>สร้างสัญญา</button>
+      <header className="lx-head contracts-heading">
+        <div><span className="contracts-eyebrow">LOAN MANAGEMENT</span><h1>สัญญากู้</h1><p>จัดการสัญญา เอกสาร และติดตามสถานะในที่เดียว</p></div>
+        <button type="button" className="lx-btn primary contracts-create" onClick={() => { setEditingDraftId(null); setCreating(true); }}><Plus size={18} aria-hidden="true"/> สร้างสัญญา</button>
       </header>
+      <GoogleSheetsSync />
       {error && <p role="alert">{error}</p>}
       {loading ? <p>กำลังโหลด…</p> : <>
-        <section className="lx-panel"><div className="lx-panel-head"><h2>ร่าง ({drafts.length})</h2></div>{table(drafts, true)}</section>
-        <section className="lx-panel">
-          <div className="lx-panel-head" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
-            <h2>สัญญาที่บันทึก ({visibleContracts.length}{contractStatusFilter === 'ALL' ? '' : ` / ${contracts.length}`})</h2>
-            <label className="lx-field" style={{ minWidth: 210 }}><span>กรองสถานะ</span><select value={contractStatusFilter} onChange={event => setContractStatusFilter(event.target.value)}><option value="ALL">ทุกสถานะ</option>{Object.entries(statusLabels).filter(([status]) => status !== 'DRAFT').map(([status, label]) => <option key={status} value={status}>{label}</option>)}</select></label>
-          </div>
+        <div className="contracts-metrics" aria-label="สรุปสถานะสัญญา">{metrics.map(({label,value,filter,Icon,tone})=><button key={filter} type="button" className={`contracts-metric is-${tone}${contractStatusFilter===filter?' is-selected':''}`} onClick={()=>setContractStatusFilter(filter)} aria-pressed={contractStatusFilter===filter}><span className="contracts-metric-icon"><Icon size={21} aria-hidden="true"/></span><span><span className="contracts-metric-label">{label}</span><strong>{value.toLocaleString('th-TH')}<small>ฉบับ</small></strong></span></button>)}</div>
+        <details className="lx-panel contracts-drafts"><summary><span><FilePenLine size={18} aria-hidden="true"/> ร่างสัญญา <b>{drafts.length}</b><small>{drafts.length?'ร่างที่เก็บอัตโนมัติ พร้อมทำต่อ':'ยังไม่มีร่างที่ค้างอยู่'}</small></span><ChevronDown size={17} aria-hidden="true"/></summary>{table(drafts,true)}</details>
+        <section className="lx-panel contracts-list">
+          <div className="contracts-list-heading"><div><h2>สัญญาที่บันทึก</h2><p>พบ {visibleContracts.length} จาก {contracts.length} สัญญา</p></div><span className="contracts-order"><ArrowDownWideNarrow size={15} aria-hidden="true"/> อัปเดตล่าสุดก่อน</span></div>
+          <div className="contracts-filters"><label className="contracts-search"><Search size={18} aria-hidden="true"/><input aria-label="ค้นหาสัญญาหรือผู้กู้" value={searchQuery} onChange={event=>setSearchQuery(event.target.value)} placeholder="ค้นหาเลขสัญญา ชื่อ หรือรหัสผู้กู้"/></label><label className="contracts-status-filter"><span>สถานะ</span><select aria-label="กรองสถานะสัญญา" value={contractStatusFilter} onChange={event=>setContractStatusFilter(event.target.value)}><option value="ALL">ทุกสถานะ</option>{Object.entries(statusLabels).filter(([status])=>status!=='DRAFT').map(([status,label])=><option key={status} value={status}>{label}</option>)}</select></label></div>
           {table(visibleContracts, false)}
         </section>
       </>}

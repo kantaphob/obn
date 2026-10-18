@@ -1,7 +1,10 @@
+import { authorizeApiRequest } from "@/lib/authorization";
 import { prisma } from '@/lib/prisma';
 import { formatBorrowerCode } from '@/lib/borrower-code';
 import { saveBorrowerFile } from '@/lib/borrower-file-storage';
 export async function POST(request: Request) {
+  const denied = await authorizeApiRequest("contracts", "write");
+  if (denied) return denied;
     const body = await request.formData().catch(() => null), file = body?.get('file');
     const types: Record<string, string> = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'application/pdf': 'pdf' };
     if (!(file instanceof File) || !types[file.type] || file.size < 1 || file.size > 10 * 1024 * 1024)

@@ -1,8 +1,11 @@
 "use client";
 
+import LoanActionButton from "@/components/loan/LoanActionButton";
 import ConfirmDelete from "@/components/ui/ConfirmDelete";
+import Link from "next/link";
 
 import "../lending-ui.css";
+import "./borrowers-ui.css";
 
 import {
   borrowerEnumValues,
@@ -27,17 +30,14 @@ import {
   ArrowDownToLine,
   ArrowLeft,
   ArrowRight,
-  Bell,
   Check,
   ChevronRight,
   ImagePlus,
   IdCard,
   LoaderCircle,
-  Pencil,
   Plus,
   Search,
   ShieldCheck,
-  Trash2,
   UsersRound,
   X,
 } from "lucide-react";
@@ -309,17 +309,21 @@ function BorrowerDetails({ borrower, banks, onClose, onEdit }: { borrower: Borro
       <button type="button" className="modal-close" aria-label="ปิดรายละเอียดผู้กู้" onClick={onClose}><X size={18} /></button>
     </header>
     <div className="borrower-details-body">{sections.map(section => <section key={section.title}><h3>{section.title}</h3><dl>{section.items.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value || "—"}</dd></div>)}</dl></section>)}</div>
-    <footer className="borrower-details-footer"><button type="button" className="export-borrowers lx-btn" onClick={onEdit}><Pencil size={15} /> แก้ไขข้อมูลผู้กู้</button></footer>
+    <footer className="borrower-details-footer"><LoanActionButton action="edit" aria-label="แก้ไขข้อมูลผู้กู้" onClick={onEdit} /></footer>
   </dialog>;
 }
 
 export default function Borrowers() {
   const [deletingBorrower, setDeletingBorrower] = useState<Borrower | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [deleteReason, setDeleteReason] = useState("");
   const trackedFetch = useTrackedFetch();
   const [borrowers, setBorrowers] = useState<Borrower[]>([]);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("ทั้งหมด");
+  const [sortOrder, setSortOrder] = useState("asc");
+  const [page, setPage] = useState(1);
+  const pageSize = 20;
   const [modalOpen, setModalOpen] = useState(false);
   const [viewing, setViewing] = useState<Borrower | null>(null);
   const [editing, setEditing] = useState<Borrower | null>(null);
@@ -338,6 +342,7 @@ export default function Borrowers() {
   const [ocrBusy, setOcrBusy] = useState(false);
   const [ocrProgress, setOcrProgress] = useState(0);
   const [ocrText, setOcrText] = useState("");
+  const [ocrError, setOcrError] = useState("");
   const ocrInputRef = useRef<HTMLInputElement>(null);
   const readBusyRef = useRef(false);
   const lastCardRef = useRef("");
@@ -366,7 +371,7 @@ export default function Borrowers() {
     setProvinceId(""); setDistrictId(""); setPostcode("");
     setDistricts([]); setSubdistricts([]);
     setReaderState("disconnected"); setReaderMessage("");
-    setOcrText(""); setOcrProgress(0);
+    setOcrError(""); setOcrText(""); setOcrProgress(0);
     setSavedSnapshot(borrowerDraftSnapshot(emptyForm, "", "", ""));
   }, []);
 
@@ -537,19 +542,23 @@ export default function Borrowers() {
           borrower.workplace || "",
         ].some((value) => value.toLocaleLowerCase("th-TH").includes(term));
       return filterMatches && queryMatches;
-    });
-  }, [borrowers, filter, query]);
+    }).sort((a, b) => (sortOrder === "asc" ? 1 : -1) * a.borrowersCode.localeCompare(b.borrowersCode, "en", { numeric: true, sensitivity: "base" }));
+  }, [borrowers, filter, query, sortOrder]);
+
+  const pageCount = Math.max(1, Math.ceil(visibleBorrowers.length / pageSize));
+  const currentPage = Math.min(page, pageCount);
+  const pageBorrowers = visibleBorrowers.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   const withNationalId = borrowers.filter(
     (borrower) => borrower.nationalId,
   ).length;
 
-  function openCreate() {
+  const openCreate = useCallback(() => {
     allowNavigationRef.current = false;
     pendingExitRef.current = null;
     setConfirmExit(false);
     setSavedSnapshot(borrowerDraftSnapshot(emptyForm, "", "", ""));
-    setOcrText("");
+    setOcrError(""); setOcrText("");
     setEditing(null);
     setForm(emptyForm);
     setReaderState("disconnected");
@@ -559,13 +568,19 @@ export default function Borrowers() {
     setPostcode("");
     setError("");
     setModalOpen(true);
-  }
+  }, [setError]);
+
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("new") !== "1") return;
+    const frame = requestAnimationFrame(openCreate);
+    return () => cancelAnimationFrame(frame);
+  }, [openCreate]);
 
   function openEdit(borrower: Borrower) {
     allowNavigationRef.current = false;
     pendingExitRef.current = null;
     setConfirmExit(false);
-    setOcrText("");
+    setOcrError(""); setOcrText("");
     setEditing(borrower);
     const nextForm: BorrowerForm = {
       workplace: borrower.workplace || "",
@@ -734,11 +749,13 @@ export default function Borrowers() {
     try {
       const response = await trackedFetch(`/api/borrowers/${borrower.id}`, {
         method: "DELETE",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({reason:deleteReason}),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "ลบข้อมูลไม่สำเร็จ");
       setDeletingBorrower(null);
-      notify({ status: "success", message: "ลบข้อมูลผู้กู้แล้ว" });
+      notify({ status: "success", message: "ย้ายผู้กู้ไปถังขยะแล้ว สามารถกู้คืนได้" });
       await loadBorrowers();
     } catch (deleteError) {
       setError(
@@ -898,32 +915,40 @@ export default function Borrowers() {
   async function uploadOcr(file?: File) {
     if (!file || readBusyRef.current || ocrBusy || saving) return;
     if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size === 0 || file.size > 5 * 1024 * 1024) {
-      setError("เลือกภาพ JPG, PNG หรือ WebP ขนาดไม่เกิน 5 MB"); return;
+      setOcrError("เลือกภาพ JPG, PNG หรือ WebP ขนาดไม่เกิน 5 MB"); setError("เลือกภาพ JPG, PNG หรือ WebP ขนาดไม่เกิน 5 MB"); return;
     }
     const session = importSessionRef.current;
-    setOcrBusy(true); setOcrProgress(0); setOcrText("");
-    let worker: Awaited<ReturnType<typeof import('tesseract.js')['createWorker']>> | undefined;
+    setOcrBusy(true); setOcrProgress(0); setOcrError(""); setOcrText("");
     try {
-      const { createWorker } = await import('tesseract.js');
-      worker = await createWorker('tha+eng', 1, { logger: message => {
-        if (session === importSessionRef.current && message.status === 'recognizing text') setOcrProgress(Math.round(message.progress * 100));
-      } });
-      const { data: { text } } = await worker.recognize(file);
+      const { readIdCardImage } = await import('@/lib/read-id-card-image');
+      const text = await readIdCardImage(file, progress=>{if(session===importSessionRef.current)setOcrProgress(progress);});
       if (session !== importSessionRef.current) return;
       if (!text.trim()) throw new Error("ไม่พบข้อความในภาพ กรุณาใช้ภาพบัตรที่ชัดเจน");
+      setOcrText(text);
       const fields = parseIdCardOcr(text);
+      if (!fields.nationalId && !fields.firstName && !fields.firstNameEN) throw new Error("พบข้อความ แต่ยังแยกข้อมูลบัตรไม่ได้ กรุณาครอปเฉพาะหน้าบัตรให้ตรงและชัดเจน แล้วอัปโหลดอีกครั้ง หรือดูข้อความ OCR ด้านล่างเพื่อกรอกเอง");
+      const {subdistrictName,districtName,provinceName,...cardFields}=fields;
+      setForm(current=>({...current,...cardFields}));
+      if(subdistrictName){
+        try{
+          const locationResponse=await trackedFetch(`/api/postcodes?q=${encodeURIComponent(subdistrictName)}&pageSize=100`,{cache:"no-store"});
+          if(locationResponse.ok){const locations:PostcodeResult=await locationResponse.json();const clean=(value:string)=>value.replace(/\s/g,"");const matches=locations.items.filter(item=>clean(item.nameTh)===clean(subdistrictName)&&(!districtName||clean(item.district.nameTh)===clean(districtName))&&(!provinceName||clean(item.district.province.nameTh)===clean(provinceName)));if(matches.length===1 && session===importSessionRef.current){const location=matches[0];setProvinceId(String(location.district.province.id));setDistrictId(String(location.district.id));setPostcode(location.postcode || "");setSubdistricts(current=>current.some(item=>item.id===location.id)?current:[...current,location]);setForm(current=>({...current,subdistrictId:String(location.id)}));}}
+        }catch{/* Keep the full address for manual selection if Masterdata cannot be loaded. */}
+      }
+      if(session!==importSessionRef.current)return;
+      const missing=[['firstName','ชื่อไทย'],['lastName','นามสกุลไทย'],['firstNameEN','ชื่ออังกฤษ'],['lastNameEN','นามสกุลอังกฤษ'],['birthDate','วันเกิด'],['issueDate','วันออกบัตร'],['expiryDate','วันหมดอายุ'],['address','ที่อยู่']].filter(([key])=>!fields[key]).map(([,label])=>label);
+      if(missing.length)setOcrError(`อ่านได้บางส่วน — ยังไม่พบ ${missing.join(' / ')} กรุณาตรวจข้อความ OCR ด้านล่างหรือกรอกเพิ่มเติม`);
       const body = new FormData(); addBorrowerUploadContext(body, fields); body.append('image', file);
       const response = await trackedFetch('/api/borrowers/images', { method: 'POST', body });
       const saved = await response.json();
       if (!response.ok) throw new Error(saved.error || 'บันทึกภาพบัตรไม่สำเร็จ');
       if (session !== importSessionRef.current) return;
-      setForm(current => ({ ...current, ...fields, idCardImageUrl: saved.url }));
+      setForm(current => ({ ...current, ...cardFields, idCardImageUrl: saved.url }));
       setOcrText(text);
-      notify({ status: 'success', message: 'อ่านภาพแล้ว กรุณาตรวจสอบข้อความและข้อมูลก่อนบันทึก' });
+      notify({ status: 'success', message: missing.length ? 'อ่านได้บางส่วน กรุณาตรวจช่องที่ยังว่างและข้อความ OCR' : 'อ่านภาพแล้ว กรุณาตรวจสอบข้อความและข้อมูลก่อนบันทึก' });
     } catch (error) {
-      if (session === importSessionRef.current) setError(error instanceof Error ? error.message : 'อ่านภาพไม่สำเร็จ');
+      if (session === importSessionRef.current) {const message=error instanceof Error?error.message:typeof error==='string'?error:'อ่านภาพไม่สำเร็จ';setOcrError(message);setError(message);}
     } finally {
-      await worker?.terminate();
       setOcrBusy(false);
     }
   }
@@ -1000,16 +1025,7 @@ export default function Borrowers() {
           <ChevronRight size={14} />
           <strong>ผู้กู้</strong>
         </div>
-        <div className="borrowers-top-actions">
-          <span className="secure-label">
-            <ShieldCheck size={14} /> ข้อมูลผู้กู้
-          </span>
-          <button className="notif-button" aria-label="การแจ้งเตือน">
-            <Bell size={17} />
-            <i />
-          </button>
-          <div className="borrower-avatar">ก</div>
-        </div>
+
       </div>
 
       <main className="borrowers-main lx-wrap">
@@ -1021,7 +1037,7 @@ export default function Borrowers() {
             </div>
             <h1>ทะเบียนผู้กู้</h1>
             <p>
-              ค้นหา แก้ไข และเพิ่มผู้กู้ พร้อมอ่านบัตรประชาชนหรืออัปโหลดภาพ OCR
+              จัดการข้อมูลผู้กู้ ค้นหารายชื่อ และตรวจสอบข้อมูลก่อนทำสัญญา
             </p>
           </div>
           <button className="borrower-add-button lx-btn primary" onClick={openCreate}>
@@ -1029,40 +1045,51 @@ export default function Borrowers() {
           </button>
         </div>
 
-        <section className="borrower-list-card lx-panel">
+        <section className="borrower-overview" aria-label="สรุปทะเบียนผู้กู้">
+          {[{ label: "ผู้กู้ทั้งหมด", value: borrowers.length, note: "รายในทะเบียน" }, { label: "มีเลขบัตรประชาชน", value: withNationalId, note: "มีข้อมูลเลขบัตรในระบบ" }, { label: "ยังไม่มีเลขบัตร", value: borrowers.length - withNationalId, note: "ตรวจสอบและเติมข้อมูลเมื่อพร้อม" }].map(item => <div key={item.label}><span>{item.label}</span><strong>{loading ? "—" : item.value.toLocaleString("th-TH")}</strong><small>{item.note}</small></div>)}
+        </section>
+        <section className="borrower-list-card lx-panel" aria-labelledby="borrower-list-title">
           <div className="borrower-list-head">
             <div>
-              <h2>รายชื่อผู้กู้</h2>
+              <h2 id="borrower-list-title">รายชื่อผู้กู้</h2>
               <p>เลือกผู้กู้เพื่อดูรายละเอียดและจัดการข้อมูล</p>
             </div>
-            <button className="export-borrowers lx-btn" onClick={exportBorrowers}>
+            <div className="borrower-list-tools"><Link className="lx-btn" href="/dashboard/loan/borrowers/delete">ถังขยะผู้กู้</Link>
+            <button type="button" className="export-borrowers lx-btn" disabled={loading || !visibleBorrowers.length} onClick={exportBorrowers}>
               <ArrowDownToLine size={15} /> ส่งออก CSV
-            </button>
+            </button></div>
           </div>
           <div className="borrower-toolbar lx-filterbar">
             <div className="borrower-search">
               <Search size={16} />
               <input
                 value={query}
-                onChange={(event) => setQuery(event.target.value)}
+                onChange={(event) => { setQuery(event.target.value); setPage(1); }}
                 placeholder="ค้นหารหัส ชื่อ เลขบัตร หรือเบอร์โทร..."
                 aria-label="ค้นหาผู้กู้"
               />
             </div>
+            <label className="borrower-sort">
+              <span>เรียงรหัสผู้กู้</span>
+              <select value={sortOrder} onChange={event => { setSortOrder(event.target.value); setPage(1); }}>
+                <option value="asc">น้อยไปมาก (1 → 9)</option>
+                <option value="desc">มากไปน้อย (9 → 1)</option>
+              </select>
+            </label>
             <div className="lx-seg" role="group" aria-label="กรองผู้กู้">
-              {[{ label: "ทั้งหมด", count: borrowers.length }, { label: "มีเลขบัตร", count: withNationalId }, { label: "ไม่มีเลขบัตร", count: borrowers.length - withNationalId }].map(item => <button key={item.label} type="button" className={filter === item.label ? "on" : ""} aria-pressed={filter === item.label} onClick={() => setFilter(item.label)}>{item.label} <b>{item.count}</b></button>)}
+              {[{ label: "ทั้งหมด", count: borrowers.length }, { label: "มีเลขบัตร", count: withNationalId }, { label: "ไม่มีเลขบัตร", count: borrowers.length - withNationalId }].map(item => <button key={item.label} type="button" className={filter === item.label ? "on" : ""} aria-pressed={filter === item.label} onClick={() => { setFilter(item.label); setPage(1); }}>{item.label} <b>{item.count}</b></button>)}
             </div>
           </div>
           <div className="borrower-table-wrap lx-table-wrap">
-            <table className="borrower-table lx-table">
+            <table className="borrower-table lx-table" aria-busy={loading}><caption className="sr-only">รายชื่อผู้กู้และข้อมูลติดต่อ เลือกชื่อเพื่อดูรายละเอียด</caption>
               <thead>
                 <tr>
                   <th>ชื่อผู้กู้</th>
                   <th>เบอร์โทรศัพท์</th>
                   <th>สถานะ / วงเงินคงเหลือ</th>
-                  <th>Rank</th>
+                  <th>ระดับความเสี่ยง</th>
                   <th>
-                    <span className="sr-only">จัดการ</span>
+                    จัดการ
                   </th>
                 </tr>
               </thead>
@@ -1079,13 +1106,13 @@ export default function Borrowers() {
                     </td>
                   </tr>
                 ) : (
-                  visibleBorrowers.map((borrower) => (
+                  pageBorrowers.map((borrower) => (
                     <tr className="borrower-row" key={borrower.id}>
                       <td>
                         <div className="borrower-identity">
                           <button type="button" className="borrower-avatar-button" aria-label={`ดูข้อมูล ${fullName(borrower)}`} title="ดูข้อมูลผู้กู้" onClick={() => setViewing(borrower)}><BorrowerAvatar borrower={borrower} /></button>
                           <span className="pair-names">
-                            <strong>{fullName(borrower)}</strong>
+                            <button type="button" className="borrower-name-link" onClick={() => setViewing(borrower)}>{fullName(borrower)}</button>
                             <small>
                               {borrower.borrowersCode}
                               {borrower.nickname
@@ -1095,7 +1122,7 @@ export default function Borrowers() {
                           </span>
                         </div>
                       </td>
-                      <td>{borrower.phone}</td>
+                      <td>{borrower.phone || "—"}</td>
                       <td>
                         <span>
                           {borrower.status
@@ -1114,19 +1141,8 @@ export default function Borrowers() {
                       <td><span className="borrower-rank" data-rank={borrower.riskRating || ""}>{borrower.riskRating || "—"}</span></td>
                       <td>
                         <div className="borrower-row-actions lx-actions">
-                          <button
-                            aria-label={`แก้ไข ${fullName(borrower)}`}
-                            onClick={() => openEdit(borrower)}
-                          >
-                            <Pencil size={15} />
-                          </button>
-                          <button
-                            aria-label={`ลบ ${fullName(borrower)}`}
-                            className="delete-borrower"
-                            onClick={() => setDeletingBorrower(borrower)}
-                          >
-                            <Trash2 size={15} />
-                          </button>
+                          <LoanActionButton action="edit" aria-label={`แก้ไข ${fullName(borrower)}`} onClick={() => openEdit(borrower)} />
+                          <LoanActionButton action="delete" aria-label={`ลบ ${fullName(borrower)}`} onClick={() => {setDeleteReason("");setDeletingBorrower(borrower);}} />
                         </div>
                       </td>
                     </tr>
@@ -1161,22 +1177,12 @@ export default function Borrowers() {
             </table>
           </div>
           <div className="borrower-table-footer lx-tablefoot">
-            <span>
-              แสดง <strong>{visibleBorrowers.length}</strong> จาก{" "}
-              <strong>{borrowers.length}</strong> ราย
-            </span>
-            <div>
-              <button disabled>
-                <ArrowLeft size={13} />
-              </button>
-              <button className="current-page">1</button>
-              <button disabled>
-                <ArrowRight size={13} />
-              </button>
-            </div>
-            <span className="secure-foot">
-              <i /> จัดเก็บผ่านฐานข้อมูล
-            </span>
+            <span role="status" aria-live="polite">{loading ? "กำลังโหลด…" : `แสดง ${visibleBorrowers.length ? (currentPage - 1) * pageSize + 1 : 0}–${Math.min(currentPage * pageSize, visibleBorrowers.length)} จาก ${visibleBorrowers.length} ราย`}</span>
+            <nav aria-label="หน้ารายชื่อผู้กู้" className="borrower-pagination">
+              <button type="button" aria-label="หน้าก่อนหน้า" disabled={loading || currentPage <= 1} onClick={() => setPage(currentPage - 1)}><ArrowLeft size={15} /></button>
+              <span>หน้า {currentPage} / {pageCount}</span>
+              <button type="button" aria-label="หน้าถัดไป" disabled={loading || currentPage >= pageCount} onClick={() => setPage(currentPage + 1)}><ArrowRight size={15} /></button>
+            </nav>
           </div>
         </section>
         <div className="borrower-page-foot">
@@ -1188,7 +1194,7 @@ export default function Borrowers() {
       </main>
 
       {viewing && <BorrowerDetails borrower={viewing} banks={banks} onClose={() => setViewing(null)} onEdit={() => { openEdit(viewing); setViewing(null); }} />}
-      {deletingBorrower && <ConfirmDelete name={fullName(deletingBorrower)} busy={deleting} onCancel={() => setDeletingBorrower(null)} onConfirm={() => void deleteBorrower(deletingBorrower)} />}
+      {deletingBorrower && <ConfirmDelete name={fullName(deletingBorrower)} description={`ย้าย “${fullName(deletingBorrower)}” ไปถังขยะหรือไม่? เก็บข้อมูลและวันที่ลบไว้ สามารถกู้คืนได้ สัญญาและประวัติชำระเงินจะยังอยู่`} busy={deleting} onCancel={() => setDeletingBorrower(null)} onConfirm={() => void deleteBorrower(deletingBorrower)}><label className="compact-field"><span>เหตุผลการลบ (ถ้ามี)</span><textarea value={deleteReason} maxLength={1000} rows={3} disabled={deleting} onChange={event=>setDeleteReason(event.target.value)} /></label></ConfirmDelete>}
       {confirmExit && <ConfirmBorrowerExit onStay={() => { pendingExitRef.current = null; setConfirmExit(false); }} onDiscard={() => {
         const afterExit = pendingExitRef.current;
         pendingExitRef.current = null;
@@ -1242,6 +1248,8 @@ export default function Borrowers() {
                 <span>เสียบบัตรเพื่ออ่านอัตโนมัติ หรืออัปโหลดภาพผ่าน OCR</span>
                 <small>ข้อมูลที่ยังไม่มี เว้นว่างได้</small>
               </div>
+              {ocrBusy && <div role="status" aria-live="polite" style={{padding:"12px 0"}}>กำลัง{ocrProgress < 20 ? "เตรียมตัวอ่านภาษาไทยและอังกฤษ" : "อ่านข้อความจากภาพ"} · {ocrProgress}%<progress value={ocrProgress} max={100} aria-label="ความคืบหน้า OCR" style={{display:"block",width:"100%"}}/></div>}
+              {ocrError && <div role="alert" style={{padding:"12px",color:"#b42318",background:"#fff1f0",borderRadius:8}}>{ocrError}</div>}
               <section className="borrower-input-section lx-card">
                 <div className="borrower-section-title">
                   <span>01</span>
@@ -1374,12 +1382,7 @@ export default function Borrowers() {
                           รูปถ่ายผู้กู้ <small>(ไม่บังคับ)</small>
                         </span>
                         {form.photoUrl && (
-                          <button
-                            type="button"
-                            onClick={() => changeField("photoUrl", "")}
-                          >
-                            ลบรูป
-                          </button>
+                          <LoanActionButton action="delete" aria-label="ลบรูปถ่ายผู้กู้" onClick={() => changeField("photoUrl", "")} />
                         )}
                       </div>
                       <label

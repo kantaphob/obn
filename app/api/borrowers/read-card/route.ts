@@ -1,8 +1,11 @@
+import { authorizeApiRequest } from "@/lib/authorization";
 import { readThaiSmartCard, SmartCardReadError } from '@/lib/thai-smart-card'
 
 const noStore = { 'Cache-Control': 'no-store' }
 
 export async function POST() {
+  const denied = await authorizeApiRequest("borrowers", "write");
+  if (denied) return denied;
   const serviceUrl = process.env.AISC_SMARTCARD_API_URL
 
   if (serviceUrl) {

@@ -1,9 +1,10 @@
 'use client';
 
+import LoanActionButton from "@/components/loan/LoanActionButton";
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
 import Link from 'next/link';
-import { ArrowDownLeft, ArrowDownToLine, ArrowUpRight, CalendarDays, Check, ChevronLeft, ChevronRight, CircleDollarSign, FileText, Pencil, Plus, Search, Trash2, Wallet, X } from 'lucide-react';
+import { ArrowDownLeft, ArrowDownToLine, ArrowUpRight, CalendarDays, Check, ChevronLeft, ChevronRight, CircleDollarSign, FileText, Plus, Search, Wallet, X } from 'lucide-react';
 import { summarizeCompanyLedgerRows } from '@/lib/company-ledger-summary';
 import ConfirmDelete from '@/components/ui/ConfirmDelete';
 import './ledger.css';
@@ -305,7 +306,7 @@ export default function Ledger() {
             <td><span className="cl-category">{entry.category}</span></td><td>{entry.party || <span className="cl-muted">—</span>}</td>
             <td className="cl-muted">{entry.method === 'BANK_TRANSFER' ? 'โอนเงิน' : entry.method === 'CARD' ? 'บัตร' : entry.method === 'OTHER' ? 'อื่นๆ' : 'เงินสด'}</td>
             <td className={`align-right cl-amount ${entry.type === 'INCOME' ? 'positive' : 'negative'}`}><span>{entry.type === 'INCOME' ? '+' : '−'}{currency(entry.amount)}</span>{entry.source === 'MANUAL' && (entry.vatRateBps !== null || entry.whtRateBps !== null) && <small className="cl-tax-breakdown">ฐาน {currency(entry.baseAmount ?? entry.amount)}{entry.vatRateBps !== null ? ` · VAT ${currency(entry.vatAmount ?? 0)}` : ''}{entry.whtRateBps !== null ? ` · WHT −${currency(entry.whtAmount ?? 0)}` : ''}</small>}</td>
-            <td>{entry.source === 'MANUAL' ? <div className="cl-row-actions"><button type="button" aria-label={`แก้ไข ${entry.title}`} title="แก้ไข" onClick={() => openEditEntry(entry)}><Pencil size={15}/></button><button type="button" className="delete" aria-label={`ลบ ${entry.title}`} title="ลบ" onClick={() => setDeletingEntry(entry)}><Trash2 size={15}/></button></div> : <span className="cl-muted">ระบบ</span>}</td>
+            <td>{entry.source === 'MANUAL' ? <div className="cl-row-actions"><LoanActionButton action="edit" aria-label={`แก้ไข ${entry.title}`} onClick={() => openEditEntry(entry)} /><LoanActionButton action="delete" aria-label={`ลบ ${entry.title}`} onClick={() => setDeletingEntry(entry)} /></div> : <span className="cl-muted">ระบบ</span>}</td>
           </tr>)}
           {!loading && visibleEntries.length === 0 && <tr><td colSpan={7}><div className="cl-empty"><span><FileText size={23}/></span><strong>{query || typeFilter !== 'ALL' ? 'ไม่พบรายการที่ตรงกับตัวกรอง' : 'ยังไม่มีรายการในช่วงนี้'}</strong><p>{query || typeFilter !== 'ALL' ? 'ลองเปลี่ยนคำค้นหรือเลือกประเภทรายการอื่น' : 'เริ่มบันทึกรายรับหรือรายจ่ายเพื่อดูสรุปบัญชีของบริษัท'}</p>{!query && typeFilter === 'ALL' && <button className="cl-button primary" type="button" onClick={openNewEntry}><Plus size={16}/> เพิ่มรายการแรก</button>}</div></td></tr>}
           {loading && <tr><td colSpan={7}><div className="cl-loading"><span className="cl-spinner"/> กำลังโหลดรายการ…</div></td></tr>}

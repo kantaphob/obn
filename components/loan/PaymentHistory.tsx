@@ -1,11 +1,12 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
 import Link from 'next/link';
-import { FileText, Paperclip, RefreshCw, Search, UserRound, X, ChevronDown } from 'lucide-react';
+import { FileText, Paperclip, RefreshCw, Search, UserRound, X, ChevronDown, CircleCheck, Clock3, CircleAlert, Circle } from 'lucide-react';
 import '@/app/dashboard/loan/payment-history/payment-history.css';
 import { useTrackedFetch } from '@/components/ui/ToastProvider';
 import LoanReceipt from '@/components/loan/LoanReceipt';
+import ContractRegisterTable from '@/components/loan/ContractRegisterTable';
 import { formatBorrowerCode } from '@/lib/borrower-code';
 
 type Receipt = {
@@ -37,9 +38,14 @@ type LegacyPayment = {
 };
 
 type Contract = {
+  previousContractNumber?:string|null;
+  requestNumber?:string|null;losNumber?:string|null;requestType?:string|null;
   id: string;
   contractNumber: string;
   status: string;
+  dueDate?: string | null;
+  principal?:number;interestRate?:number;interestAmount?:number;netDisbursed?:number;startDate?:string;signedAt?:string|null;documentData?:string|null;createdAt?:string;updatedAt?:string;
+  balance?: { total: number };
   receiptBranch: { name: string; companyName: string; taxId: string; address: string; phone: string } | null;
   repayments: Receipt[];
   legacyPayments: LegacyPayment[];
@@ -50,6 +56,7 @@ type Contract = {
     nickname: string | null;
     address: string | null;
     houseNumber: string | null;
+    phone?:string|null;
   };
 };
 
@@ -69,12 +76,20 @@ const baht = (value: number) => new Intl.NumberFormat('th-TH', { style: 'currenc
 const today = () => new Intl.DateTimeFormat('en-CA', { timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
 const dateLabel = (value: string) => new Intl.DateTimeFormat('th-TH', { timeZone: TZ, dateStyle: 'medium' }).format(new Date(value));
 const timeLabel = (value: string) => new Intl.DateTimeFormat('th-TH', { timeZone: TZ, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date(value));
-const dayOf = (value: string) => new Intl.DateTimeFormat('th-TH', { timeZone: TZ, day: 'numeric' }).format(new Date(value));
-const monthShort = (value: string) => new Intl.DateTimeFormat('th-TH', { timeZone: TZ, month: 'short' }).format(new Date(value));
 const monthKey = (value: string) => new Intl.DateTimeFormat('en-CA', { timeZone: TZ, year: 'numeric', month: '2-digit' }).format(new Date(value));
 const monthTitle = (value: string) => new Intl.DateTimeFormat('th-TH', { timeZone: TZ, month: 'long', year: 'numeric' }).format(new Date(value));
 const borrowerName = (contract: Contract) =>
   [contract.debtor.firstName, contract.debtor.lastName].filter(Boolean).join(' ') || contract.debtor.nickname || 'ไม่ระบุชื่อ';
+
+function currentContractStatus(contract?:Contract) {
+  if(contract?.status==='CLOSED')return {label:'ปิดสัญญา',Icon:CircleCheck,color:'#288453',background:'#eaf6ee'};
+  if(contract?.status==='OVERDUE' || (contract?.status==='ACTIVE' && contract.dueDate && new Intl.DateTimeFormat('en-CA',{timeZone:TZ,year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(contract.dueDate))<today() && (contract.balance?.total??1)>0))return {label:'เกินกำหนด',Icon:CircleAlert,color:'#b74455',background:'#fceef0'};
+  if(contract?.status==='ACTIVE')return {label:'รอชำระคืน',Icon:Clock3,color:'#3477ac',background:'#edf4fc'};
+  if(contract?.status==='RESERVED')return {label:'จองสัญญา',Icon:Clock3,color:'#936a16',background:'#fff6df'};
+  if(contract?.status==='READY')return {label:'พร้อมจ่ายเงิน',Icon:Circle,color:'#367ca3',background:'#eaf4fb'};
+  if(contract?.status==='AWAITING_DOCUMENT')return {label:'รอเอกสารลงนาม',Icon:Clock3,color:'#7c5b9d',background:'#f3edf9'};
+  return {label:contract?.status==='DRAFT'?'ร่าง':'ไม่ระบุสถานะ',Icon:Circle,color:'#727985',background:'#f0f2f5'};
+}
 
 export default function PaymentHistory({ onReceivePayment, revision = 0 }: {
   onReceivePayment?: (borrowerCode: string, contractId?: string) => void;
@@ -132,12 +147,13 @@ export default function PaymentHistory({ onReceivePayment, revision = 0 }: {
   const filteredBorrowers = borrowers.filter(({ sample }) =>
     `${sample.debtor.borrowersCode} ${sample.debtor.firstName} ${sample.debtor.lastName || ''} ${sample.debtor.nickname || ''}`
       .toLocaleLowerCase('th-TH')
-      .includes(needle),
+      .includes(needle) || contracts.some(contract=>contract.debtor.borrowersCode===sample.debtor.borrowersCode && `${contract.contractNumber} ${contract.previousContractNumber||''} ${contract.requestNumber||''} ${contract.losNumber||''} ${contract.debtor.phone||''}`.toLocaleLowerCase('th-TH').includes(needle)),
   );
 
   const activeCode = selectedCode || filteredBorrowers[0]?.sample.debtor.borrowersCode || '';
   const selected = filteredBorrowers.find(({ sample }) => sample.debtor.borrowersCode === activeCode)?.sample;
   const borrowerContracts = contracts.filter(contract => contract.debtor.borrowersCode === activeCode);
+
 
   const entries = (() => {
     const list: Entry[] = borrowerContracts
@@ -151,7 +167,7 @@ export default function PaymentHistory({ onReceivePayment, revision = 0 }: {
           title: receipt.receiptNumber,
           amount: receipt.amount,
           receipt,
-          reference: '',
+          reference: receipt.note?.match(/เลขสลิปเดิม:\s*(\S+)/)?.[1] || receipt.receiptNumber,
         })),
         ...(contract.legacyPayments || []).map((entry) => ({
           id: entry.id,
@@ -161,7 +177,7 @@ export default function PaymentHistory({ onReceivePayment, revision = 0 }: {
           title: entry.title,
           amount: entry.amount,
           receipt: null,
-          reference: entry.reference || entry.note || '',
+          reference: entry.reference || '',
         })),
       ]);
     return list.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime() || a.id.localeCompare(b.id));
@@ -267,6 +283,8 @@ export default function PaymentHistory({ onReceivePayment, revision = 0 }: {
                 </dl>
               </div>
 
+              <section style={{margin:'24px 0',border:'1px solid var(--ph-line,#e9e3ef)',borderRadius:16,overflow:'hidden'}} aria-label="รายการสัญญาของผู้กู้"><h3 style={{padding:'16px 18px',margin:0,fontSize:15}}>รายการสัญญาและการชำระ</h3><ContractRegisterTable rows={borrowerContracts} renderActions={contract=><>{onReceivePayment && ['ACTIVE','OVERDUE'].includes(contract.status) && <button type="button" className="lx-btn sm" onClick={()=>onReceivePayment(contract.debtor.borrowersCode,contract.id)}>รับชำระ</button>}<button type="button" className="lx-btn sm" onClick={()=>{setContractFilter(contract.contractNumber);setOpenId('');}}>ดูประวัติ</button></>}/></section>
+
               {borrowerContracts.length > 1 && (
                 <div className="ph-chips" role="group" aria-label="กรองตามสัญญา">
                   <button type="button" className={!contractFilter ? 'is-active' : ''} onClick={() => setContractFilter('')}>ทุกสัญญา</button>
@@ -296,6 +314,8 @@ export default function PaymentHistory({ onReceivePayment, revision = 0 }: {
                       const rowKey = `${entry.contractNumber}-${entry.id}`;
                       const open = openId === rowKey;
                       const receipt = entry.receipt;
+                      const contractStatus = currentContractStatus(borrowerContracts.find(contract=>contract.contractNumber===entry.contractNumber));
+                      const StatusIcon = contractStatus.Icon;
                       const parts = receipt
                         ? [
                             { key: 'interest', label: 'ดอกเบี้ย', value: receipt.interestPaid },
@@ -305,7 +325,7 @@ export default function PaymentHistory({ onReceivePayment, revision = 0 }: {
                         : [];
                       const sum = parts.reduce((s, p) => s + p.value, 0);
                       return (
-                        <li key={rowKey} className={open ? 'is-open' : ''}>
+                        <li key={rowKey} className={`ph-status-card${open ? ' is-open' : ''}`} style={{'--ph-card-accent':contractStatus.color,'--ph-card-tint':contractStatus.background} as CSSProperties}>
                           <button
                             type="button"
                             className="ph-row"
@@ -313,10 +333,12 @@ export default function PaymentHistory({ onReceivePayment, revision = 0 }: {
                             disabled={!receipt}
                             onClick={() => setOpenId(open ? '' : rowKey)}
                           >
-                            <span className="ph-date"><b>{dayOf(entry.date)}</b>{monthShort(entry.date)}<small>{entry.timeRecorded ? timeLabel(entry.date) : 'ไม่ระบุเวลา'}</small></span>
+                            <span className="ph-status-avatar" aria-hidden="true"><StatusIcon size={30} strokeWidth={1.8}/></span>
                             <span className="ph-main">
-                              <strong>{entry.title}</strong>
-                              <small>สัญญา {entry.contractNumber}{!receipt && ` · ${entry.reference || 'รายการเดิม'}`}</small>
+                              <span className="ph-card-title"><strong>เลขที่สัญญา {entry.contractNumber}</strong><span className="ph-card-status" aria-label={`สถานะปัจจุบัน: ${contractStatus.label}`}><StatusIcon size={15} aria-hidden="true"/>{contractStatus.label}</span></span>
+                              <small style={{overflowWrap:'anywhere'}}>เลขอ้างอิง / เลขสลิป: {entry.reference || 'ยังไม่มีเลขอ้างอิง'}</small>
+                              <small className="ph-card-date">{dateLabel(entry.date)} · {entry.timeRecorded ? timeLabel(entry.date) : 'ไม่ระบุเวลา'}</small>
+                              {!receipt && <small>{entry.title}</small>}
                               {receipt && sum > 0 && (
                                 <span className="ph-bar" aria-hidden>
                                   {parts.map((p) => p.value > 0 && <i key={p.key} className={`ph-seg-${p.key}`} style={{ flexGrow: p.value }} />)}

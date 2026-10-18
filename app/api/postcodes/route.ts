@@ -1,3 +1,4 @@
+import { authorizeApiRequest } from "@/lib/authorization";
 import { prisma } from '@/lib/prisma';
 import type { Prisma } from '@/generated/prisma/client';
 import type { PostcodeResult } from '@/lib/postcode-types';
@@ -11,6 +12,8 @@ function positiveInteger(value: string | null, fallback?: number) {
 }
 
 export async function GET(request: Request) {
+  const denied = await authorizeApiRequest("masterdata", "read");
+  if (denied) return denied;
   const params = new URL(request.url).searchParams;
   let page: number, pageSize: number, provinceId: number | undefined, districtId: number | undefined;
   try {

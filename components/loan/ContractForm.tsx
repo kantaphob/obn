@@ -1,5 +1,7 @@
 "use client";
 
+import LoanActionButton from "@/components/loan/LoanActionButton";
+import ConfirmDelete from "@/components/ui/ConfirmDelete";
 import ContractDocumentPreview from "@/components/loan/ContractDocumentPreview";
 import { emptyDocumentSettings, makeLoanDocument, makeGuaranteeDocument, makeCollateralAgreementDocument, type ContractDocumentPackage, type ContractDocumentSettings } from "@/lib/contract-document";
 import { formatBorrowerCode } from "@/lib/borrower-code";
@@ -322,6 +324,7 @@ export default function ContractForm({ embedded = false, draftId, onClose, onSav
   const [stage, setStage] = useState<"FORM"|"BORROWER"|"WITNESSES"|"REVIEW">("FORM");
   const [confirmed, setConfirmed] = useState(false);
   const [savedContractId, setSavedContractId] = useState("");
+  const [removingEvidence, setRemovingEvidence] = useState<{url:string;name:string}|null>(null);
   const [signedDocumentUploaded, setSignedDocumentUploaded] = useState(false);
   const [attachmentBusy, setAttachmentBusy] = useState(false);
   const draftIdRef = useRef("");
@@ -447,6 +450,19 @@ export default function ContractForm({ embedded = false, draftId, onClose, onSav
     setAttachmentBusy(true);setSaveError("");
     try { const body=new FormData();body.append("file",file);if(selected)body.append("borrowerId",selected.id);body.append("contractNumber",contract.contractNumber||savedContractNumber||"DRAFT");const response=await fetch("/api/contracts/attachments",{method:"POST",body});const data=await response.json();if(!response.ok)throw new Error(data.error);setDocuments(current=>({...current,attachments:[...current.attachments,{url:data.url,name:file.name}]})); }
     catch(error){setSaveError(error instanceof Error ? error.message : "แนบเอกสารไม่สำเร็จ");}finally{setAttachmentBusy(false);}
+  }
+
+  async function deleteDeliveryEvidence() {
+    if(!removingEvidence || !savedContractId || attachmentBusy)return;
+    setAttachmentBusy(true);setSaveError("");
+    try {
+      const response=await fetch(`/api/contracts/${savedContractId}/delivery-evidence`,{method:"DELETE",headers:{"Content-Type":"application/json"},body:JSON.stringify({url:removingEvidence.url})});
+      const result=await response.json();
+      if(!response.ok)throw new Error(result.error||"ลบหลักฐานไม่สำเร็จ");
+      setDocuments(current=>({...current,attachments:current.attachments.filter(file=>file.url!==result.deletedUrl)}));
+      setRemovingEvidence(null);
+    } catch(error) {setSaveError(error instanceof Error?error.message:"ลบหลักฐานไม่สำเร็จ");setRemovingEvidence(null);}
+    finally {setAttachmentBusy(false);}
   }
 
   async function uploadDelivery(file?:File){
@@ -708,6 +724,7 @@ export default function ContractForm({ embedded = false, draftId, onClose, onSav
 
   return (
     <RootElement className="page-wrap contract-page lx-page"><div className="lx-wrap">
+      {removingEvidence && <ConfirmDelete name={removingEvidence.name} busy={attachmentBusy} onConfirm={()=>void deleteDeliveryEvidence()} onCancel={()=>{if(!attachmentBusy)setRemovingEvidence(null);}}/>}
       {showDocument && <ContractDocumentPreview loanText={documents.loanText || makeLoanDocument(documentSettings,documentLoan)} guaranteeText={hasGuarantorDocument ? documents.guaranteeText || makeGuaranteeDocument(documentSettings,documentLoan,contract.guarantor) : undefined} collateralAgreementText={hasCollateralDocument ? documents.collateralAgreementText || makeCollateralAgreementDocument(documentSettings,documentLoan,contract.guarantor) : undefined} font={documents.documentFont} fontSize={documents.documentFontSize} headingSize={documents.documentHeadingSize} onTypographyChange={(key,value)=>setDocuments(current=>({...current,[key]:value}))} onTextChange={(key,value)=>setDocuments(current=>({...current,[key]:value}))} signers={signers} attachments={documents.attachments} draft={!savedContractNumber} onClose={()=>setShowDocument(false)}/>}
       <div className="contract-heading lx-head">
         <div>
@@ -880,12 +897,14 @@ export default function ContractForm({ embedded = false, draftId, onClose, onSav
                 {contract.contractType!=="NONE" && <div className="contract-print-actions"><button type="button" className="secondary-button lx-btn" onClick={() => setShowDocument(true)}>พิมพ์เอกสารเพื่อลงนาม</button><button type="button" className="secondary-button lx-btn" onClick={() => setShowDocument(true)}>ส่งออก PDF</button></div>}
                 {contract.contractType!=="NONE" && contract.signatureMode==="PRINT" && !contract.signedAt && !signedDocumentUploaded && <section className="contract-review-card"><h3>สำเนาสัญญาที่ลงนามแล้ว</h3><p>เมื่อลงนามบนเอกสารแล้ว แนบสำเนาที่นี่เพื่อเปลี่ยนสถานะเป็นพร้อมจ่ายเงิน</p><input type="file" accept="image/jpeg,image/png,image/webp,application/pdf" disabled={attachmentBusy} onChange={event=>{void uploadSignedDocument(event.target.files?.[0]);event.target.value="";}}/></section>}
                 {signedDocumentUploaded && <p className="contract-signed-document-note" role="status">{showingReservation ? "รับสำเนาสัญญาที่ลงนามแล้ว จะพร้อมจ่ายเมื่อถึงวันเริ่มสัญญา" : "รับสำเนาสัญญาที่ลงนามแล้ว สถานะพร้อมจ่ายเงิน"}</p>}
-                <section className="contract-review-card"><h3>หลักฐานส่งมอบเงิน</h3><p>แนบสลิปหลังทำสัญญาสำเร็จ เพื่อเก็บเป็นหลักฐานการจ่ายเงินจริง</p><input type="file" accept="image/jpeg,image/png,image/webp,application/pdf" disabled={attachmentBusy} onChange={event=>{void uploadDelivery(event.target.files?.[0]);event.target.value="";}}/>{documents.attachments.map(file=><p key={file.url}><a href={file.url} target="_blank" rel="noreferrer">{file.name}</a></p>)}{saveError && <p role="alert">{saveError}</p>}</section>
+                <section className="contract-review-card"><h3>หลักฐานส่งมอบเงิน</h3><p>แนบสลิปหลังทำสัญญาสำเร็จ เพื่อเก็บเป็นหลักฐานการจ่ายเงินจริง</p><input type="file" accept="image/jpeg,image/png,image/webp,application/pdf" disabled={attachmentBusy} onChange={event=>{void uploadDelivery(event.target.files?.[0]);event.target.value="";}}/>{documents.attachments.map(file=><div key={file.url} className="contract-attachment-row" style={{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:12,marginTop:12}}><a href={file.url} target="_blank" rel="noreferrer">{file.name}</a>{/^(หลักฐานส่งมอบเงิน|หลักฐานโอนเงินเดิม)/.test(file.name) && <LoanActionButton action="delete" disabled={attachmentBusy} aria-label={`ลบ ${file.name}`} onClick={()=>setRemovingEvidence(file)} />}</div>)}{saveError && <p role="alert">{saveError}</p>}</section>
               </>
             ) : (
               <form className="contract-form" onSubmit={saveContract}>
                 <div hidden={stage !== "FORM"}><div className="contract-form-section">
                   <div className="contract-section-title-row"><h3>ส่วนที่ 2 การเลือกเงื่อนไขทำสัญญา</h3>{contract.contractNumber && <span className="contract-number-value">{contract.contractNumber}</span>}</div>
+                  <div className="contract-form-grid"><label className="contract-field lx-field"><span>รายการคำขอ</span><select value={documents.requestType} onChange={event=>setDocuments(current=>({...current,requestType:event.target.value}))}><option value="LOAN">กู้ยืมเงิน</option><option value="TOP_UP">กู้เพิ่ม</option><option value="RENEWAL">ต่อสัญญา</option></select></label><label className="contract-field lx-field"><span>เลขที่ใบคำขอ LOS (ถ้ามี)</span><input maxLength={100} value={documents.losNumber} onChange={event=>setDocuments(current=>({...current,losNumber:event.target.value}))}/></label></div>
+
                   <p className="contract-section-caption">เลือกรูปแบบการชำระและกำหนดระยะเวลาก่อนคำนวณยอดกู้</p>
                   <fieldset className="contract-payment-options"><legend>การจ่ายเงิน</legend>
                     <label className={!contract.reserveMoney ? "is-active" : ""}><input type="radio" name="reserve-money" checked={!contract.reserveMoney} onChange={() => updateContract("reserveMoney", false)} /><span><strong>สร้างสัญญาปกติ</strong><small>ดำเนินการตามวันที่เริ่มสัญญาและขั้นตอนเอกสาร</small></span></label>

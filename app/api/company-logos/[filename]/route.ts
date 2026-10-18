@@ -1,7 +1,10 @@
+import { authorizeApiRequest } from "@/lib/authorization";
 import { readFile } from 'node:fs/promises';
 import { companyFilePath } from '@/lib/company-file-storage';
 
 export async function GET(request: Request, { params }: { params: Promise<{ filename: string }> }) {
+  const denied = await authorizeApiRequest("companies", "read");
+  if (denied) return denied;
   const { filename } = await params;
   const legacyName = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}\.(jpg|png|webp)$/i.test(filename);
   const organizedName = /^\d{5}-LOGO-\d{2}-\d{8}(?:-\d{2})?\.(jpg|png|webp)$/i.test(filename);

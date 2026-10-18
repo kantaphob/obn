@@ -1,3 +1,4 @@
+import { authorizeApiRequest } from "@/lib/authorization";
 import { prisma } from '@/lib/prisma'
 import { saveBorrowerFile } from '@/lib/borrower-file-storage'
 
@@ -8,6 +9,8 @@ const acceptedTypes: Record<string, string> = {
 }
 
 export async function POST(request: Request) {
+  const denied = await authorizeApiRequest("borrowers", "write");
+  if (denied) return denied;
   const formData = await request.formData().catch(() => null)
   const image = formData?.get('image')
   if (!(image instanceof File) || !acceptedTypes[image.type]) {

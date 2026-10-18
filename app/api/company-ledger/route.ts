@@ -1,3 +1,4 @@
+import { authorizeApiRequest, getCurrentAccess } from "@/lib/authorization";
 import { prisma } from "@/lib/prisma";
 import { getCompanyLedgerRows } from "@/lib/company-ledger";
 import { calculateCompanyLedgerTax } from "@/lib/company-ledger-tax";
@@ -27,6 +28,9 @@ function dateTimeFromInput(dateValue: unknown, timeValue: unknown) {
 }
 
 export async function GET(request: Request) {
+  const denied = await authorizeApiRequest("accounting", "read");
+  if (denied) return denied;
+  const access = await getCurrentAccess();
   const params = new URL(request.url).searchParams;
   const type = params.get("type");
   const from = dateFromInput(params.get("from"));
@@ -34,7 +38,8 @@ export async function GET(request: Request) {
   const query = text(params.get("q"), 100);
 
   const entries = await getCompanyLedgerRows(from, to);
-  const filtered = entries.filter((entry) => {
+  const companyScopedEntries = access?.accessConfigured ? entries.filter((entry) => entry.companyCode && access.companyCodes.includes(entry.companyCode)) : entries;
+  const filtered = companyScopedEntries.filter((entry) => {
     if (type && type !== "ALL" && TYPES.includes(type as (typeof TYPES)[number]) && entry.type !== type) return false;
     if (!query) return true;
     return `${entry.title} ${entry.category} ${entry.party} ${entry.reference} ${entry.note}`.toLocaleLowerCase("th-TH").includes(query.toLocaleLowerCase("th-TH"));
@@ -44,6 +49,9 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const denied = await authorizeApiRequest("accounting", "write");
+  if (denied) return denied;
+  const access = await getCurrentAccess();
   let body: unknown;
   try { body = await request.json(); } catch { return Response.json({ error: "ข้อมูลที่ส่งมาไม่ถูกต้อง" }, { status: 400 }); }
   if (!body || typeof body !== "object") return Response.json({ error: "ข้อมูลที่ส่งมาไม่ถูกต้อง" }, { status: 400 });
@@ -63,6 +71,7 @@ export async function POST(request: Request) {
   if (!tax) return Response.json({ error: "จำนวนเงินหรืออัตรา VAT/WHT ไม่ถูกต้อง" }, { status: 400 });
   if (!transactionDate) return Response.json({ error: "วันที่หรือเวลาไม่ถูกต้อง" }, { status: 400 });
   if (!/^\d{5}$/.test(companyCode) || !/^\d{5}$/.test(branchCode)) return Response.json({ error: "กรุณาเลือกสำนักงานใหญ่และสาขาที่ทำรายการ" }, { status: 400 });
+  if (access?.accessConfigured && !access.companyCodes.includes(companyCode)) return Response.json({ error: "บัญชีนี้ไม่มีสิทธิ์เข้าถึงบริษัทที่เลือก" }, { status: 403 });
   if (!METHODS.includes(method as (typeof METHODS)[number])) return Response.json({ error: "ช่องทางชำระเงินไม่ถูกต้อง" }, { status: 400 });
   const financeCategory = await prisma.companyFinanceCategory.findFirst({ where: { id: categoryId, direction: type, isActive: true } });
   if (!financeCategory) return Response.json({ error: "กรุณาเลือกหมวดหมู่ที่เปิดใช้งานสำหรับประเภทรายการนี้" }, { status: 400 });

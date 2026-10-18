@@ -276,6 +276,7 @@ enum ContractStatus {
   ACTIVE // จ่ายเงินแล้ว กำลังดำเนินการ
   OVERDUE // เกินกำหนด
   CLOSED // ปิดสัญญา (หนี้สูญให้ปิดพร้อมหมายเหตุ)
+  CANCELLED // ยกเลิกก่อนจ่ายเงิน
 }
 
 enum SignatureMode {
@@ -404,18 +405,40 @@ model borrowers {
   photoUrl    String? // รูปจากบัตร (เก็บเป็นไฟล์ ไม่เก็บในฐานข้อมูล)
   idCardImageUrl String? // ภาพถ่ายบัตร (ถ้ามี)
 
+  deletedAt DateTime?
+  deletionHistory borrowersdelete[]
+
   contracts Contract[]
+  loanApplications LoanApplication[]
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
 
   @@index([payoutBankCode])
+  @@index([deletedAt])
+}
+
+// Keep every deletion event, including events that were subsequently restored.
+model borrowersdelete {
+  id String @id @default(cuid())
+  borrowerId String
+  borrower borrowers @relation(fields: [borrowerId], references: [id], onDelete: Restrict)
+  borrowersCode String
+  snapshot String
+  reason String?
+  deletedAt DateTime @default(now())
+  restoredAt DateTime?
+  @@index([borrowerId, deletedAt])
+  @@index([restoredAt, deletedAt])
 }
 
 model Contract {
   id             String @id @default(cuid())
   contractNumber String @unique
+  previousContractNumber String? @unique
+  renumberedAt DateTime?
   debtorId       String
   debtor         borrowers @relation(fields: [debtorId], references: [id])
+  application    LoanApplication?
 
   // ยอดเงิน (สตางค์)
   principal      Int // เงินต้น
@@ -447,6 +470,8 @@ model Contract {
   guarantor    String?
 
   status ContractStatus @default(DRAFT)
+  cancelledAt DateTime?
+  cancellationReason String?
   note   String?
   lateFeePerDay Int @default(5000) // สตางค์ต่อวัน
   lateFeeWaived Boolean @default(false)
@@ -460,6 +485,31 @@ model Contract {
 
   @@index([debtorId])
   @@index([status, dueDate])
+}
+
+model LoanApplication {
+  id String @id @default(cuid())
+  requestNumber String @unique
+  losNumber String? @unique
+  requestType String @default("LOAN")
+  borrowerId String
+  borrower borrowers @relation(fields: [borrowerId], references: [id], onDelete: Restrict)
+  borrowerSnapshot String
+  requestedAmount Int
+  requestedAt DateTime @default(now())
+  source String @default("SYSTEM")
+  contractId String? @unique
+  contract Contract? @relation(fields: [contractId], references: [id], onDelete: Restrict)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([borrowerId, requestedAt])
+}
+
+model LoanApplicationNumberSequence {
+  year Int @id
+  lastNumber Int @default(0)
+  updatedAt DateTime @updatedAt
 }
 
 // ตารางงวดจ่ายดอก (ใช้กับสัญญาแบบ INTEREST_ONLY)
@@ -600,6 +650,7 @@ model CompanySequence {
   type                    CompanySequenceType
   status                  CompanySequenceStatus @default(ACTIVE)
   branches                BranchCodeSequence[]
+  userAccess              UserCompanyAccess[]
 
   @@index([ownerProvinceId])
   @@index([ownerDistrictId])
@@ -669,11 +720,137 @@ model BranchCodeSequence {
   @@index([companycode])
 }
 //---------------------------------------------------
-// Role
+// Admin
 //---------------------------------------------------
-model Role {
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  PENDING
+}
+
+// Better Auth identities are separate from business contact records.
+model User {
+  id            String    @id @default(cuid())
+  name          String
+  username      String?   @unique
+  email         String    @unique
+  emailVerified Boolean   @default(false)
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  role          String?   @default("staff")
+  status        UserStatus @default(ACTIVE)
+  accessConfigured Boolean @default(false)
+  banned        Boolean?  @default(false)
+  banReason     String?
+  banExpires    DateTime?
+  sessions      Session[]
+  accounts      Account[]
+  profile       UserProfile?
+  companyAccess UserCompanyAccess[]
+  appAccess     UserAppAccess[]
+  menuAccess    UserMenuAccess[]
+}
+
+model UserProfile {
   id        String   @id @default(cuid())
-  name      String   @unique
+  userId    String   @unique
+  firstName String   @default("")
+  lastName  String   @default("")
+  phone     String   @default("")
+  avatar    String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([lastName, firstName])
+}
+
+model UserCompanyAccess {
+  id          String         @id @default(cuid())
+  userId      String
+  companyCode String
+  createdAt   DateTime       @default(now())
+  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company     CompanySequence @relation(fields: [companyCode], references: [companycode], onDelete: Cascade, onUpdate: Cascade)
+
+  @@unique([userId, companyCode])
+  @@index([companyCode])
+}
+
+model UserAppAccess {
+  id        String   @id @default(cuid())
+  userId    String
+  appKey    String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, appKey])
+  @@index([appKey])
+}
+
+model UserMenuAccess {
+  id        String   @id @default(cuid())
+  userId    String
+  href      String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, href])
+  @@index([href])
+}
+
+model Session {
+  id             String   @id @default(cuid())
+  expiresAt      DateTime
+  token          String   @unique
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  ipAddress      String?
+  userAgent      String?
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  impersonatedBy String?
+
+  @@index([userId])
+}
+
+model Account {
+  id                    String    @id @default(cuid())
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+}
+
+model Verification {
+  id         String    @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime? @default(now())
+  updatedAt  DateTime? @updatedAt
+}
+
+model Role {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  name        String
+  description String   @default("")
+  permissions String   @default("[]")
+  isSystem    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }

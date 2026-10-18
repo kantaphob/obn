@@ -1,7 +1,10 @@
-import React from 'react'
+import UsersPageClient from "./UsersPageClient";
 
-export default function Users() {
-  return (
-    <div>Users</div>
-  )
+// The parent admin layout performs a request-time session check and may
+// redirect before rendering this page, so this route cannot be validated as
+// an instant navigation segment.
+export const instant = false;
+
+export default function UsersPage() {
+  return <UsersPageClient />;
 }

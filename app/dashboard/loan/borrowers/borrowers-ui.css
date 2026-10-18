@@ -1,0 +1,54 @@
+@reference "tailwindcss";
+
+/* Borrower directory: neutral surfaces, clear hierarchy, scoped to this screen. */
+.loan-theme .borrowers-page.lx-page { @apply bg-transparent!; }
+.loan-theme .borrowers-page .borrowers-topline { @apply max-w-none! px-0! pt-0! pb-4!; }
+.loan-theme .borrowers-page .borrowers-main { @apply m-0! max-w-none! p-0!; }
+.loan-theme .borrowers-page .borrowers-heading-row { @apply mb-6! items-center! gap-4!; }
+.loan-theme .borrowers-page .borrowers-heading-row h1 { @apply text-[28px]! font-semibold! tracking-tight! leading-snug!; }
+.loan-theme .borrowers-page .borrowers-heading-row p { @apply mt-2! text-sm! text-slate-500!; }
+.loan-theme .borrowers-page .borrower-add-button { @apply h-10! shrink-0! rounded-lg! px-4! text-sm!; }
+.loan-theme .borrower-overview { @apply mb-6 grid grid-cols-3 gap-4 max-[640px]:gap-2; }
+.loan-theme .borrower-overview > div { @apply flex min-w-0 flex-col gap-2 rounded-xl border border-slate-200 bg-white p-5 max-[640px]:p-3; }
+.loan-theme .borrower-overview span { @apply text-xs font-medium text-slate-500; }
+.loan-theme .borrower-overview strong { @apply text-3xl font-semibold tabular-nums text-slate-800 max-[640px]:text-2xl; }
+.loan-theme .borrower-overview small { @apply text-xs text-slate-500 max-[640px]:hidden; }
+.loan-theme .borrowers-page .borrower-list-card { @apply overflow-hidden! rounded-xl! border-slate-200! bg-white! shadow-none!; }
+.loan-theme .borrowers-page .borrower-list-head { @apply flex! flex-wrap! items-center! justify-between! gap-4! border-b! border-slate-100! p-5!; }
+.loan-theme .borrowers-page .borrower-list-head h2 { @apply text-base! font-semibold! text-slate-800!; }
+.loan-theme .borrowers-page .borrower-list-head p { @apply mt-1! text-xs! text-slate-500!; }
+.loan-theme .borrower-list-tools { @apply flex flex-wrap items-center gap-2; }
+.loan-theme .borrowers-page .borrower-list-tools .lx-btn { @apply h-9! rounded-lg! border-slate-200! bg-white! px-3! text-xs! font-medium! text-slate-600! shadow-none! disabled:opacity-50!; }
+.loan-theme .borrowers-page .borrower-toolbar { @apply flex! flex-wrap! items-center! gap-3! border-b! border-slate-100! bg-white! p-5!; }
+.loan-theme .borrowers-page .borrower-search { @apply order-0! flex! h-10! min-w-[220px]! flex-1! items-center! gap-2! rounded-lg! border! border-slate-200! bg-white! px-3! shadow-none!; }
+.loan-theme .borrowers-page .borrower-search input { @apply w-full! min-w-0! border-0! p-0! text-sm! shadow-none!; }
+.loan-theme .borrowers-page .borrower-sort { @apply flex! items-center! gap-2! text-xs! text-slate-500!; }
+.loan-theme .borrowers-page .borrower-sort select { @apply h-10! rounded-lg! border! border-slate-200! px-3! text-xs!; }
+.loan-theme .borrowers-page .borrower-toolbar .lx-seg { @apply order-3! flex! w-full! flex-wrap! gap-1! rounded-none! bg-transparent! p-0!; }
+.loan-theme .borrowers-page .borrower-toolbar .lx-seg button { @apply min-h-9! rounded-lg! border! border-transparent! bg-transparent! px-3! text-xs! text-slate-500! shadow-none!; }
+.loan-theme .borrowers-page .borrower-toolbar .lx-seg button.on { @apply border-slate-200! bg-slate-100! font-semibold! text-slate-800!; }
+.loan-theme .borrowers-page .borrower-toolbar .lx-seg b { @apply ml-1! rounded! bg-white! px-1.5! text-[10px]! font-medium! text-slate-500!; }
+.loan-theme .borrowers-page .borrower-table-wrap { @apply overflow-x-auto!; }
+.loan-theme .borrowers-page .borrower-table { @apply w-full! min-w-[760px]!; }
+.loan-theme .borrowers-page .borrower-table th { @apply h-11! whitespace-nowrap! bg-slate-50! px-5! text-left! text-xs! font-medium!; }
+.loan-theme .borrowers-page .borrower-table td { @apply px-5! py-4! text-sm!; }
+.loan-theme .borrowers-page .borrower-table th:last-child { @apply w-[180px]!; }
+.loan-theme .borrowers-page .borrower-row:hover { @apply bg-slate-50/70!; }
+.loan-theme .borrowers-page .borrower-identity { @apply gap-3!; }
+.loan-theme .borrower-name-link { @apply block border-0 bg-transparent p-0 text-left text-sm font-semibold text-slate-800 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-500; }
+.loan-theme .borrowers-page .pair-names small { @apply mt-1! text-xs! text-slate-500!; }
+.loan-theme .borrowers-page .borrower-table-footer { @apply flex! flex-wrap! items-center! justify-between! gap-3! border-t! border-slate-200! bg-white! px-5! py-4! text-xs! text-slate-500!; }
+.loan-theme .borrower-pagination { @apply flex items-center gap-3; }
+.loan-theme .borrowers-page .borrower-pagination button { @apply grid! size-9! place-items-center! rounded-lg! border! border-slate-200! bg-white! text-slate-600! disabled:cursor-not-allowed! disabled:opacity-40!; }
+.loan-theme .borrowers-page .borrower-page-foot { @apply mt-5! text-[10px]! text-slate-400!; }
+.loan-theme .borrowers-page .borrower-crud-modal { @apply max-h-[90dvh]! rounded-2xl! border-slate-200! bg-white! shadow-xl!; }
+.loan-theme .borrowers-page .borrower-crud-modal .borrower-modal-header { @apply border-b! border-slate-200! bg-white! px-6! py-5!; }
+.loan-theme .borrowers-page .borrower-crud-modal .borrower-modal-footer { @apply border-t! border-slate-200! bg-white!; }
+.loan-theme .borrowers-page .borrower-person-layout { @apply gap-6!; }
+@media (max-width: 640px) {
+  .loan-theme .borrowers-page .borrowers-heading-row { @apply items-start!; }
+  .loan-theme .borrowers-page .borrowers-heading-row h1 { @apply text-2xl!; }
+  .loan-theme .borrowers-page .borrower-list-head, .loan-theme .borrowers-page .borrower-toolbar { @apply p-4!; }
+  .loan-theme .borrowers-page .borrower-search { @apply basis-full!; }
+  .loan-theme .borrowers-page .borrower-list-tools { @apply w-full!; }
+}

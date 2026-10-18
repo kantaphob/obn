@@ -50,3 +50,7 @@ next-env.d.ts
 /storage/company-logos/
 
 /storage/company-owner-documents/
+
+# Local integration status and service-account credentials
+/storage/integrations/
+/secrets/

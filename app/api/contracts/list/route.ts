@@ -1,9 +1,13 @@
+import { authorizeApiRequest } from "@/lib/authorization";
+import { loanApplicationFields } from '@/lib/loan-application';
 import { prisma } from '@/lib/prisma';
 import { formatBorrowerCode } from '@/lib/borrower-code';
 import { ContractStatus, ContractType, PaymentType, SignatureMode } from '@/generated/prisma/enums';
 import { loanBalance, thaiDay } from '@/lib/loan-balance';
 
 export async function GET() {
+  const denied = await authorizeApiRequest("contracts", "read");
+  if (denied) return denied;
   const today = new Intl.DateTimeFormat('en-CA', {
     timeZone: 'Asia/Bangkok', year: 'numeric', month: '2-digit', day: '2-digit',
   }).format(new Date());
@@ -61,7 +65,8 @@ export async function GET() {
 
   const contracts = await prisma.contract.findMany({
     include: {
-      debtor: { select: { borrowersCode: true, firstName: true, lastName: true, nickname: true } },
+      application:true,
+      debtor: { select: { borrowersCode: true, firstName: true, lastName: true, phone: true, nickname: true } },
       schedules: {
         select: { id: true, periodNo: true, dueDate: true, amount: true, principalAmount: true, interestAmount: true, status: true },
         orderBy: { periodNo: 'asc' },
@@ -92,6 +97,7 @@ export async function GET() {
 
     return {
       ...contract,
+      ...loanApplicationFields(contract.application),
       disbursement: disbursement ? {
         id: disbursement.id,
         amount: disbursement.amount,

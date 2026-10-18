@@ -1,3 +1,4 @@
+import { authorizeApiRequest } from "@/lib/authorization";
 import { prisma } from '@/lib/prisma'
 import { isPrismaCode, parseBorrowerInput, validateBorrowerPayout } from '@/lib/borrowers'
 import { formatBorrowerCode } from '@/lib/borrower-code'
@@ -5,6 +6,8 @@ import { writeLoanLog } from '@/lib/loan-logs'
 import { finalizePendingBorrowerProfileUrl } from '@/lib/borrower-file-storage'
 
 export async function GET(request: Request) {
+  const denied = await authorizeApiRequest("borrowers", "read");
+  if (denied) return denied;
   const { searchParams } = new URL(request.url)
   const query = searchParams.get('q')?.trim()
   const takeParam = Number(searchParams.get('take'))
@@ -12,7 +15,7 @@ export async function GET(request: Request) {
   const nationalIdQuery = query?.replace(/\D/g, '')
 
   const borrowers = await prisma.borrowers.findMany({
-    where: query
+    where: { deletedAt: null, ...(query
       ? {
           OR: [
             { borrowersCode: { contains: query.toLowerCase() } },
@@ -24,7 +27,7 @@ export async function GET(request: Request) {
             { phone: { contains: query } },
           ],
         }
-      : undefined,
+      : {}) },
     orderBy: { updatedAt: 'desc' },
     ...(take ? { take } : {}),
     include: {
@@ -38,6 +41,8 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const denied = await authorizeApiRequest("borrowers", "write");
+  if (denied) return denied;
   let body: unknown
   try {
     body = await request.json()

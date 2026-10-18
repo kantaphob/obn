@@ -1,8 +1,11 @@
+import { authorizeApiRequest } from "@/lib/authorization";
 import { prisma } from '@/lib/prisma';
 import { loanBalance } from '@/lib/loan-balance';
 import { formatBorrowerCode } from '@/lib/borrower-code';
 
 export async function GET() {
+  const denied = await authorizeApiRequest("contracts", "read");
+  if (denied) return denied;
   const contracts = await prisma.contract.findMany({
     where: { status: { in: ['ACTIVE', 'OVERDUE'] } },
     select: {

@@ -1,3 +1,4 @@
+import { authorizeApiRequest } from "@/lib/authorization";
 import { randomUUID } from "node:crypto";
 import { prisma } from "@/lib/prisma";
 
@@ -8,6 +9,8 @@ function message(error: unknown, fallback: string) {
 }
 
 export async function GET(request: Request) {
+  const denied = await authorizeApiRequest("accounting", "read");
+  if (denied) return denied;
   const params = new URL(request.url).searchParams;
   const direction = params.get("direction");
   const categories = await prisma.companyFinanceCategory.findMany({
@@ -21,6 +24,8 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const denied = await authorizeApiRequest("accounting", "write");
+  if (denied) return denied;
   const origin = request.headers.get("origin");
   if (origin && origin !== new URL(request.url).origin) return Response.json({ error: "ไม่อนุญาตคำขอจากเว็บไซต์อื่น" }, { status: 403 });
   let body: unknown;

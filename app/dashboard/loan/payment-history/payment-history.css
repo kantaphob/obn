@@ -155,6 +155,21 @@
 }
 
 /* Shared payment workspace and native receipt dialog. */
+.ph-page .ph-ledger { display: grid; gap: 12px; border: 0; background: transparent; overflow: visible; }
+.ph-page .ph-ledger > li.ph-status-card { border: 1px solid color-mix(in srgb, var(--ph-card-accent) 18%, transparent); border-radius: 16px; overflow: hidden; background: var(--ph-card-tint); }
+.ph-page .ph-status-card .ph-row { grid-template-columns: 52px minmax(0,1fr) auto 20px; gap: 14px; padding: 18px 20px; cursor: pointer; }
+.ph-page .ph-status-card .ph-row:disabled { cursor: default; opacity: 1; }
+.ph-page .ph-status-card .ph-row:hover { background: color-mix(in srgb,var(--ph-card-accent) 4%,transparent); }
+.ph-page .ph-status-avatar { display: grid; place-items: center; width: 52px; height: 52px; border-radius: 15px; background: color-mix(in srgb,var(--ph-card-accent) 13%,transparent); color: var(--ph-card-accent); }
+.ph-page .ph-card-title { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 12px; }
+.ph-page .ph-card-status { display: inline-flex; align-items: center; gap: 5px; color: var(--ph-card-accent); font-size: 12px; font-weight: 600; white-space: nowrap; }
+.ph-page .ph-card-date { font-size: 12px; opacity: .85; }
+.ph-page .ph-status-card .ph-main { gap: 5px; }
+.ph-page .ph-status-card .ph-main strong { white-space: normal; }
+.ph-page .ph-status-card .ph-amount { color: var(--ph-card-accent); }
+.ph-page .ph-status-card .ph-bar { margin-top: 3px; height: 5px; max-width: 280px; }
+.ph-page .ph-status-card .ph-expand { padding: 16px 20px 20px 86px; border-top: 1px solid color-mix(in srgb,var(--ph-card-accent) 15%,transparent); background: color-mix(in srgb,var(--ph-card-tint) 40%,white); }
+@media(max-width:560px) { .ph-page .ph-status-card .ph-row { grid-template-columns: 40px minmax(0,1fr) 16px; gap: 10px; padding: 14px; }.ph-page .ph-status-avatar { width:40px;height:40px;border-radius:12px; }.ph-page .ph-status-card .ph-amount { grid-column:2;grid-row:2;justify-self:start; }.ph-page .ph-status-card .ph-chevron,.ph-page .ph-status-card .ph-chevron-space { grid-column:3;grid-row:1; }.ph-page .ph-status-card .ph-expand { padding:14px; } }
 .ph-page .ph-btn-primary { @apply [color:#fff]!; }
 @media print { [data-payment-entry] { @apply [position:absolute]; @apply [inset:0]; @apply [max-height:none]; @apply [width:100%]; @apply [overflow:visible]; @apply [border:0]; @apply [box-shadow:none]; } }
 

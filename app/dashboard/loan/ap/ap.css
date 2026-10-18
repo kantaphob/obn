@@ -109,6 +109,14 @@
 .ap-upload-field .lx-btn { @apply cursor-pointer; }
 .ap-file-name { @apply [max-width:100%]; @apply [overflow-wrap:anywhere]; @apply [color:var(--lx-muted)]; @apply [font-size:12px]; }
 .ap-modal-actions { @apply flex; @apply justify-end; @apply [gap:10px]; @apply [padding-top:4px]; }
+.ap-row-actions { display: flex; align-items: center; gap: 8px; }
+.ap-cancel-backdrop { z-index: 100; }
+.ap-cancel-modal { width: min(520px, 100%); max-height: min(90dvh, 680px); overflow-y: auto; border: 1px solid var(--lx-line); border-radius: 16px; background: var(--lx-bg); box-shadow: 0 20px 60px rgba(22,34,27,.22); }
+.ap-cancel-form { display: grid; gap: 16px; padding: 18px 20px 20px; }
+.ap-cancel-contract { display: grid; grid-template-columns: 100px minmax(0, 1fr); gap: 6px 12px; padding: 14px; border: 1px solid var(--lx-line); border-radius: 12px; background: #fff; }
+.ap-cancel-contract span { color: var(--lx-muted); }
+.ap-cancel-contract strong { overflow-wrap: anywhere; }
+.ap-cancel-form > p, .ap-cancel-form > .lx-notice { margin: 0; }
 
 @media (max-width: 700px) {
   .ap-summary { @apply [grid-template-columns:1fr]; @apply [gap:10px]; }
@@ -118,6 +126,8 @@
   .ap-modal-backdrop { @apply [align-items:end]; @apply [padding:0]; }
   .ap-payout-modal { @apply [width:100%]; @apply [max-height:94dvh]; @apply [border-radius:16px_16px_0_0]; }
   .ap-payout-form { @apply [padding:16px]; }
+  .ap-cancel-modal { @apply [width:100%]; @apply [max-height:94dvh]; @apply [border-radius:16px_16px_0_0]; }
+  .ap-cancel-form { @apply [padding:16px]; }
 }
 
 @media (max-width: 480px) {

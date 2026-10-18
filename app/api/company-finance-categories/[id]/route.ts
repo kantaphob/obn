@@ -1,8 +1,11 @@
+import { authorizeApiRequest } from "@/lib/authorization";
 import { prisma } from "@/lib/prisma";
 
 type Context = { params: Promise<{ id: string }> };
 
 export async function PATCH(request: Request, context: Context) {
+  const denied = await authorizeApiRequest("accounting", "write");
+  if (denied) return denied;
   const origin = request.headers.get("origin");
   if (origin && origin !== new URL(request.url).origin) return Response.json({ error: "ไม่อนุญาตคำขอจากเว็บไซต์อื่น" }, { status: 403 });
   const { id } = await context.params;

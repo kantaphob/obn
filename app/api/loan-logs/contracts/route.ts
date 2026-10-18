@@ -1,6 +1,9 @@
+import { authorizeApiRequest } from "@/lib/authorization";
 import { prisma } from '@/lib/prisma';
 
 export async function GET(request: Request) {
+  const denied = await authorizeApiRequest("contracts", "read");
+  if (denied) return denied;
   const borrowerId = new URL(request.url).searchParams.get('borrowerId')?.trim();
   if (!borrowerId) return Response.json({ error: 'กรุณาระบุผู้กู้' }, { status: 400 });
 

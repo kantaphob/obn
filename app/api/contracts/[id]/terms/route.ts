@@ -1,3 +1,6 @@
+import { authorizeApiRequest } from "@/lib/authorization";
+import { after } from 'next/server';
+import { syncLoanGoogleSheet } from '@/lib/integrations/google-sheets';
 import { ContractStatus, InterestMode, InterestRateBasis, PaymentType, RepayType, ScheduleStatus } from '@/generated/prisma/enums';
 import { prisma } from '@/lib/prisma';
 import { loanBalance, allocateRepayment, thaiDay } from '@/lib/loan-balance';
@@ -21,6 +24,8 @@ function scheduleRows(input: { principal: number; interestAmount: number; months
 }
 
 export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
+  const denied = await authorizeApiRequest("contracts", "write");
+  if (denied) return denied;
   const origin = request.headers.get('origin');
   if (origin && origin !== new URL(request.url).origin) return Response.json({ error: 'ไม่อนุญาตคำขอจากเว็บไซต์อื่น' }, { status: 403 });
   const { id } = await context.params;
@@ -45,6 +50,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
           beforeData: { interestMode: contract.interestMode }, afterData: { interestMode: updated.interestMode },
         });
       });
+      after(async()=>{await syncLoanGoogleSheet();});
       return Response.json({ ok: true });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'แก้ไขสัญญาไม่สำเร็จ';
@@ -75,6 +81,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
       // Serialize concurrent changes and repayment writes using the contract row.
       await tx.contract.update({ where: { id }, data: { updatedAt: new Date() } });
       const current = await tx.contract.findUniqueOrThrow({ where: { id }, include: { payments: true, repayments: { orderBy: [{ paidAt: 'asc' }, { createdAt: 'asc' }] }, schedules: true } });
+      if (current.status === ContractStatus.CANCELLED) throw new Error('สัญญาที่ถูกยกเลิกแล้วไม่สามารถแก้ไขได้');
       const receiptNotes = new Set(current.repayments.map(r => `รับชำระ ${r.receiptNumber}`));
       const recalculatedPayments = current.payments.filter(p => p.note && receiptNotes.has(p.note));
       const orphanedSplits = current.payments.filter(p => [PaymentType.INTEREST, PaymentType.PRINCIPAL, PaymentType.PENALTY].some(type => type === p.type) && !p.note?.startsWith('รับชำระ '));
@@ -154,6 +161,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
       });
       return updated;
     });
+    after(async()=>{await syncLoanGoogleSheet();});
     return Response.json(saved, { headers: { 'Cache-Control': 'no-store' } });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'แก้ไขสัญญาไม่สำเร็จ';

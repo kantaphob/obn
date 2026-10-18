@@ -1,7 +1,10 @@
+import { authorizeApiRequest } from "@/lib/authorization";
 import { prisma } from '@/lib/prisma';
 import { formatBorrowerCode } from '@/lib/borrower-code';
 
 export async function GET(request: Request) {
+  const denied = await authorizeApiRequest("logs", "read");
+  if (denied) return denied;
   const { searchParams } = new URL(request.url);
   const query = searchParams.get('q')?.trim().toLocaleLowerCase('th') ?? '';
   const logs = await prisma.loanlogs.findMany({ orderBy: { createdAt: 'desc' }, take: 200 });
@@ -27,6 +30,8 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const denied = await authorizeApiRequest("logs", "write");
+  if (denied) return denied;
   let body: unknown;
   try {
     body = await request.json();

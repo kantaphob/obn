@@ -1,3 +1,4 @@
+import { authorizeApiRequest } from "@/lib/authorization";
 import { prisma } from "@/lib/prisma";
 
 function readText(value: unknown, maxLength: number) {
@@ -5,6 +6,8 @@ function readText(value: unknown, maxLength: number) {
 }
 
 export async function GET(request: Request) {
+  const denied = await authorizeApiRequest("accounting", "read");
+  if (denied) return denied;
   const { searchParams } = new URL(request.url);
   const query = searchParams.get("q")?.trim();
   const category = searchParams.get("category")?.trim();
@@ -31,6 +34,8 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const denied = await authorizeApiRequest("accounting", "write");
+  if (denied) return denied;
   let body: unknown;
   try {
     body = await request.json();

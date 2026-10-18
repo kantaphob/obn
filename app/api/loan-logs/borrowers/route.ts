@@ -1,7 +1,10 @@
+import { authorizeApiRequest } from "@/lib/authorization";
 import { prisma } from '@/lib/prisma';
 import { formatBorrowerCode } from '@/lib/borrower-code';
 
 export async function GET(request: Request) {
+  const denied = await authorizeApiRequest("borrowers", "read");
+  if (denied) return denied;
   const query = new URL(request.url).searchParams.get('q')?.trim();
   if (!query || query.length < 2) return Response.json([]);
 

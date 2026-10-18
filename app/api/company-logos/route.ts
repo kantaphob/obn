@@ -1,6 +1,9 @@
+import { authorizeApiRequest } from "@/lib/authorization";
 import { saveCompanyFile } from '@/lib/company-file-storage';
 
 export async function POST(request: Request) {
+  const denied = await authorizeApiRequest("companies", "write");
+  if (denied) return denied;
   const origin = request.headers.get('origin');
   if (origin && origin !== new URL(request.url).origin) return Response.json({ error: 'ไม่อนุญาตคำขอจากเว็บไซต์อื่น' }, { status: 403 });
   try {

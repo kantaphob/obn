@@ -1,3 +1,4 @@
+import { authorizeApiRequest, getCurrentAccess } from "@/lib/authorization";
 import { getCompanyLedgerRows } from "@/lib/company-ledger";
 
 function csv(value: string) { return `"${value.replaceAll('"', '""')}"`; }
@@ -8,10 +9,14 @@ function dateInput(value: string | null) {
 }
 
 export async function GET(request: Request) {
+  const denied = await authorizeApiRequest("accounting", "read");
+  if (denied) return denied;
+  const access = await getCurrentAccess();
   const params = new URL(request.url).searchParams;
   const from = dateInput(params.get("from"));
   const to = dateInput(params.get("to"));
-  const entries = await getCompanyLedgerRows(from, to);
+  const ledgerRows = await getCompanyLedgerRows(from, to);
+  const entries = access?.accessConfigured ? ledgerRows.filter((entry) => entry.companyCode && access.companyCodes.includes(entry.companyCode)) : ledgerRows;
   const rows = [
     ["วันที่", "เวลา", "เลขที่รายการ", "รหัสสำนักงานใหญ่", "รหัสสาขา", "ประเภท", "รายการ", "หมวดหมู่", "ผู้เกี่ยวข้อง", "ช่องทาง", "เลขอ้างอิง", "แหล่งข้อมูล", "ยอดฐาน (บาท)", "VAT (%)", "VAT (บาท)", "WHT (%)", "WHT (บาท)", "รายรับสุทธิ (บาท)", "รายจ่ายสุทธิ (บาท)", "หมายเหตุ"],
     ...entries.map((entry) => [

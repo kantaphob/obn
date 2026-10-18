@@ -1,3 +1,6 @@
+import { authorizeApiRequest } from "@/lib/authorization";
+import { after } from 'next/server';
+import { syncLoanGoogleSheet } from '@/lib/integrations/google-sheets';
 import { unlink } from 'node:fs/promises';
 import { ContractStatus, PaymentMethod, PaymentType } from '@/generated/prisma/enums';
 import { prisma } from '@/lib/prisma';
@@ -19,6 +22,8 @@ function bangkokDate(value: Date) {
 }
 
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
+  const denied = await authorizeApiRequest("contracts", "write");
+  if (denied) return denied;
   const origin = request.headers.get('origin');
   if (origin && origin !== new URL(request.url).origin) {
     return Response.json({ error: 'ไม่อนุญาตคำขอจากเว็บไซต์อื่น' }, { status: 403 });
@@ -132,6 +137,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       return { payment, attachment, contractNumber: contract.contractNumber, borrower: { ...contract.debtor, borrowersCode: formatBorrowerCode(contract.debtor.borrowersCode) } };
     });
 
+    after(async()=>{await syncLoanGoogleSheet();});
     return Response.json(result, { status: 201 });
   } catch (error) {
     if (savedFile) await unlink(storedUploadPath('contract-attachments', evidenceUrl)).catch(() => {});

@@ -283,6 +283,13 @@ export default function HomePage() {
                 </a>
               ))}
 
+              <a
+                href="/login?callbackURL=/portal"
+                className={`rounded-full px-5 py-2.5 text-sm font-medium transition-colors duration-500 ${navTheme === "dark" ? "text-gray-700 hover:bg-black/5 hover:text-black" : "text-gray-200 hover:bg-white/10 hover:text-white"}`}
+              >
+                เข้าสู่ระบบ
+              </a>
+
               <motion.a
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
@@ -339,6 +346,17 @@ export default function HomePage() {
                         {link.label}
                       </motion.a>
                     ))}
+
+                    <motion.a
+                      href="/login?callbackURL=/portal"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.34 }}
+                      className="rounded-2xl border border-gray-200 px-6 py-4 text-center text-lg font-semibold text-black transition-colors hover:bg-gray-50"
+                    >
+                      เข้าสู่ระบบ
+                    </motion.a>
 
                     <motion.a
                       href="#contact"

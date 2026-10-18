@@ -1,3 +1,4 @@
+import { authorizeApiRequest, getCurrentAccess } from "@/lib/authorization";
 import { prisma } from "@/lib/prisma";
 import { calculateCompanyLedgerTax } from "@/lib/company-ledger-tax";
 
@@ -23,10 +24,14 @@ function originAllowed(request: Request) {
 }
 
 export async function PATCH(request: Request, context: Context) {
+  const denied = await authorizeApiRequest("accounting", "write");
+  if (denied) return denied;
+  const access = await getCurrentAccess();
   if (!originAllowed(request)) return Response.json({ error: "ไม่อนุญาตคำขอจากเว็บไซต์อื่น" }, { status: 403 });
   const { id } = await context.params;
   const existing = await prisma.companyLedgerEntry.findUnique({ where: { id } });
   if (!existing) return Response.json({ error: "ไม่พบรายการใบรับ/จ่าย" }, { status: 404 });
+  if (access?.accessConfigured && (!existing.companyCode || !access.companyCodes.includes(existing.companyCode))) return Response.json({ error: "บัญชีนี้ไม่มีสิทธิ์เข้าถึงบริษัทที่เลือก" }, { status: 403 });
 
   let body: unknown;
   try { body = await request.json(); } catch { return Response.json({ error: "ข้อมูลที่ส่งมาไม่ถูกต้อง" }, { status: 400 }); }
@@ -77,10 +82,14 @@ export async function PATCH(request: Request, context: Context) {
 }
 
 export async function DELETE(request: Request, context: Context) {
+  const denied = await authorizeApiRequest("accounting", "write");
+  if (denied) return denied;
+  const access = await getCurrentAccess();
   if (!originAllowed(request)) return Response.json({ error: "ไม่อนุญาตคำขอจากเว็บไซต์อื่น" }, { status: 403 });
   const { id } = await context.params;
-  const existing = await prisma.companyLedgerEntry.findUnique({ where: { id }, select: { id: true, title: true, documentNumber: true } });
+  const existing = await prisma.companyLedgerEntry.findUnique({ where: { id }, select: { id: true, title: true, documentNumber: true, companyCode: true } });
   if (!existing) return Response.json({ error: "ไม่พบรายการใบรับ/จ่าย" }, { status: 404 });
+  if (access?.accessConfigured && (!existing.companyCode || !access.companyCodes.includes(existing.companyCode))) return Response.json({ error: "บัญชีนี้ไม่มีสิทธิ์เข้าถึงบริษัทที่เลือก" }, { status: 403 });
   await prisma.companyLedgerEntry.delete({ where: { id } });
   return Response.json({ ok: true, deleted: existing });
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type CSSProperties } from "react";
+import { type ReactNode, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   ArrowUpRight,
@@ -24,7 +24,7 @@ const menuCount = companies.reduce(
   0,
 );
 
-export default function CompanyDirectory() {
+export default function CompanyDirectory({ children }: { children?: ReactNode }) {
   const [query, setQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState("ทั้งหมด");
   const normalizedQuery = query.trim().toLocaleLowerCase("th");
@@ -48,18 +48,20 @@ export default function CompanyDirectory() {
   }), [activeCategory, normalizedQuery]);
 
   return (
-    <div className="py-8 max-[760px]:py-6">
+    <div data-company-directory className="py-5 max-[760px]:py-4">
       <header className="mb-7 flex items-end justify-between gap-6 max-[760px]:mb-5 max-[760px]:items-start">
         <div>
           <p className="mb-2 text-[10px] font-semibold tracking-[2px] text-[#81877e]">OBNITHI GROUP / COMPANY DIRECTORY</p>
-          <h1 className="text-[clamp(26px,3vw,38px)] font-medium leading-tight tracking-[-1.3px] text-[#272d28]">ข้อมูลบริษัททุกหมวด</h1>
+          <h1 className="text-[clamp(26px,3vw,38px)] font-medium leading-tight tracking-[-1.3px] text-[#272d28]">ภาพรวมกลุ่มบริษัท</h1>
           <p className="mt-2 text-[13px] text-[#737a72]">ดูภาพรวมธุรกิจ หมวดงาน และเมนูของแต่ละบริษัทในที่เดียว</p>
         </div>
         <div className="hidden items-center gap-2 rounded-full border border-[#dce2d9] bg-white/55 px-3 py-2 text-[11px] text-[#687267] min-[761px]:flex">
-          <span className="size-2 rounded-full bg-[#6f9a78]" />
+          <span className="size-2 rounded-full bg-slate-400" />
           ภาพรวมกลุ่มบริษัท
         </div>
       </header>
+
+      {children}
 
       <section aria-label="สรุปข้อมูลกลุ่มบริษัท" className="mb-6 grid grid-cols-3 gap-3 max-[560px]:gap-2">
         {[
@@ -67,7 +69,7 @@ export default function CompanyDirectory() {
           { label: "หมวดธุรกิจ", value: categoryCount, icon: Layers3 },
           { label: "เมนูงาน", value: menuCount, icon: ChevronRight },
         ].map(({ label, value, icon: Icon }) => (
-          <div key={label} className="flex items-center gap-3 rounded-2xl border border-white/70 bg-[var(--ws-soft,#efeee8)] px-4 py-3 shadow-[inset_1px_1px_2px_#fff8,3px_4px_9px_#9da19424] max-[560px]:gap-2 max-[560px]:px-3">
+          <div key={label} data-directory-summary className="flex items-center gap-3 rounded-2xl border border-white/70 bg-[var(--ws-soft,#efeee8)] px-4 py-3 shadow-[inset_1px_1px_2px_#fff8,3px_4px_9px_#9da19424] max-[560px]:gap-2 max-[560px]:px-3">
             <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-white/70 text-[#5f765f]"><Icon size={18} strokeWidth={1.7} aria-hidden="true" /></span>
             <span className="min-w-0"><span className="block text-[10px] text-[#7d847a]">{label}</span><strong className="text-[20px] font-medium leading-tight text-[#2f3830]">{value}</strong></span>
           </div>
@@ -75,7 +77,10 @@ export default function CompanyDirectory() {
       </section>
 
       <section aria-label="ค้นหาและกรองหมวดบริษัท" className="mb-6 rounded-2xl border border-white/70 bg-[var(--ws-soft,#f2f1eb)] p-4 shadow-[inset_1px_1px_2px_#fff8,3px_4px_9px_#9da19420] max-[560px]:p-3">
-        
+        <label className="flex max-w-md items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-slate-500">
+          <Search size={17} aria-hidden="true" />
+          <input value={query} onChange={event => setQuery(event.target.value)} placeholder="ค้นหาบริษัท หมวดงาน หรือเมนู" aria-label="ค้นหาบริษัท หมวดงาน หรือเมนู" className="min-w-0 flex-1 border-0 bg-transparent text-sm outline-none" />
+        </label>
         <div className="mt-3 flex flex-wrap gap-2" aria-label="ตัวกรองหมวดธุรกิจ">
           {["ทั้งหมด", ...categories].map((category) => {
             const selected = activeCategory === category;
@@ -105,9 +110,9 @@ export default function CompanyDirectory() {
             const Icon = company.icon;
             const visibleItemCount = groups.reduce((total, group) => total + group.items.length, 0);
             return (
-              <article key={company.key} className="overflow-hidden rounded-[20px] border border-white/75 bg-[linear-gradient(135deg,#faf9f5,#eeece5)] shadow-[6px_7px_16px_#8e948536,inset_1px_1px_2px_#fff9]">
+              <article data-company-card key={company.key} className="overflow-hidden rounded-[20px] border border-slate-200 bg-white shadow-sm">
                 <header className="flex items-start gap-3.5 border-b border-[#c8cbbf]/60 p-5 max-[560px]:p-4">
-                  <span className="text-[color:var(--company-color)] grid size-12 shrink-0 place-items-center rounded-[15px] border border-white/75 bg-white/55 shadow-[inset_1px_1px_2px_#fff,3px_4px_7px_#aaa39140]" style={{ "--company-color": company.color } as CSSProperties}>
+                  <span className="text-slate-600 grid size-12 shrink-0 place-items-center rounded-[15px] border border-white/75 bg-white/55 shadow-[inset_1px_1px_2px_#fff,3px_4px_7px_#aaa39140]">
                     <Icon size={25} strokeWidth={1.6} aria-hidden="true" />
                   </span>
                   <div className="min-w-0 flex-1">

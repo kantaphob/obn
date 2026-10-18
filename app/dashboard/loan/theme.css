@@ -371,3 +371,15 @@
 .loan-theme [data-confirm-delete] { @apply [background:var(--lx-surface)] [color:var(--lx-ink)] [border-color:var(--lx-line)]; }
 @media print { .loan-theme { @apply bg-white text-black; } }
 
+
+/* Shared edit/delete buttons across every loan screen. */
+.loan-theme button[data-loan-action] {
+  @apply inline-flex! w-auto! h-9! min-w-0! shrink-0! items-center! justify-center! gap-1.5! rounded-lg! border! border-solid! border-slate-200! bg-white! px-3! py-1.5! text-xs! font-medium! leading-5! text-slate-600! shadow-none! whitespace-nowrap! transition-colors disabled:cursor-not-allowed! disabled:opacity-50!;
+}
+.loan-theme button[data-loan-action]:hover:not(:disabled) { @apply border-slate-300! bg-slate-50! text-slate-900!; }
+.loan-theme button[data-loan-action="delete"] { @apply border-red-200! bg-red-50! text-red-700!; }
+.loan-theme button[data-loan-action="delete"]:hover:not(:disabled) { @apply border-red-300! bg-red-100! text-red-800!; }
+.loan-theme button[data-loan-action]:focus-visible { @apply outline-2! outline-offset-2! outline-slate-500!; }
+.loan-theme button[data-loan-action="delete"]:focus-visible { @apply outline-red-500!; }
+.loan-theme button[data-loan-action] svg { @apply size-4! shrink-0!; }
+.loan-theme :is(.borrower-row-actions, .cl-row-actions) { @apply flex! flex-wrap! items-center! gap-2!; }

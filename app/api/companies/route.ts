@@ -1,10 +1,15 @@
+import { authorizeApiRequest, getCurrentAccess } from "@/lib/authorization";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(request: Request) {
+  const denied = await authorizeApiRequest("companies", "read");
+  if (denied) return denied;
+  const access = await getCurrentAccess();
   const companyCode = new URL(request.url).searchParams.get("code")?.trim();
   if (!companyCode || !/^\d{5}$/.test(companyCode)) {
     return Response.json({ error: "กรุณาระบุรหัสบริษัท" }, { status: 400 });
   }
+  if (access?.accessConfigured && !access.companyCodes.includes(companyCode)) return Response.json({ error: "บัญชีนี้ไม่มีสิทธิ์เข้าถึงบริษัทที่เลือก" }, { status: 403 });
 
   const company = await prisma.companySequence.findUnique({
     where: { companycode: companyCode },

@@ -1,3 +1,5 @@
+import { authorizeApiRequest } from "@/lib/authorization";
+import { loanApplicationFields } from '@/lib/loan-application';
 import { access } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
 import { prisma } from '@/lib/prisma';
@@ -7,6 +9,8 @@ import { formatBorrowerCode } from '@/lib/borrower-code';
 import { writeLoanLog } from '@/lib/loan-logs';
 import { isUploadUrl, storedUploadPath } from '@/lib/borrower-file-storage';
 export async function GET(request: Request) {
+  const denied = await authorizeApiRequest("repayments", "read");
+  if (denied) return denied;
     const params = new URL(request.url).searchParams;
     const paidDate = params.get('date');
     const asOf = paidDate ? new Date(`${paidDate}T12:00:00+07:00`) : new Date();
@@ -14,7 +18,7 @@ export async function GET(request: Request) {
         return Response.json({ error: 'วันที่ไม่ถูกต้อง' }, { status: 400 });
     const contractId = params.get('contractId');
     const [contracts, legacyEntries] = await Promise.all([
-        prisma.contract.findMany({ where: contractId ? { id: contractId } : undefined, include: { debtor: { select: { borrowersCode: true, firstName: true, lastName: true, nickname: true, address: true, houseNumber: true } }, payments: true, repayments: { orderBy: [{ paidAt: 'desc' }, { createdAt: 'desc' }] } }, orderBy: { createdAt: 'desc' } }),
+        prisma.contract.findMany({ where: contractId ? { id: contractId } : undefined, include: { application:true, debtor: { select: { borrowersCode: true, firstName: true, lastName: true, phone: true, nickname: true, address: true, houseNumber: true } }, payments: true, repayments: { orderBy: [{ paidAt: 'desc' }, { createdAt: 'desc' }] } }, orderBy: { createdAt: 'desc' } }),
         prisma.companyLedgerEntry.findMany({
             where: { type: 'INCOME', title: { in: ['รับดอกเบี้ย', 'รับชำระเงินต้น', 'รับชำระเงินต้นพร้อมดอกเบี้ย'] }, note: { contains: 'นำเข้าจากบัญชีเดิม' } },
             select: { id: true, title: true, amount: true, transactionDate: true, party: true, reference: true, note: true, method: true },
@@ -73,6 +77,7 @@ export async function GET(request: Request) {
     };
     return Response.json(contracts.map(({ payments, ...contract }) => ({
         ...contract,
+        ...loanApplicationFields(contract.application),
         debtor: { ...contract.debtor, borrowersCode: formatBorrowerCode(contract.debtor.borrowersCode) },
         receiptBranch: receiptBranchOf(contract.id),
         balance: loanBalance({ ...contract, payments }, asOf),
@@ -80,6 +85,8 @@ export async function GET(request: Request) {
     })), { headers: { 'Cache-Control': 'no-store' } });
 }
 export async function POST(request: Request) {
+  const denied = await authorizeApiRequest("repayments", "write");
+  if (denied) return denied;
     const origin = request.headers.get('origin');
     if (origin && origin !== new URL(request.url).origin)
         return Response.json({ error: 'ไม่อนุญาตคำขอจากเว็บไซต์อื่น' }, { status: 403 });

@@ -1,3 +1,7 @@
+import { authorizeApiRequest } from "@/lib/authorization";
+import { createLoanApplication, loanApplicationFields, loanRequestTypes } from '@/lib/loan-application';
+import { after } from 'next/server';
+import { syncLoanGoogleSheet } from '@/lib/integrations/google-sheets';
 import { emptyDocumentSettings } from "@/lib/contract-document";
 import { access, unlink } from "node:fs/promises";
 import { ContractStatus, ContractType, InterestMode, InterestRateBasis, RepayType, SignatureMode } from "@/generated/prisma/enums";
@@ -74,6 +78,8 @@ function makeInstallmentSchedule({
 }
 
 export async function GET() {
+  const denied = await authorizeApiRequest("contracts", "read");
+  if (denied) return denied;
   const year = bangkokYear();
   const current = await prisma.contractNumberSequence.findUnique({ where: { year }, select: { lastNumber: true } });
   return Response.json(
@@ -83,6 +89,8 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const denied = await authorizeApiRequest("contracts", "write");
+  if (denied) return denied;
   let body: unknown;
   try {
     body = await request.json();
@@ -176,6 +184,9 @@ export async function POST(request: Request) {
   if (typeof witnessCountInput !== "string" || !["0","1","2"].includes(witnessCountInput)) return Response.json({error:"จำนวนพยานไม่ถูกต้อง"},{status:400});
   const witnessCount = Number(witnessCountInput);
   if (contractType !== ContractType.NONE && ((witnessCount>=1 && !text(data.witness1,160)) || (witnessCount>=2 && !text(data.witness2,160)))) return Response.json({error:"กรุณาระบุชื่อพยานตามจำนวนที่เลือก"},{status:400});
+  const requestType=typeof documentInput.requestType==='string'?documentInput.requestType:'LOAN';
+  const losNumber=text(documentInput.losNumber,100)||null;
+  if(!Object.hasOwn(loanRequestTypes,requestType))return Response.json({error:'ประเภทคำขอไม่ถูกต้อง'},{status:400});
   const packageByContractType = contractType === ContractType.NONE ? "NONE" : contractType === ContractType.WITNESS ? "LOAN_WITNESS" : "LOAN_GUARANTEE_WITNESS";
   const documentPackage = typeof documentInput.packageType === "string" ? documentInput.packageType : packageByContractType;
   const validDocumentPackages = ["NONE", "LOAN_WITNESS", "LOAN_GUARANTEE_WITNESS", "LOAN_GUARANTEE_COLLATERAL", "LOAN_GUARANTEE_WITNESS_COLLATERAL"];
@@ -201,12 +212,6 @@ export async function POST(request: Request) {
     if (!branch || branch.status !== "ACTIVE" || branch.company.status !== "ACTIVE") {
       return Response.json({ error: "ไม่พบข้อมูลบริษัทสาขาที่ใช้งาน กรุณาเลือกสาขาใหม่" }, { status: 400 });
     }
-    const branchAddress = branch.address || [
-      branch.houseNo && `บ้านเลขที่ ${branch.houseNo}`,
-      branch.moo && `หมู่${branch.moo}`,
-      branch.soi && `ซอย${branch.soi}`,
-      branch.road && `ถนน${branch.road}`,
-    ].filter(Boolean).join(" ") || branch.company.address || "";
     const owner = branch.company.owner;
     if (personalLender && (!owner?.ownerFirstName || !owner?.ownerLastName || !/^\d{13}$/.test(owner?.ownerNationalId || '') || !owner?.ownerAddress)) return Response.json({ error: 'กรุณาบันทึกชื่อ นามสกุล เลขประชาชน และที่อยู่เจ้าของในหน้าบริษัทก่อน' }, { status: 400 });
     if (personalLender) { lenderDocumentUrl = owner?.ownerDocumentUrl || ''; lenderDocumentName = owner?.ownerDocumentName || ''; }
@@ -264,12 +269,15 @@ export async function POST(request: Request) {
   if (draftId) {
     const previous = await prisma.loanContractDraft.findUnique({where:{id:draftId}});
     if (previous && previous.borrowerId !== debtorId) return Response.json({error:"ร่างไม่ตรงกับผู้กู้ที่เลือก"},{status:400});
-    if (previous?.finalizedContractId) return Response.json(await prisma.contract.findUnique({where:{id:previous.finalizedContractId}}));
+    if (previous?.finalizedContractId) {
+      const finalized=await prisma.contract.findUniqueOrThrow({where:{id:previous.finalizedContractId},include:{application:true}});
+      return Response.json({...finalized,...loanApplicationFields(finalized.application)});
+    }
   }
   const signaturePaths:string[] = [];
   const year = bangkokYear();
   let signatureUrl:string|null = null;
-  const signatureBorrower = await prisma.borrowers.findUnique({ where: { id: debtorId }, select: { borrowersCode: true } });
+  const signatureBorrower = await prisma.borrowers.findUnique({ where: { id: debtorId, deletedAt: null }, select: { borrowersCode: true } });
   if (!signatureBorrower) return Response.json({ error: "ไม่พบข้อมูลผู้กู้ที่เลือก" }, { status: 404 });
   const filenameContractNumber = text(data.contractNumber, 80) || "DRAFT";
 
@@ -299,7 +307,7 @@ export async function POST(request: Request) {
       if (draftId) {
         await tx.loanContractDraft.updateMany({where:{id:draftId,borrowerId:debtorId},data:{updatedAt:new Date()}});
         const previous=await tx.loanContractDraft.findUnique({where:{id:draftId}});
-        if (previous?.finalizedContractId) return tx.contract.findUniqueOrThrow({where:{id:previous.finalizedContractId}});
+        if (previous?.finalizedContractId) return tx.contract.findUniqueOrThrow({where:{id:previous.finalizedContractId},include:{application:true}});
       }
       const sequence = await tx.contractNumberSequence.upsert({
         where: { year },
@@ -312,9 +320,11 @@ export async function POST(request: Request) {
       if(documentPayload.kind === "NEW_LOAN" && provisionalNumber && provisionalNumber !== contractNumber){
         for(const key of ["loanText","guaranteeText","collateralAgreementText"]){if(typeof documentPayload[key] === "string")documentPayload[key]=(documentPayload[key] as string).replaceAll(provisionalNumber,contractNumber);}
       }
+      const application=await createLoanApplication(tx,{borrowerId:debtorId,requestedAmount:principal,requestType,losNumber});
       const contract = await tx.contract.create({
         data: {
           contractNumber,
+          application:{connect:{id:application.id}},
           debtorId,
           principal,
           interestRate,
@@ -346,6 +356,7 @@ export async function POST(request: Request) {
           schedules: { create: scheduleRows },
         },
         include: {
+          application:true,
           debtor: { select: { id: true, prefixTH: true, firstName: true, lastName: true, nickname: true } },
         },
       });
@@ -376,10 +387,11 @@ export async function POST(request: Request) {
     const responsePayload = savedWithDebtor.debtor
       ? { ...savedWithDebtor, debtor: { ...savedWithDebtor.debtor, borrowersCode: formatBorrowerCode(savedWithDebtor.debtor.borrowersCode) } }
       : saved;
-    return Response.json(responsePayload, { status: 201, headers: { "Cache-Control": "no-store" } });
+    after(async()=>{await syncLoanGoogleSheet();});
+    return Response.json({...responsePayload,...loanApplicationFields(saved.application)}, { status: 201, headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     await Promise.all(signaturePaths.map(file=>unlink(file).catch(()=>{})));
-    if (isPrismaCode(error, "P2002")) return Response.json({ error: "ไม่สามารถสร้างเลขที่สัญญาได้ กรุณาลองบันทึกอีกครั้ง" }, { status: 409 });
+    if (isPrismaCode(error, "P2002")) return Response.json({ error: "เลขที่สัญญา ใบคำขอ หรือ LOS ซ้ำ กรุณาตรวจเลข LOS แล้วลองอีกครั้ง" }, { status: 409 });
     if (isPrismaCode(error, "P2003")) return Response.json({ error: "ไม่พบข้อมูลผู้กู้ที่เลือก" }, { status: 404 });
     throw error;
   }

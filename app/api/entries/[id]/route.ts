@@ -1,3 +1,4 @@
+import { authorizeApiRequest } from "@/lib/authorization";
 import { prisma } from "@/lib/prisma";
 
 function readText(value: unknown, maxLength: number) {
@@ -5,6 +6,8 @@ function readText(value: unknown, maxLength: number) {
 }
 
 export async function PATCH(request: Request, context: RouteContext<"/api/entries/[id]">) {
+  const denied = await authorizeApiRequest("accounting", "write");
+  if (denied) return denied;
   const { id } = await context.params;
   let body: unknown;
   try {
@@ -42,6 +45,8 @@ export async function PATCH(request: Request, context: RouteContext<"/api/entrie
 }
 
 export async function DELETE(_request: Request, context: RouteContext<"/api/entries/[id]">) {
+  const denied = await authorizeApiRequest("accounting", "write");
+  if (denied) return denied;
   const { id } = await context.params;
   const existing = await prisma.entry.findUnique({ where: { id } });
   if (!existing) {

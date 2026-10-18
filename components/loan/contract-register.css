@@ -1,0 +1,18 @@
+.contract-register-scroll{width:100%;overflow-x:auto;border-radius:0 0 16px 16px;background:#fff}
+.contract-register-table{width:100%;border-collapse:collapse;min-width:1280px;text-align:left;font-size:12px;color:#655970}
+.contract-register-table th{padding:14px 16px;background:#f8f9fc;border-bottom:1px solid #e9e7f0;font-size:11px;font-weight:600;white-space:nowrap;color:#94899f}
+.contract-register-table td{padding:15px 16px;border-bottom:1px solid #f0edf5;vertical-align:middle}
+.contract-register-table td:nth-child(3),.contract-register-table td:nth-child(4),.contract-register-table td:nth-child(5),.contract-register-table td:nth-child(6),.contract-register-table td:nth-child(8),.contract-register-table td:nth-child(10){white-space:nowrap}
+.contract-register-table tbody tr:hover,.contract-register-table tr.is-expanded{background:#fcfaff}
+.contract-register-open,.contract-register-number{display:inline-flex;align-items:center;gap:6px;border:0;background:transparent;color:#8756b6;font:inherit;cursor:pointer;padding:0;text-align:left;white-space:nowrap}
+.contract-register-number{font-weight:600}.contract-register-open:hover,.contract-register-number:hover{text-decoration:underline}
+.contract-register-money{text-align:right;font-weight:600;white-space:nowrap;font-variant-numeric:tabular-nums}
+.contract-register-status{display:inline-block;padding:5px 9px;border-radius:999px;background:#f1edf6;color:#8a6aa6;white-space:nowrap;font-size:11px;font-weight:600}
+.contract-register-status.is-closed{background:#eaf6ee;color:#32815a}.contract-register-status.is-active,.contract-register-status.is-ready{background:#edf5fc;color:#397fab}.contract-register-status.is-overdue{background:#fceef0;color:#b95162}.contract-register-status.is-reserved{background:#fff6e5;color:#ae7a22}
+.contract-register-status.is-cancelled{background:#fceef0;color:#b95162}
+.contract-register-actions{display:flex;flex-wrap:wrap;gap:6px;min-width:170px}.contract-register-actions .lx-btn{display:inline-flex;align-items:center;gap:5px;padding:6px 9px;min-height:30px;font-size:11px;white-space:nowrap}
+.contract-register-table .contract-register-detail-row>td{padding:22px 24px;background:#faf8fd;white-space:normal}
+.contract-register-detail-title{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:18px}.contract-register-detail-title>strong{font-size:15px;color:#5b426e}.contract-register-detail-title>span{font-size:11px;color:#998aa5}
+.contract-register-detail-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px 24px}.contract-register-detail-grid>div{display:grid;gap:5px;min-width:0}.contract-register-detail-grid span{font-size:11px;color:#998aa5}.contract-register-detail-grid strong{font-size:12px;font-weight:500;overflow-wrap:anywhere;color:#655970}
+.contract-register-files{margin-top:20px;padding-top:16px;border-top:1px solid #e9e3ef;display:grid;gap:10px}.contract-register-files a{color:#8756b6;text-decoration:underline}.contract-register-files small{margin-left:12px;color:#95879f}.contract-register-empty{padding:32px;text-align:center;color:#998aa5}
+@media(max-width:700px){.contract-register-detail-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}

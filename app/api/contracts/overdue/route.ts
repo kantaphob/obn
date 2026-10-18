@@ -1,3 +1,4 @@
+import { authorizeApiRequest } from "@/lib/authorization";
 import { prisma } from '@/lib/prisma';
 import { loanBalance } from '@/lib/loan-balance';
 import { formatBorrowerCode } from '@/lib/borrower-code';
@@ -7,6 +8,8 @@ const bangkokDate = (date: Date) => new Intl.DateTimeFormat('en-CA', {
 }).format(date);
 
 export async function GET() {
+  const denied = await authorizeApiRequest("contracts", "read");
+  if (denied) return denied;
   const today = bangkokDate(new Date());
   const todayStart = new Date(`${today}T00:00:00.000Z`);
   const contracts = await prisma.contract.findMany({

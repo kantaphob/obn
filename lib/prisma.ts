@@ -12,17 +12,21 @@ const adapter = new PrismaBetterSqlite3({
   url: process.env.DATABASE_URL ?? "file:./prisma/dev.db",
 });
 
-// Client regeneration can leave a previous schema's client in the dev cache.
+// Prisma clients survive HMR through globalThis, so bump the fingerprint when
+// schema fields change to replace a cached client with the regenerated model.
 const cachedPrisma = globalForPrisma.prisma;
 const schemaFingerprint = [BorrowerPayoutChannel, BorrowerRiskRating, BorrowerStatus, ContractStatus]
   .map((values) => Object.values(values).join(","))
-  .join("|") + "|borrowersCode-v1|repayment-v1|draft-doc-v1|personal-lender-v1|company-owner-doc-v2|company-owner-v7|company-address-v3|company-sequence-v1|company-ledger-v1|company-finance-categories-v1|loanlogs-v2";
+  .join("|") + "|borrowersCode-v1|repayment-v1|draft-doc-v1|personal-lender-v1|company-owner-doc-v2|company-owner-v7|company-address-v3|company-sequence-v1|company-ledger-v1|company-finance-categories-v1|loanlogs-v2|loan-applications-v1|borrower-recycle-bin-v1|contract-renumber-v1|auth-rbac-v1|user-profiles-v1";
 export const prisma =
+  cachedPrisma?.loanApplication &&
   cachedPrisma?.banking &&
   cachedPrisma?.borrowers &&
   cachedPrisma?.companySequence &&
   cachedPrisma?.companyFinanceCategory &&
-  globalForPrisma.prismaSchemaFingerprint === schemaFingerprint
+  cachedPrisma?.user &&
+  cachedPrisma?.role &&
+    globalForPrisma.prismaSchemaFingerprint === `${schemaFingerprint}|auth-rbac-v1|user-profiles-v1`
     ? cachedPrisma
     : new PrismaClient({ adapter });
 
@@ -32,5 +36,5 @@ if (cachedPrisma && cachedPrisma !== prisma) {
 
 if (process.env.NODE_ENV !== "production") {
   globalForPrisma.prisma = prisma;
-  globalForPrisma.prismaSchemaFingerprint = schemaFingerprint;
+  globalForPrisma.prismaSchemaFingerprint = `${schemaFingerprint}|auth-rbac-v1|user-profiles-v1`;
 }

@@ -32,6 +32,7 @@ import {
   type LucideIcon,
   Building2Icon,
   CreditCard,
+  Trash2,
 } from "lucide-react";
 
 export type NavItem = { label: string; href: string; icon: LucideIcon; children?: NavItem[] };
@@ -298,6 +299,7 @@ export const SYSTEMS: Record<SystemKey, System> = {
         title: "ลูกค้า",
         items: [
           l("borrowers", "ผู้กู้", UserRound),
+          l("deleted", "ถังขยะ", Trash2),
           l("collaterals", "หลักประกัน", Landmark),
           l("docs", "เอกสาร", FileText),
         ],

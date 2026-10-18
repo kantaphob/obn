@@ -1,3 +1,4 @@
+import { authorizeApiRequest } from "@/lib/authorization";
 import { prisma } from "@/lib/prisma";
 import { connection } from "next/server";
 
@@ -6,6 +7,8 @@ function escapeCsv(value: string) {
 }
 
 export async function GET() {
+  const denied = await authorizeApiRequest("accounting", "read");
+  if (denied) return denied;
   await connection();
   const entries = await prisma.entry.findMany({ orderBy: { createdAt: "desc" } });
   const rows = [
