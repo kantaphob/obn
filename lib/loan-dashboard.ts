@@ -44,14 +44,16 @@ export async function getLoanDashboardData() {
     }),
     getCompanyLedgerRows(null, throughToday),
   ]);
-  const cashflowRows = ledgerRows.filter(row => row.transactionDate >= chartStart);
-  const lifetimeFinance = summarizeLoanFinanceRows(ledgerRows);
-  const cashBalance = summarizeCompanyLedgerRows(ledgerRows).net;
+  const loanRows = ledgerRows.filter(row => row.source === "LOAN");
+  const cashflowRows = loanRows.filter(row => row.transactionDate >= chartStart);
+  const groupCashflowRows = ledgerRows.filter(row => row.transactionDate >= chartStart);
+  const lifetimeFinance = summarizeLoanFinanceRows(loanRows);
+  const cashBalance = summarizeCompanyLedgerRows(loanRows).net;
   const contractsById = new Map(contracts.map(contract => [contract.id, contract]));
   const upfrontInterestRows = getUpfrontInterestRows(contracts, now)
     .filter(row => row.paidAt >= chartStart);
   const upfrontInterestTotal = upfrontInterestRows.reduce((sum, row) => sum + row.amount, 0);
-  const capitalRows = ledgerRows.filter(row => {
+  const capitalRows = loanRows.filter(row => {
     const code = normalizeLoanFinanceCategoryCode(row.categoryCode);
     return (row.type === "INCOME" && code === "LOAN_CAPITAL_IN") || (row.type === "EXPENSE" && code === "LOAN_CAPITAL_OUT");
   });
@@ -74,6 +76,19 @@ export async function getLoanDashboardData() {
   const overdueFollowups = overdue.slice(0, 5);
 
   const cashflow = chartMonths.map(({ key, date }) => {
+    const rows = groupCashflowRows.filter(row => {
+      const parts = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Bangkok", year: "numeric", month: "2-digit" }).formatToParts(row.transactionDate);
+      return `${parts.find(part => part.type === "year")?.value}-${parts.find(part => part.type === "month")?.value}` === key;
+    });
+    const totals = summarizeCompanyLedgerRows(rows);
+    return {
+      key,
+      label: new Intl.DateTimeFormat("th-TH", { timeZone: "Asia/Bangkok", month: "short" }).format(date),
+      expense: totals.expense,
+      income: totals.income,
+    };
+  });
+  const loanCashflow = chartMonths.map(({ key, date }) => {
     const rows = cashflowRows.filter(row => {
       const parts = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Bangkok", year: "numeric", month: "2-digit" }).formatToParts(row.transactionDate);
       return `${parts.find(part => part.type === "year")?.value}-${parts.find(part => part.type === "month")?.value}` === key;
@@ -86,7 +101,8 @@ export async function getLoanDashboardData() {
       income: totals.income,
     };
   });
-  const annualCashflow = summarizeCompanyLedgerRows(cashflowRows);
+  const annualCashflow = summarizeCompanyLedgerRows(groupCashflowRows);
+  const loanAnnualCashflow = summarizeCompanyLedgerRows(cashflowRows);
   const finance = summarizeLoanFinanceRows(cashflowRows);
   const outstanding = openContracts.reduce((sum, contract) => ({
     principal: sum.principal + contract.balance.principal,
@@ -98,5 +114,5 @@ export async function getLoanDashboardData() {
     .reduce((sum, contract) => sum + Math.max(0, contract.netDisbursed - contract.payments
       .filter(payment => payment.type === "DISBURSEMENT" && thaiDay(payment.paidAt) <= today)
       .reduce((paid, payment) => paid + payment.amount, 0)), 0);
-  return { now, year, dateParts, contracts, ledgerRows, cashflowRows, lifetimeFinance, cashBalance, contractsById, upfrontInterestRows, upfrontInterestTotal, capitalRows, reviewQueue, openContracts, dueToday, overdue, overdueBalance, recentReviewQueue, reviewPrincipalTotal, overdueFollowups, cashflow, annualCashflow, finance, outstanding, pendingDisbursement };
+  return { now, year, dateParts, contracts, ledgerRows, cashflowRows, lifetimeFinance, cashBalance, contractsById, upfrontInterestRows, upfrontInterestTotal, capitalRows, reviewQueue, openContracts, dueToday, overdue, overdueBalance, recentReviewQueue, reviewPrincipalTotal, overdueFollowups, cashflow, loanCashflow, annualCashflow, loanAnnualCashflow, finance, outstanding, pendingDisbursement };
 }

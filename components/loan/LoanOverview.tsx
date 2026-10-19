@@ -37,7 +37,7 @@ function borrowerName(borrower: {
 }
 
 export default async function LoanOverview() {
-  const { now, year, dateParts, contracts, cashflowRows, lifetimeFinance, cashBalance, contractsById, upfrontInterestRows, upfrontInterestTotal, capitalRows, openContracts, dueToday, overdue, overdueBalance, recentReviewQueue, reviewPrincipalTotal, overdueFollowups, cashflow, annualCashflow, finance, outstanding, pendingDisbursement } = await getLoanDashboardData();
+  const { now, year, dateParts, contracts, cashflowRows, lifetimeFinance, cashBalance, contractsById, upfrontInterestRows, upfrontInterestTotal, capitalRows, openContracts, dueToday, overdue, overdueBalance, recentReviewQueue, reviewPrincipalTotal, overdueFollowups, loanCashflow: cashflow, loanAnnualCashflow: annualCashflow, finance, outstanding, pendingDisbursement } = await getLoanDashboardData();
   const system = SYSTEMS.loan;
   const capitalFacts = [
     { label: "เงินสดคงเหลือตามบัญชี", value: cashBalance, note: "เงินรับทั้งหมด − เงินจ่ายทั้งหมดถึงวันนี้" },

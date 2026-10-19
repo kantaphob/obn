@@ -1,23 +1,56 @@
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { getLoanDashboardData } from "@/lib/loan-dashboard";
+import { prisma } from "@/lib/prisma";
+import { summarizeCompanyLedgerRows } from "@/lib/company-ledger-summary";
 
 const money = (value: number) => new Intl.NumberFormat("th-TH", { style: "currency", currency: "THB" }).format(value / 100);
 
 export default async function LoanDashboardSummary() {
-  const { year, now, cashBalance, lifetimeFinance, outstanding, annualCashflow, finance, upfrontInterestTotal, cashflow, openContracts, overdue, overdueBalance } = await getLoanDashboardData();
-  const maxFlow = Math.max(1, ...cashflow.flatMap(month => [month.income, month.expense]));
+  const { year, now, ledgerRows, outstanding, annualCashflow, finance, upfrontInterestTotal, cashflow, overdue, overdueBalance } = await getLoanDashboardData();
+  const [companies, branches] = await Promise.all([
+    prisma.companySequence.findMany({ where: { type: "COMPANY" }, select: { companycode: true, nameTH: true, nameEN: true } }),
+    prisma.branchCodeSequence.findMany({ where: { type: "BRANCH" }, select: { companycode: true, branchcode: true, nameTH: true, nameEN: true } }),
+  ]);
+  const allTime = summarizeCompanyLedgerRows(ledgerRows);
+  const branchRows = companies.flatMap((company) => {
+    const companyRows = ledgerRows.filter((row) => row.companyCode === company.companycode);
+    const branchByCode = new Map<string, { branchcode: string; name: string }>();
+    branchByCode.set(company.companycode, { branchcode: company.companycode, name: "สำนักงานใหญ่" });
+    branches.filter((branch) => branch.companycode === company.companycode).forEach((branch) => {
+      branchByCode.set(branch.branchcode, { branchcode: branch.branchcode, name: branch.nameTH || branch.nameEN || `สาขา ${branch.branchcode}` });
+    });
+    companyRows.forEach((row) => {
+      const branchCode = row.branchCode || company.companycode;
+      if (!branchByCode.has(branchCode)) branchByCode.set(branchCode, { branchcode: branchCode, name: branchCode === company.companycode ? "สำนักงานใหญ่" : `สาขา ${branchCode}` });
+    });
+    return [...branchByCode.values()].map((branch) => {
+      const rows = companyRows.filter((row) => (row.branchCode || company.companycode) === branch.branchcode);
+      const totals = summarizeCompanyLedgerRows(rows);
+      return { company: company.nameTH || company.nameEN || company.companycode, companyCode: company.companycode, ...branch, ...totals, count: rows.length };
+    });
+  });
+  const unassignedRows = ledgerRows.filter((row) => !row.companyCode);
+  if (unassignedRows.length) {
+    const totals = summarizeCompanyLedgerRows(unassignedRows);
+    branchRows.push({ company: "ยังไม่ระบุบริษัท", companyCode: "", branchcode: "", name: "ยังไม่ระบุสาขา", ...totals, count: unassignedRows.length });
+  }
   const metrics = [
-    { label: "เงินสดคงเหลือตามบัญชี", amount: cashBalance, note: "เงินรับ − เงินจ่ายสะสมถึงวันนี้" },
-    { label: "ทุนสุทธิคงอยู่ในกิจการ", amount: lifetimeFinance.capitalReceived - lifetimeFinance.capitalWithdrawn, note: "ทุนเข้า " + money(lifetimeFinance.capitalReceived) + " · ถอน " + money(lifetimeFinance.capitalWithdrawn) },
-    { label: "เงินต้นที่ยังอยู่กับผู้กู้", amount: outstanding.principal, note: `${openContracts.length} สัญญาที่ยังมียอดคงเหลือ` },
+    { label: "เงินสดสุทธิ OBN รวม 5 บริษัท", amount: allTime.net, note: `รับ ${money(allTime.income)} · จ่าย ${money(allTime.expense)}` },
+    { label: "รายรับสะสมทุกบริษัท", amount: allTime.income, note: `${ledgerRows.filter((row) => row.type === "INCOME").length.toLocaleString("th-TH")} รายการ · ทุกแหล่งรับเงิน` },
+    { label: "รายจ่ายสะสมทุกบริษัท", amount: allTime.expense, note: `${ledgerRows.filter((row) => row.type === "EXPENSE").length.toLocaleString("th-TH")} รายการ · ทุกแหล่งจ่ายเงิน` },
   ];
+  const maxFlow = Math.max(1, ...cashflow.flatMap(month => [month.income, month.expense]));
   return <section aria-labelledby="group-loan-title" className="mb-7 rounded-3xl border border-white/80 bg-white/75 p-5 shadow-[0_8px_30px_#315b4910] sm:p-6">
     <header className="mb-5 flex flex-wrap items-center justify-between gap-3">
-      <div><p className="text-[10px] font-semibold tracking-[2px] text-teal-700">LOAN MANAGEMENT</p><h2 id="group-loan-title" className="mt-1 text-xl font-semibold text-slate-800">สรุปบริษัท Loan</h2><p className="mt-1 text-xs text-slate-500">ข้อมูลจากระบบสินเชื่อและสมุดบัญชี · อัปเดตทุก 10 วินาที · ล่าสุด {new Intl.DateTimeFormat("th-TH", { timeZone: "Asia/Bangkok", hour: "2-digit", minute: "2-digit", second: "2-digit" }).format(now)}</p></div>
+      <div><p className="text-[10px] font-semibold tracking-[2px] text-teal-700">OBN GROUP FINANCE</p><h2 id="group-loan-title" className="mt-1 text-xl font-semibold text-slate-800">ภาพรวมรับ–จ่าย OBN · {companies.length} บริษัท</h2><p className="mt-1 text-xs text-slate-500">รวมรายการสะสมจากสำนักงานใหญ่และทุกสาขา · อัปเดตทุก 10 วินาที · ล่าสุด {new Intl.DateTimeFormat("th-TH", { timeZone: "Asia/Bangkok", hour: "2-digit", minute: "2-digit", second: "2-digit" }).format(now)}</p></div>
       <Link href="/dashboard/loan" className="inline-flex items-center gap-2 rounded-full bg-teal-800 px-4 py-2 text-xs font-medium text-white">ดูภาพรวมสินเชื่อ <ArrowUpRight size={15} aria-hidden="true" /></Link>
     </header>
     <dl className="grid gap-3 md:grid-cols-3">{metrics.map(metric => <div key={metric.label} className="rounded-2xl border border-teal-100 bg-gradient-to-br from-teal-50 to-white p-4"><dt className="text-xs text-slate-600">{metric.label}</dt><dd className="mt-2 break-words text-2xl font-semibold tabular-nums text-teal-900">{money(metric.amount)}</dd><dd className="mt-2 text-[11px] text-slate-500">{metric.note}</dd></div>)}</dl>
+    <section className="mt-4 overflow-hidden rounded-2xl border border-slate-100" aria-labelledby="obn-branch-ledger-title">
+      <header className="flex flex-wrap items-end justify-between gap-2 p-4"><div><h3 id="obn-branch-ledger-title" className="text-sm font-semibold text-slate-800">รับ–จ่ายแยกตามบริษัทและสาขา</h3><p className="mt-1 text-[10px] text-slate-500">ยอดสะสมตั้งแต่รายการแรก · รายการที่ไม่มีรหัสสาขาจัดเป็นสำนักงานใหญ่</p></div><Link href="/dashboard/loan/ledger" className="inline-flex items-center gap-1 text-xs font-medium text-teal-700">เปิดสมุดบัญชี <ArrowUpRight size={13} aria-hidden="true" /></Link></header>
+      <div className="overflow-x-auto"><table className="w-full min-w-[640px] text-xs"><caption className="sr-only">ยอดรับจ่ายสะสมแยกบริษัทและสาขา</caption><thead className="bg-slate-50 text-slate-500"><tr><th scope="col" className="px-4 py-2 text-left font-medium">บริษัท</th><th scope="col" className="px-4 py-2 text-left font-medium">สำนักงานใหญ่ / สาขา</th><th scope="col" className="px-4 py-2 text-right font-medium">รับ</th><th scope="col" className="px-4 py-2 text-right font-medium">จ่าย</th><th scope="col" className="px-4 py-2 text-right font-medium">สุทธิ</th><th scope="col" className="px-4 py-2 text-right font-medium">รายการ</th></tr></thead><tbody className="divide-y divide-slate-100">{branchRows.map((row) => <tr key={`${row.companyCode}-${row.branchcode || "unknown"}`}><th scope="row" className="px-4 py-2.5 text-left font-medium text-slate-700">{row.company}<span className="ml-1 font-normal text-slate-400">{row.companyCode}</span></th><td className="px-4 py-2.5 text-slate-600">{row.name}<span className="ml-1 text-slate-400">{row.branchcode}</span></td><td className="px-4 py-2.5 text-right tabular-nums text-emerald-700">{money(row.income)}</td><td className="px-4 py-2.5 text-right tabular-nums text-rose-700">{money(row.expense)}</td><td className={`px-4 py-2.5 text-right tabular-nums font-medium ${row.net < 0 ? "text-rose-700" : "text-slate-700"}`}>{money(row.net)}</td><td className="px-4 py-2.5 text-right tabular-nums text-slate-500">{row.count}</td></tr>)}</tbody></table></div>
+    </section>
     <div className="mt-4 grid gap-4 lg:grid-cols-[1.5fr_1fr]">
       <section className="min-w-0 rounded-2xl border border-slate-100 p-4" aria-labelledby="group-loan-cashflow">
         <div className="flex flex-wrap items-center justify-between gap-2"><h3 id="group-loan-cashflow" className="text-sm font-semibold text-slate-800">รับ–จ่ายทั้งปี {year + 543}</h3><span className="text-[10px] text-slate-500">ม.ค.–ธ.ค. · รับจริงถึงวันนี้</span></div>
@@ -27,7 +60,7 @@ export default async function LoanDashboardSummary() {
         <details className="mt-3 text-xs text-slate-500"><summary className="cursor-pointer">รายละเอียดรายเดือน</summary><table className="mt-2 w-full text-right"><caption className="sr-only">เงินรับและเงินจ่ายรายเดือน</caption><thead><tr><th scope="col" className="text-left">เดือน</th><th scope="col">เงินรับ</th><th scope="col">เงินจ่าย</th></tr></thead><tbody>{cashflow.map(month => <tr key={month.key}><th scope="row" className="py-1 text-left font-normal">{month.label}</th><td>{money(month.income)}</td><td>{money(month.expense)}</td></tr>)}</tbody></table></details>
         <p className="mt-3 text-[10px] text-slate-400">ยอดรับรวมเงินต้นและเงินเพิ่มทุน จึงไม่ใช่กำไร</p>
       </section>
-      <section className="rounded-2xl bg-slate-50 p-4" aria-labelledby="group-loan-interest"><h3 id="group-loan-interest" className="text-sm font-semibold text-slate-800">ดอกเบี้ยและยอดติดตาม</h3><dl className="mt-3 divide-y divide-slate-200/70">{[
+      <section className="rounded-2xl bg-slate-50 p-4" aria-labelledby="group-loan-interest"><h3 id="group-loan-interest" className="text-sm font-semibold text-slate-800">สินเชื่อ Loan · ดอกเบี้ยและยอดติดตาม</h3><dl className="mt-3 divide-y divide-slate-200/70">{[
         { label: `ดอกเบี้ยรับ ปี ${year + 543}`, amount: finance.interestReceived },
         { label: `ดอกเบี้ยหักล่วงหน้า ปี ${year + 543}`, amount: upfrontInterestTotal },
         { label: "ดอกเบี้ยรอรับ ณ วันนี้", amount: outstanding.interest },

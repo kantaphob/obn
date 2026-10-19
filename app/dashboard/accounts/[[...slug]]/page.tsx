@@ -3,9 +3,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { SYSTEMS, findItem } from "@/lib/nav";
 import WorkspaceLoading from "@/components/ui/WorkspaceLoading";
+import AccountsOverview from "@/components/accounts/AccountsOverview";
 
 async function AccountsContent({ params }: { params: Promise<{ slug?: string[] }> }) {
   const { slug = [] } = await params;
+  if (slug.length === 0) return <AccountsOverview />;
   const href = ["/dashboard/accounts", ...slug].join("/");
   const found = findItem(SYSTEMS.dashboard, href);
   if (!found || !href.startsWith("/dashboard/accounts")) notFound();

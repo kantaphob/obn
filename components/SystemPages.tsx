@@ -22,5 +22,5 @@ export function SubPage({ system, group, label }: { system: System; group: strin
 }
 
 export function GroupOverview() {
-  return <CompanyDirectory><Suspense fallback={<div className="mb-6 rounded-2xl bg-white/70 p-6 text-sm text-slate-500" role="status">กำลังโหลดสรุปบริษัท Loan…</div>}><LoanDashboardSummary /></Suspense></CompanyDirectory>;
+  return <CompanyDirectory><Suspense fallback={<div className="mb-6 rounded-2xl bg-white/70 p-6 text-sm text-slate-500" role="status">กำลังโหลดภาพรวมการเงิน OBN…</div>}><LoanDashboardSummary /></Suspense></CompanyDirectory>;
 }

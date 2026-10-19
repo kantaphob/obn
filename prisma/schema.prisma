@@ -42,6 +42,7 @@ model CompanyLedgerEntry {
   method          String   @default("CASH")
   reference       String   @default("")
   note            String   @default("")
+  attachmentUrl   String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
@@ -863,4 +864,15 @@ model Role {
   isSystem    Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+//---------------------------------------------------
+// YouTube Family Subscription
+//---------------------------------------------------
+model YoutubeFamilySubscription {
+  id String @id @default(cuid())
+  familyName String
+  mailacc String @unique
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

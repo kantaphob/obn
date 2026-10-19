@@ -1,6 +1,7 @@
 import { authorizeApiRequest, getCurrentAccess } from "@/lib/authorization";
 import { prisma } from "@/lib/prisma";
 import { calculateCompanyLedgerTax } from "@/lib/company-ledger-tax";
+import { isLoanFinanceCategoryCode } from "@/lib/company-ledger-summary";
 
 type Context = { params: Promise<{ id: string }> };
 const METHODS = ["CASH", "BANK_TRANSFER", "CARD", "OTHER"] as const;
@@ -58,8 +59,8 @@ export async function PATCH(request: Request, context: Context) {
   }
 
   const category = await prisma.companyFinanceCategory.findFirst({ where: { id: categoryId, direction: type } });
-  if (!category || (!category.isActive && existing.financeCategoryId !== category.id)) {
-    return Response.json({ error: "กรุณาเลือกหมวดหมู่ที่เปิดใช้งานสำหรับประเภทรายการนี้" }, { status: 400 });
+  if (!category || !isLoanFinanceCategoryCode(category.code) || (!category.isActive && existing.financeCategoryId !== category.id)) {
+    return Response.json({ error: "กรุณาเลือกหมวดหมู่ Loan ที่เปิดใช้งานสำหรับประเภทรายการนี้" }, { status: 400 });
   }
 
   const entry = await prisma.companyLedgerEntry.update({

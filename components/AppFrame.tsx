@@ -15,7 +15,9 @@ export default function AppFrame({ children, sidebar = true, theme = "white" }: 
     {sidebar && <Suspense fallback={<div aria-hidden="true" className={`${styles.sidebar} animate-pulse`} />}><Sidebar /></Suspense>}
     <main className={`${styles.main} [&:has(.loan-theme)]:[background:#f8f3fc] [&:has(.loan-theme)]:[--text:#2d1c43] [&:has(.loan-theme)]:[--muted:#776587] [&:has(.loan-theme)]:[border-color:#eadcf5]`} id="workspace-content">
       <AuthSessionControl />
-      <WorkspaceAccessGate>{children}</WorkspaceAccessGate>
+      <Suspense fallback={<div aria-live="polite" className="mx-auto mt-12 max-w-xl rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 text-center text-sm text-[var(--muted)]">กำลังตรวจสอบสิทธิ์การเข้าถึง…</div>}>
+        <WorkspaceAccessGate>{children}</WorkspaceAccessGate>
+      </Suspense>
     </main>
   </WorkspaceTheme></UserAccessProvider>;
 }

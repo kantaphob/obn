@@ -8,7 +8,7 @@ import { useWorkspaceStatus } from "./ToastProvider";
 import { SYSTEMS, TOOLS, type SystemKey } from "@/lib/nav";
 import { useUserAccess } from "@/components/UserAccessProvider";
 
-const mainKeys: SystemKey[] = ["dashboard", "construction", "buildin", "agricultures", "loan"];
+const mainKeys: SystemKey[] = ["dashboard", "construction", "buildin", "agricultures", "loan", "youtube", "netflix"];
 const group = "flex w-full shrink-0 flex-col items-center gap-1.5 rounded-[19px] border border-[#e2e8f0] bg-white px-1 py-2 shadow-[0_3px_10px_#64748b14] max-[760px]:w-auto max-[760px]:flex-row max-[760px]:px-2 max-[760px]:py-2";
 const button = "relative grid size-11 shrink-0 place-items-center rounded-[12px] border border-[#e2e8f0] bg-[var(--ws-surface,#f8fafc)] text-[color:color-mix(in_srgb,var(--shortcut)_42%,#243047)]! shadow-[0_2px_5px_#64748b12] transition-[background,box-shadow,transform] hover:border-[#cbd5e1] hover:bg-[var(--ws-soft,#f1f5f9)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--shortcut)] aria-[current=page]:border-white/50 aria-[current=page]:bg-[color-mix(in_srgb,var(--shortcut)_24%,white)] aria-[current=page]:text-[#171a19]! aria-[current=page]:shadow-[inset_0_0_0_1px_#cbd5e1,0_3px_8px_#64748b18] motion-reduce:transition-none";
 const accent = (color: string) => ({ "--shortcut": color } as CSSProperties);

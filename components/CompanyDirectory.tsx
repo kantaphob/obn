@@ -9,9 +9,39 @@ import {
   Layers3,
   Search,
 } from "lucide-react";
-import { COMPANY_KEYS, SYSTEMS } from "@/lib/nav";
+import { SYSTEMS } from "@/lib/nav";
 
-const companies = COMPANY_KEYS.map((key) => SYSTEMS[key]);
+const companies = [
+  {
+    ...SYSTEMS.dashboard,
+    label: "OBN Co., Ltd.",
+    href: "/dashboard/accounts",
+    description: "บริษัทหลัก · ภาพรวมบัญชีและการเงินของกลุ่มบริษัท",
+    groups: SYSTEMS.dashboard.groups
+      .filter((group) => group.title === "Accounts")
+      .map((group) => ({ ...group, title: "บัญชีและการเงิน" })),
+  },
+  {
+    ...SYSTEMS.loan,
+    label: "Loan-OBN Co., Ltd.",
+    description: "ระบบบริหารการกู้ยืมและลูกหนี้",
+  },
+  {
+    ...SYSTEMS.construction,
+    label: "Construction-OBN Co., Ltd.",
+    description: "ระบบรับเหมาก่อสร้าง",
+  },
+  {
+    ...SYSTEMS.buildin,
+    label: "Build-In-OBN Co., Ltd.",
+    description: "ระบบงานตกแต่งภายใน",
+  },
+  {
+    ...SYSTEMS.agricultures,
+    label: "Agriculture-OBN Co., Ltd.",
+    description: "ระบบการเกษตร",
+  },
+];
 const categories = Array.from(
   new Set(companies.flatMap((company) => company.groups.filter((group) => group.title !== "ภาพรวม").map((group) => group.title))),
 );
@@ -53,11 +83,11 @@ export default function CompanyDirectory({ children }: { children?: ReactNode })
         <div>
           <p className="mb-2 text-[10px] font-semibold tracking-[2px] text-[#81877e]">OBNITHI GROUP / COMPANY DIRECTORY</p>
           <h1 className="text-[clamp(26px,3vw,38px)] font-medium leading-tight tracking-[-1.3px] text-[#272d28]">ภาพรวมกลุ่มบริษัท</h1>
-          <p className="mt-2 text-[13px] text-[#737a72]">ดูภาพรวมธุรกิจ หมวดงาน และเมนูของแต่ละบริษัทในที่เดียว</p>
+          <p className="mt-2 text-[13px] text-[#737a72]">ภาพรวมรับจ่ายทุกบริษัทและสาขา พร้อมพื้นที่ทำงานแยกตามบริษัท</p>
         </div>
         <div className="hidden items-center gap-2 rounded-full border border-[#dce2d9] bg-white/55 px-3 py-2 text-[11px] text-[#687267] min-[761px]:flex">
-          <span className="size-2 rounded-full bg-slate-400" />
-          ภาพรวมกลุ่มบริษัท
+          <span className="size-2 rounded-full bg-teal-600" />
+          บริษัททั้งหมด · รวมสาขา
         </div>
       </header>
 
@@ -100,7 +130,7 @@ export default function CompanyDirectory({ children }: { children?: ReactNode })
       </section>
 
       <div className="mb-3 flex items-center justify-between gap-3">
-        <h2 className="text-[14px] font-medium text-[#303831]">บริษัทและหมวดงาน</h2>
+        <h2 className="text-[14px] font-medium text-[#303831]">พื้นที่ทำงานแยกตามบริษัท</h2>
         <span className="text-[10px] text-[#838a80]">แสดง {visibleCompanies.length} จาก {companies.length} บริษัท</span>
       </div>
 

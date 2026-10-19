@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { formatBorrowerCode } from "@/lib/borrower-code";
+import { isLoanFinanceCategoryCode } from "@/lib/company-ledger-summary";
 
 export type CompanyLedgerRow = {
   id: string;
@@ -23,6 +24,7 @@ export type CompanyLedgerRow = {
   method: string;
   reference: string;
   note: string;
+  attachmentUrl: string | null;
   source: "MANUAL" | "LOAN";
   loanReceiptBreakdown?: { principal: number; interest: number; penalty: number };
 };
@@ -93,12 +95,14 @@ export async function getCompanyLedgerRows(from: Date | null, to: Date | null): 
   const manualRows: CompanyLedgerRow[] = manualEntries.flatMap((entry) => {
     if (entry.type !== "INCOME" && entry.type !== "EXPENSE") return [];
     const { financeCategory, ...manualEntry } = entry;
+    const categoryCode = financeCategory?.code ?? "";
+    const isLoanFinanceEntry = isLoanFinanceCategoryCode(categoryCode);
     return [{
       ...manualEntry,
       type: entry.type,
       category: financeCategory?.name ?? categoryByName.get(`${entry.type}:${entry.category}`) ?? entry.category,
-      categoryCode: financeCategory?.code ?? "",
-      source: "MANUAL",
+      categoryCode,
+      source: isLoanFinanceEntry ? "LOAN" : "MANUAL",
     }];
   });
   const repaymentRows: CompanyLedgerRow[] = repayments.map((repayment) => {
@@ -128,6 +132,7 @@ export async function getCompanyLedgerRows(from: Date | null, to: Date | null): 
       method: repayment.method,
       reference: repayment.receiptNumber,
       note: repayment.note ?? "",
+      attachmentUrl: null,
       source: "LOAN" as const,
     };
   });
@@ -165,6 +170,7 @@ export async function getCompanyLedgerRows(from: Date | null, to: Date | null): 
       method: payment.method,
       reference: payment.type === "DISBURSEMENT" ? payment.note?.match(/^เลขอ้างอิงการจ่าย (.+)$/)?.[1] ?? "" : "",
       note: payment.type === "DISBURSEMENT" && payment.note?.startsWith("เลขอ้างอิงการจ่าย ") ? "" : payment.note ?? "",
+      attachmentUrl: null,
       source: "LOAN",
     }];
   });

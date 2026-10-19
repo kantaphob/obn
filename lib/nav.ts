@@ -1,4 +1,6 @@
 import {
+  SquarePlay,
+  Clapperboard,
   BarChart3,
   Boxes,
   BuildingComplex,
@@ -43,6 +45,8 @@ export type SystemKey =
   | "buildin"
   | "agricultures"
   | "loan"
+  | "youtube"
+  | "netflix"
   | "admin";
 export type System = {
   key: SystemKey;
@@ -66,8 +70,10 @@ const make =
 
 const c = make("/dashboard/construction");
 const b = make("/dashboard/buildin");
-const a = make("/dashboard/agricultures");
+const a = make("/dashboard/agriculture");
 const l = make("/dashboard/loan");
+const yt = make("/dashboard/youtube");
+const nf = make("/dashboard/netflix");
 const ad = make("/admin");
 
 export const SYSTEMS: Record<SystemKey, System> = {
@@ -239,6 +245,8 @@ export const SYSTEMS: Record<SystemKey, System> = {
           a("products", "สินค้า", Package),
           a("stock", "สต็อกคงเหลือ", Boxes),
           a("lots", "ล็อตและวันหมดอายุ", AlarmClock),
+          a("categories", "หมวดหมู่", AlarmClock),
+          a("classifier", "ลักษณะนาม", AlarmClock),
         ],
       },
       {
@@ -307,6 +315,28 @@ export const SYSTEMS: Record<SystemKey, System> = {
     ],
   },
 
+  youtube: {
+    key: "youtube",
+    label: "Yture Co., Ltd.",
+    shortLabel: "Yture",
+    description: "พื้นที่ทำงาน Yture Co., Ltd.",
+    href: "/dashboard/youtube",
+    color: "#94a3b8",
+    icon: SquarePlay,
+    stats: [],
+    groups: [{ title: "ภาพรวม", items: [yt("", "ภาพรวม Yture", LayoutDashboard)] }],
+  },
+  netflix: {
+    key: "netflix",
+    label: "Nf Co., Ltd.",
+    shortLabel: "Nf",
+    description: "พื้นที่ทำงาน Nf Co., Ltd.",
+    href: "/dashboard/netflix",
+    color: "#94a3b8",
+    icon: Clapperboard,
+    stats: [],
+    groups: [{ title: "ภาพรวม", items: [nf("", "ภาพรวม Nf", LayoutDashboard)] }],
+  },
   admin: {
     key: "admin",
     label: "ผู้ดูแลระบบ",
@@ -365,6 +395,7 @@ export function getSystem(pathname: string): System {
   const seg = pathname.startsWith("/dashboard/")
     ? pathname.split("/")[2]
     : undefined;
+  if (seg === "agriculture") return SYSTEMS.agricultures;
   if (seg && seg in SYSTEMS && seg !== "dashboard" && seg !== "admin")
     return SYSTEMS[seg as SystemKey];
   return SYSTEMS.dashboard;
@@ -375,6 +406,8 @@ export const COMPANY_KEYS: SystemKey[] = [
   "buildin",
   "agricultures",
   "loan",
+  "youtube",
+  "netflix",
 ];
 
 /** Flatten navigation for route lookup and icon-only sidebars. */

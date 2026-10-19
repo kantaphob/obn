@@ -15,8 +15,12 @@ export async function GET(request: Request) {
   const params = new URL(request.url).searchParams;
   const from = dateInput(params.get("from"));
   const to = dateInput(params.get("to"));
+  const source = params.get("source");
   const ledgerRows = await getCompanyLedgerRows(from, to);
-  const entries = access?.accessConfigured ? ledgerRows.filter((entry) => entry.companyCode && access.companyCodes.includes(entry.companyCode)) : ledgerRows;
+  const companyScopedEntries = access?.accessConfigured ? ledgerRows.filter((entry) => entry.companyCode && access.companyCodes.includes(entry.companyCode)) : ledgerRows;
+  const entries = source === "MANUAL" || source === "LOAN"
+    ? companyScopedEntries.filter((entry) => entry.source === source)
+    : companyScopedEntries;
   const rows = [
     ["วันที่", "เวลา", "เลขที่รายการ", "รหัสสำนักงานใหญ่", "รหัสสาขา", "ประเภท", "รายการ", "หมวดหมู่", "ผู้เกี่ยวข้อง", "ช่องทาง", "เลขอ้างอิง", "แหล่งข้อมูล", "ยอดฐาน (บาท)", "VAT (%)", "VAT (บาท)", "WHT (%)", "WHT (บาท)", "รายรับสุทธิ (บาท)", "รายจ่ายสุทธิ (บาท)", "หมายเหตุ"],
     ...entries.map((entry) => [
@@ -28,7 +32,7 @@ export async function GET(request: Request) {
       entry.type === "INCOME" ? "รายรับ" : "รายจ่าย", entry.title, entry.category, entry.party,
       entry.method === "BANK_TRANSFER" ? "โอนเงิน" : entry.method === "CARD" ? "บัตร" : entry.method === "OTHER" ? "อื่นๆ" : "เงินสด",
       entry.reference, entry.source === "LOAN" ? "รายการสินเชื่อ" : "บันทึกเอง",
-      entry.source === "MANUAL" ? ((entry.baseAmount ?? entry.amount) / 100).toFixed(2) : "",
+      entry.baseAmount !== null || entry.documentNumber !== null ? ((entry.baseAmount ?? entry.amount) / 100).toFixed(2) : "",
       entry.vatRateBps === null ? "" : (entry.vatRateBps / 100).toFixed(2),
       entry.vatAmount === null ? "" : (entry.vatAmount / 100).toFixed(2),
       entry.whtRateBps === null ? "" : (entry.whtRateBps / 100).toFixed(2),

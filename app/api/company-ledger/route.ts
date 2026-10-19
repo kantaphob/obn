@@ -2,6 +2,7 @@ import { authorizeApiRequest, getCurrentAccess } from "@/lib/authorization";
 import { prisma } from "@/lib/prisma";
 import { getCompanyLedgerRows } from "@/lib/company-ledger";
 import { calculateCompanyLedgerTax } from "@/lib/company-ledger-tax";
+import { isLoanFinanceCategoryCode } from "@/lib/company-ledger-summary";
 
 const TYPES = ["INCOME", "EXPENSE"] as const;
 const METHODS = ["CASH", "BANK_TRANSFER", "CARD", "OTHER"] as const;
@@ -33,6 +34,7 @@ export async function GET(request: Request) {
   const access = await getCurrentAccess();
   const params = new URL(request.url).searchParams;
   const type = params.get("type");
+  const source = params.get("source");
   const from = dateFromInput(params.get("from"));
   const to = dateFromInput(params.get("to"));
   const query = text(params.get("q"), 100);
@@ -40,6 +42,8 @@ export async function GET(request: Request) {
   const entries = await getCompanyLedgerRows(from, to);
   const companyScopedEntries = access?.accessConfigured ? entries.filter((entry) => entry.companyCode && access.companyCodes.includes(entry.companyCode)) : entries;
   const filtered = companyScopedEntries.filter((entry) => {
+    if (source === "LOAN" && entry.source !== "LOAN") return false;
+    if (source === "MANUAL" && entry.source !== "MANUAL") return false;
     if (type && type !== "ALL" && TYPES.includes(type as (typeof TYPES)[number]) && entry.type !== type) return false;
     if (!query) return true;
     return `${entry.title} ${entry.category} ${entry.party} ${entry.reference} ${entry.note}`.toLocaleLowerCase("th-TH").includes(query.toLocaleLowerCase("th-TH"));
@@ -74,15 +78,15 @@ export async function POST(request: Request) {
   if (access?.accessConfigured && !access.companyCodes.includes(companyCode)) return Response.json({ error: "บัญชีนี้ไม่มีสิทธิ์เข้าถึงบริษัทที่เลือก" }, { status: 403 });
   if (!METHODS.includes(method as (typeof METHODS)[number])) return Response.json({ error: "ช่องทางชำระเงินไม่ถูกต้อง" }, { status: 400 });
   const financeCategory = await prisma.companyFinanceCategory.findFirst({ where: { id: categoryId, direction: type, isActive: true } });
-  if (!financeCategory) return Response.json({ error: "กรุณาเลือกหมวดหมู่ที่เปิดใช้งานสำหรับประเภทรายการนี้" }, { status: 400 });
+  if (!financeCategory || !isLoanFinanceCategoryCode(financeCategory.code)) return Response.json({ error: "กรุณาเลือกหมวดหมู่ Loan ที่เปิดใช้งานสำหรับประเภทรายการนี้" }, { status: 400 });
 
   let entry;
   try {
     entry = await prisma.$transaction(async (tx) => {
-      const [company, branch] = await Promise.all([
-        tx.companySequence.findFirst({ where: { companycode: companyCode, type: "COMPANY", status: "ACTIVE" }, select: { companycode: true } }),
-        tx.branchCodeSequence.findFirst({ where: { companycode: companyCode, branchcode: branchCode, type: "BRANCH", status: "ACTIVE" }, select: { branchcode: true } }),
-      ]);
+      const company = await tx.companySequence.findFirst({ where: { companycode: companyCode, type: "COMPANY", status: "ACTIVE" }, select: { companycode: true } });
+      const branch = branchCode === companyCode
+        ? { branchcode: companyCode }
+        : await tx.branchCodeSequence.findFirst({ where: { companycode: companyCode, branchcode: branchCode, type: "BRANCH", status: "ACTIVE" }, select: { branchcode: true } });
       if (!company || !branch) throw new Error("ไม่พบสำนักงานใหญ่หรือสาขาที่เปิดใช้งาน");
 
       const year = Number(new Intl.DateTimeFormat("en", { timeZone: "Asia/Bangkok", year: "numeric" }).format(transactionDate));

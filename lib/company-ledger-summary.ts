@@ -11,6 +11,10 @@ export function normalizeLoanFinanceCategoryCode(code: string): string {
   return legacyCodes[code] ?? code;
 }
 
+export function isLoanFinanceCategoryCode(code: string): boolean {
+  return code.startsWith("LOAN_") || code.startsWith("LEGACY_");
+}
+
 // Receipt totals already include their principal, interest, and penalty components.
 // These components classify cash received; they must not be added to cash income again.
 export function summarizeLoanFinanceRows(rows: ReadonlyArray<{
