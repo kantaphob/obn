@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import "./theme.css";
+import "./ui-kit.css";
 
 export const instant = false;
 

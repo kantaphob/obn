@@ -45,3 +45,34 @@
 @media(max-width:900px) { .contracts-metrics { grid-template-columns:repeat(2,minmax(0,1fr)); }.contracts-metric { padding:16px; } }
 @media(max-width:560px) { .contracts-workspace.lx-page { padding:20px 12px; }.contracts-metrics { gap:10px; }.contracts-metric { gap:10px;padding:13px; }.contracts-metric-icon { width:36px;height:36px;border-radius:10px; }.contracts-metric strong { font-size:23px; }.contracts-metric-label { font-size:11px; }.contracts-drafts summary small { display:none; }.contracts-filters { padding:0 16px 16px; }.contracts-list-heading { padding:18px 16px 14px; }.contracts-status-filter,.contracts-status-filter select { flex:1; }.contracts-order { font-size:11px; } }
 @media(prefers-reduced-motion:reduce) { .contracts-metric { transition:none; } }
+
+/* Compact, single-line actions. Horizontal scrolling belongs to the table. */
+@reference "tailwindcss";
+@media screen {
+  #workspace-content .contracts-workspace .contract-register-table {
+    @apply text-xs! text-slate-700!;
+  }
+  #workspace-content .contracts-workspace .contract-register-table > thead > tr > th {
+    @apply px-3! py-2.5! text-[11px]!;
+  }
+  #workspace-content .contracts-workspace .contract-register-table > tbody > tr:not(.contract-register-detail-row) > td {
+    @apply px-3! py-2.5! text-xs!;
+  }
+  #workspace-content .contracts-workspace .contract-register-actions {
+    @apply flex! w-max! min-w-0! flex-nowrap! items-center! gap-1.5!;
+  }
+  #workspace-content .contracts-workspace .contract-register-actions :is(.lx-btn, button[data-loan-action]) {
+    @apply h-8! min-h-8! shrink-0! rounded-lg! px-2.5! py-1! text-[11px]! leading-5!;
+  }
+  #workspace-content .contracts-workspace .contract-register-open,
+  #workspace-content .contracts-workspace .contract-register-number {
+    @apply text-slate-700!;
+  }
+  #workspace-content .contracts-workspace .contract-register-detail-row > td {
+    @apply bg-slate-50! p-5!;
+  }
+  #workspace-content .contracts-workspace .contract-register-detail-grid :is(span, strong) { @apply text-slate-600!; }
+  @media (pointer: coarse) {
+    #workspace-content .contracts-workspace .contract-register-actions :is(.lx-btn, button[data-loan-action]) { @apply min-h-11!; }
+  }
+}

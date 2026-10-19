@@ -1,0 +1,74 @@
+@reference "tailwindcss";
+
+/* Shared loan UI. Scoped to operational screens, never printed contract documents. */
+@media screen {
+  #workspace-content .loan-theme {
+    --loan-control-height: 36px;
+    --loan-icon-size: 16px;
+    --loan-control-radius: 8px;
+  }
+  #workspace-content .loan-theme :is(.lx-btn, .cl-button, .ph-btn, .payment-save-button, .loan-log-pagination button, button[data-loan-action]) {
+    @apply inline-flex! h-9! min-h-9! w-auto! shrink-0! items-center! justify-center! gap-1.5! rounded-lg! border! border-solid! border-slate-200! bg-white! px-3! py-1.5! text-xs! font-medium! leading-5! whitespace-nowrap! text-slate-600! shadow-none! transition-colors! disabled:cursor-not-allowed! disabled:opacity-50!;
+  }
+  #workspace-content .loan-theme :is(.lx-btn, .cl-button, .ph-btn):hover:not(:disabled) {
+    @apply border-slate-300! bg-slate-50! text-slate-900!;
+  }
+  #workspace-content .loan-theme :is(.lx-btn.primary, .cl-button.primary, .ph-btn-primary, .payment-save-button) {
+    @apply border-slate-700! bg-slate-700! text-white!;
+  }
+  #workspace-content .loan-theme :is(.lx-btn.primary, .cl-button.primary, .ph-btn-primary, .payment-save-button):hover:not(:disabled) {
+    @apply border-slate-800! bg-slate-800! text-white!;
+  }
+  #workspace-content .loan-theme :is(.lx-btn.danger, button[data-loan-action="delete"], .borrower-discard-button) {
+    @apply border-red-200! bg-red-50! text-red-700!;
+  }
+  #workspace-content .loan-theme :is(.lx-btn.danger, button[data-loan-action="delete"], .borrower-discard-button):hover:not(:disabled) {
+    @apply border-red-300! bg-red-100! text-red-800!;
+  }
+  #workspace-content .loan-theme :is(.lx-icon-btn, .borrower-icon-button, .cl-close) {
+    @apply inline-flex! size-9! min-h-9! shrink-0! items-center! justify-center! rounded-lg! border! border-slate-200! bg-white! p-2! text-slate-600! shadow-none!;
+  }
+  #workspace-content .loan-theme :is(.lx-btn, .cl-button, .ph-btn, .lx-icon-btn, .borrower-icon-button, .cl-close, .payment-save-button, .loan-log-pagination button, button[data-loan-action]) svg {
+    @apply size-4! shrink-0! [stroke-width:1.8]!;
+  }
+  #workspace-content .loan-theme :is(.lx-btn, .cl-button, .ph-btn, .lx-icon-btn, .borrower-icon-button, .cl-close, .payment-save-button, .loan-log-pagination button, button[data-loan-action]):focus-visible {
+    @apply outline-2! outline-offset-2! outline-slate-500!;
+  }
+  #workspace-content .loan-theme :is(.lx-table, .borrower-table, .cl-table, .ar-table, .ap-table, .overdue-table, .approvals-table, .contract-register-table, .loan-log-table, .loan-monthly-data table) {
+    @apply w-full! border-collapse! text-[13px]! leading-[1.5]!;
+  }
+  #workspace-content .loan-theme :is(.lx-table, .borrower-table, .cl-table, .ar-table, .ap-table, .overdue-table, .approvals-table, .contract-register-table, .loan-log-table, .loan-monthly-data table) th {
+    @apply h-auto! border-slate-200! bg-slate-50! px-3! py-2.5! text-[11.5px]! font-medium! leading-5! text-slate-500! whitespace-nowrap!;
+  }
+  #workspace-content .loan-theme :is(.lx-table, .borrower-table, .cl-table, .ar-table, .ap-table, .overdue-table, .approvals-table, .contract-register-table, .loan-log-table, .loan-monthly-data table) td {
+    @apply h-auto! border-slate-100! px-3! py-2.5! text-[13px]! leading-[1.5]! align-middle!;
+  }
+  #workspace-content .loan-theme :is(.lx-table, .borrower-table, .cl-table, .ar-table, .ap-table, .overdue-table, .approvals-table, .contract-register-table, .loan-log-table, .loan-monthly-data table) td :is(small, .borrower-limit-caption) {
+    @apply text-[11px]! leading-[1.5]!;
+  }
+  #workspace-content .loan-theme :is(.lx-table, .borrower-table, .cl-table, .ar-table, .ap-table, .overdue-table, .approvals-table, .contract-register-table, .loan-log-table, .loan-monthly-data table) td strong {
+    @apply text-[13px]! font-semibold!;
+  }
+  #workspace-content .loan-theme :is(.lx-table-wrap, .borrower-table-wrap, .cl-table-wrap, .ar-table-wrap, .ap-table-wrap, .overdue-table-wrap, .approvals-table-wrap, .contract-register-table-wrap, .loan-log-table-wrap) {
+    @apply max-w-full! overflow-x-auto! overscroll-x-contain!;
+  }
+  #workspace-content .loan-theme :is(.borrower-row-actions, .cl-row-actions, .lx-table-actions) {
+    @apply flex! flex-wrap! items-center! gap-1.5!;
+  }
+  #workspace-content .loan-theme :is(.lx-contract-status, .borrower-status, .ar-aging-badge) {
+    @apply inline-flex! min-h-6! items-center! gap-1! rounded-md! px-2! py-0.5! text-[11px]! font-medium! leading-4! whitespace-nowrap!;
+  }
+  #workspace-content .loan-theme .borrower-name-link { @apply text-[13px]!; }
+  #workspace-content .loan-theme :is(.lx-head, .cl-header, .ph-header, .overdue-head, .approvals-head) h1 {
+    @apply text-[26px]! font-semibold! leading-snug! tracking-tight!;
+  }
+  #workspace-content .loan-theme :is(.lx-head, .cl-header, .ph-header, .overdue-head, .approvals-head) p {
+    @apply text-[13px]! leading-relaxed! text-slate-500!;
+  }
+  @media (pointer: coarse) {
+    #workspace-content .loan-theme :is(.lx-btn, .cl-button, .ph-btn, .lx-icon-btn, .borrower-icon-button, .cl-close, .payment-save-button, .loan-log-pagination button, button[data-loan-action]) {
+      @apply min-h-11!;
+    }
+    #workspace-content .loan-theme :is(.lx-icon-btn, .borrower-icon-button, .cl-close) { @apply min-w-11!; }
+  }
+}

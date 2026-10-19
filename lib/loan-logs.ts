@@ -1,4 +1,5 @@
 import type { Prisma } from '@/generated/prisma/client';
+import { getCurrentAccess } from '@/lib/authorization';
 
 type LoanLogEntry = {
   userId?: string;
@@ -32,9 +33,10 @@ function snapshot(value: unknown) {
 }
 
 export async function writeLoanLog(tx: Prisma.TransactionClient, entry: LoanLogEntry) {
+  const access = entry.userId ? null : await getCurrentAccess();
   return tx.loanlogs.create({
     data: {
-      userId: entry.userId?.trim() || 'guest',
+      userId: entry.userId?.trim() || access?.session.user.id || 'guest',
       borrowerId: entry.borrowerId,
       contractId: entry.contractId ?? null,
       arId: entry.arId ?? null,

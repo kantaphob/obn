@@ -4,42 +4,11 @@
 .loan-logs-head h1 { margin: 8px 0 5px; color: #2d1c43; font-size: clamp(1.6rem, 3vw, 2rem); letter-spacing: -.035em; }
 .loan-logs-head p { margin: 0; color: #776587; }
 .loan-logs-kicker { display: inline-flex; align-items: center; gap: 7px; color: #7844ad; font-size: .72rem; font-weight: 800; letter-spacing: .12em; }
-.loan-log-compose, .loan-log-history { border: 1px solid #e5d9f1; border-radius: 18px; background: #fdfbff; box-shadow: 0 4px 16px #6040750a; }
-.loan-log-compose { margin: 24px 0; padding: 22px; }
-.loan-log-compose-title { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
-.loan-log-compose-title > span { display: grid; width: 38px; height: 38px; place-items: center; border-radius: 12px; background: #f0e4fb; color: #7844ad; }
-.loan-log-compose-title h2, .loan-log-history-head h2 { margin: 0; color: #2d1c43; font-size: 1.08rem; font-weight: 750; }
-.loan-log-compose-title p, .loan-log-history-head p { margin: 4px 0 0; color: #776587; font-size: .84rem; }
-.loan-log-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 20px; }
-.loan-log-field { position: relative; display: flex; min-width: 0; flex-direction: column; gap: 7px; color: #57466a; font-size: .85rem; font-weight: 650; }
-.loan-log-field label b, .loan-log-form-footer > span b { color: #c84f65; }
-.loan-log-field input, .loan-log-field select, .loan-log-field textarea { width: 100%; min-height: 42px; border: 1px solid #e5d9f1; border-radius: 10px; outline: none; background: #fff; padding: 10px 12px; color: #2d1c43; font: inherit; font-weight: 450; transition: border-color .15s ease, box-shadow .15s ease; }
-.loan-log-field textarea { min-height: 86px; resize: vertical; }
-.loan-log-field input::placeholder, .loan-log-field textarea::placeholder { color: #ad9bbd; }
-.loan-log-field input:focus, .loan-log-field select:focus, .loan-log-field textarea:focus, .loan-log-history-search:focus-within, .loan-log-search:focus-within { border-color: #b58bd3; box-shadow: 0 0 0 3px #7844ad18; }
-.loan-log-field select:disabled { cursor: not-allowed; background: #f8f4fb; color: #a899b5; }
-.loan-log-search, .loan-log-history-search { display: flex; min-height: 42px; align-items: center; gap: 9px; border: 1px solid #e5d9f1; border-radius: 10px; background: #fff; padding: 0 12px; color: #927da5; transition: border-color .15s ease, box-shadow .15s ease; }
-.loan-log-search input, .loan-log-history-search input { min-width: 0; width: 100%; min-height: 40px; border: 0; outline: 0; background: transparent; padding: 0; color: #2d1c43; font: inherit; font-weight: 450; box-shadow: none !important; }
-.loan-log-search input::placeholder, .loan-log-history-search input::placeholder { color: #ad9bbd; }
-.loan-log-field-hint { color: #927da5; font-size: .75rem; font-weight: 450; }
-.loan-log-borrower-options { position: absolute; z-index: 5; top: calc(100% - 1px); right: 0; left: 0; overflow: auto; max-height: 260px; border: 1px solid #e5d9f1; border-radius: 10px; background: white; box-shadow: 0 12px 30px #40235720; }
-.loan-log-borrower-options button { display: flex; width: 100%; flex-direction: column; align-items: flex-start; gap: 3px; border: 0; border-bottom: 1px solid #f0eaf5; background: transparent; padding: 10px 12px; color: #2d1c43; text-align: left; cursor: pointer; }
-.loan-log-borrower-options button:last-child { border-bottom: 0; }
-.loan-log-borrower-options button:hover, .loan-log-borrower-options button:focus-visible { outline: 0; background: #f8f3fc; }
-.loan-log-borrower-options small { color: #776587; font-size: .76rem; font-weight: 450; }
-.loan-log-selected-borrower { display: flex; min-height: 48px; align-items: center; gap: 10px; border: 1px solid #e5d9f1; border-radius: 10px; background: #fff; padding: 5px 9px; }
-.loan-log-avatar { display: grid; width: 32px; height: 32px; flex: 0 0 auto; place-items: center; border-radius: 9px; background: #f0e4fb; color: #7844ad; }
-.loan-log-selected-borrower > span:nth-child(2) { display: flex; min-width: 0; flex: 1; flex-direction: column; gap: 2px; }
-.loan-log-selected-borrower strong { overflow: hidden; color: #2d1c43; text-overflow: ellipsis; white-space: nowrap; }
-.loan-log-selected-borrower small { color: #776587; font-size: .75rem; }
-.loan-log-selected-borrower button { border: 0; border-radius: 7px; background: #f8f3fc; padding: 6px 8px; color: #7844ad; font: inherit; font-size: .78rem; font-weight: 700; cursor: pointer; }
-.loan-log-form-footer { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-top: 19px; border-top: 1px solid #f0eaf5; padding-top: 16px; }
-.loan-log-form-footer > span { color: #927da5; font-size: .77rem; }
-.loan-log-form-footer .lx-btn { display: inline-flex; align-items: center; gap: 7px; }
+.loan-log-history { border: 1px solid #e5d9f1; border-radius: 18px; background: #fdfbff; box-shadow: 0 4px 16px #6040750a; overflow: hidden; }
+.loan-log-history-head h2 { margin: 0; color: #2d1c43; font-size: 1.08rem; font-weight: 750; }
+.loan-log-history-head p { margin: 4px 0 0; color: #776587; font-size: .84rem; }
 .loan-log-message { display: flex; align-items: center; gap: 7px; margin: 14px 0 0; border-radius: 9px; padding: 10px 12px; font-size: .84rem; }
 .loan-log-message.is-error { border: 1px solid #f0c9ce; background: #fff6f6; color: #a52e40; }
-.loan-log-message.is-success { border: 1px solid #c9e9d5; background: #f3fbf5; color: #287342; }
-.loan-log-history { overflow: hidden; }
 .loan-log-history-head { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 20px 22px 12px; }
 .loan-log-history-search { width: min(360px, 48%); min-height: 39px; }
 .loan-log-history-search input { min-height: 37px; font-size: .82rem; }
@@ -69,22 +38,53 @@
 .loan-log-empty { display: flex; min-height: 180px; flex-direction: column; align-items: center; justify-content: center; gap: 8px; border-top: 1px solid #f0eaf5; padding: 24px; color: #a18caf; text-align: center; }
 .loan-log-empty strong { color: #57466a; font-size: .92rem; }
 .loan-log-empty span { color: #927da5; font-size: .82rem; }
+.loan-log-filters { display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #f0eaf5; padding: 0 22px 12px; }
+.loan-log-filters label { display: inline-flex; align-items: center; gap: 7px; color: #776587; font-size: .76rem; white-space: nowrap; }
+.loan-log-filters select { min-height: 32px; border: 1px solid #e5d9f1; border-radius: 8px; background: #fff; padding: 4px 8px; color: #2d1c43; font: inherit; font-size: .76rem; }
+.loan-log-filters .loan-log-count { margin-left: auto; padding: 0; white-space: nowrap; }
+.loan-log-table-wrap { overflow-x: auto; border-top: 1px solid #f0eaf5; }
+.loan-log-table { width: 100%; min-width: 850px; border-collapse: collapse; table-layout: fixed; }
+.loan-log-table th { background: #faf7fc; padding: 9px 12px; color: #776587; font-size: .72rem; font-weight: 750; text-align: left; white-space: nowrap; }
+.loan-log-table td { border-top: 1px solid #f0eaf5; padding: 8px 12px; color: #57466a; font-size: .76rem; vertical-align: top; }
+.loan-log-table tbody tr:hover { background: #fdfbff; }
+.loan-log-table th:nth-child(1) { width: 150px; }
+.loan-log-table th:nth-child(2) { width: 105px; }
+.loan-log-table th:nth-child(3) { width: 235px; }
+.loan-log-table th:nth-child(5) { width: 145px; }
+.loan-log-table td:first-child { color: #776587; white-space: nowrap; }
+.loan-log-table td > small { display: block; margin-top: 3px; color: #927da5; font-size: .69rem; }
+.loan-log-table-borrower { display: block; overflow: hidden; color: #2d1c43; font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
+.loan-log-table-note { overflow-wrap: anywhere; }
+.loan-log-action-badge { display: inline-block; border-radius: 5px; background: #f0e4fb; padding: 3px 6px; color: #7844ad; font-size: .68rem; font-weight: 750; white-space: nowrap; }
+.loan-log-action-badge.action-delete { background: #fff0f0; color: #b13b4e; }
+.loan-log-action-badge.action-create { background: #edf8ef; color: #287342; }
+.loan-log-action-badge.action-restore { background: #eaf4ff; color: #2d66a0; }
+.loan-log-type-label { display: block; color: #927da5; font-size: .66rem; }
+.loan-log-table .loan-log-change-details { margin-top: 5px; }
+.loan-log-table .loan-log-change-details summary { padding: 4px 6px; font-size: .69rem; }
+.loan-log-pagination { display: flex; align-items: center; justify-content: space-between; gap: 12px; border-top: 1px solid #f0eaf5; padding: 10px 16px; color: #776587; font-size: .75rem; }
+.loan-log-pagination > div { display: flex; align-items: center; gap: 10px; }
+.loan-log-pagination button { min-height: 30px; border: 1px solid #e5d9f1; border-radius: 7px; background: #fff; padding: 4px 10px; color: #57466a; font: inherit; cursor: pointer; }
+.loan-log-pagination button:disabled { background: #f8f4fb; color: #b5a8c0; cursor: not-allowed; }
 
 @media (max-width: 680px) {
   .loan-logs-head { align-items: flex-start; }
-  .loan-log-compose { padding: 17px; }
-  .loan-log-form-grid { grid-template-columns: minmax(0, 1fr); gap: 15px; }
   .loan-log-history-head { align-items: stretch; flex-direction: column; padding: 17px 17px 11px; }
   .loan-log-history-search { width: 100%; }
   .loan-log-count { padding-right: 17px; padding-left: 17px; }
+  .loan-log-filters { align-items: flex-start; flex-wrap: wrap; padding-right: 17px; padding-left: 17px; }
+  .loan-log-filters .loan-log-count { width: 100%; margin: 0; }
   .loan-log-entry { gap: 10px; padding: 15px 17px; }
   .loan-log-entry-top { flex-direction: column; gap: 5px; }
   .loan-log-entry-top > div { flex-direction: column; align-items: flex-start; }
 }
 
 @media (max-width: 420px) {
+  .loan-log-pagination { align-items: flex-start; flex-direction: column; }
+  .loan-log-pagination > div { width: 100%; justify-content: space-between; }
+}
+
+@media (max-width: 420px) {
   .loan-logs-head { gap: 10px; }
   .loan-logs-head .lx-btn { padding: 8px; font-size: .78rem; }
-  .loan-log-form-footer { align-items: flex-start; flex-direction: column; }
-  .loan-log-form-footer .lx-btn { width: 100%; justify-content: center; }
 }

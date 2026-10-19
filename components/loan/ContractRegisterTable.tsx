@@ -44,7 +44,7 @@ export default function ContractRegisterTable<T extends RegisterContract>({rows,
    <td>{request}</td><td>{los}</td>
    <td><button type="button" className="contract-register-number" onClick={()=>toggle(row.id)} aria-expanded={open}>{row.contractNumber||'ยังไม่ออกเลขสัญญา'}</button>{row.previousContractNumber && <small style={{display:'block',marginTop:5,color:'#998aa5'}}>เลขเดิม {row.previousContractNumber}</small>}</td>
    <td>{person?.borrowersCode||'—'}</td><td>{name}</td><td>{person?.phone||'—'}</td><td className="contract-register-money">{money(amount)}</td><td>{date(row.signedAt||row.startDate||row.data?.contract?.startDate)}</td>
-   <td><div className="contract-register-actions"><button type="button" className="lx-btn sm" onClick={()=>toggle(row.id)} aria-expanded={open}>รายละเอียด<ChevronDown size={13} style={{transform:open?'rotate(180deg)':undefined}} aria-hidden="true"/></button>{renderActions?.(row)}</div></td>
+   <td><div className="contract-register-actions"><button type="button" className="lx-btn sm" onClick={()=>toggle(row.id)} aria-expanded={open} aria-controls={`contract-register-${row.id}`}>รายละเอียด<ChevronDown size={13} style={{transform:open?'rotate(180deg)':undefined}} aria-hidden="true"/></button>{renderActions?.(row)}</div></td>
   </tr>{open && <tr className="contract-register-detail-row"><td colSpan={11}><section id={`contract-register-${row.id}`} aria-label={`รายละเอียดสัญญา ${row.contractNumber||'ร่าง'}`}>
    <div className="contract-register-detail-title"><strong>รายละเอียด {row.contractNumber||'ร่างสัญญา'}</strong><span>แก้ไขล่าสุด {date(row.updatedAt)}</span></div>
    <div className="contract-register-detail-grid">{[

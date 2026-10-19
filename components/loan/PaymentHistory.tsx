@@ -206,7 +206,7 @@ export default function PaymentHistory({ onReceivePayment, revision = 0 }: {
     setContractFilter('');
     setOpenId('');
     setPreview(null);
-    setBorrowerDialog(true);
+    setBorrowerDialog(false);
   };
 
   return (
@@ -265,21 +265,83 @@ export default function PaymentHistory({ onReceivePayment, revision = 0 }: {
           </ul>
         </aside>
 
-        <div className="ph-empty ph-pick-hint">
-          <UserRound size={34} aria-hidden />
-          <h2>ค้นหาแล้วเลือกผู้กู้</h2>
-          <p>กดชื่อผู้กู้เพื่อเปิดสัญญาและประวัติการรับชำระ</p>
-        </div>
+        {selected ? (
+          <section className="ph-borrower-overview" aria-label="ภาพรวมผู้กู้ที่เลือก" style={{minWidth:0,alignSelf:'start',padding:24,border:'1px solid var(--ph-line, #e6dcf1)',borderRadius:20,background:'var(--ph-surface, #fff)'}}>
+            <header style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:16,flexWrap:'wrap'}}>
+              <div style={{display:'flex',alignItems:'center',gap:12,minWidth:0}}>
+                <span className="ph-avatar" aria-hidden style={{display:'grid',placeItems:'center',width:46,height:46,flex:'none',borderRadius:'50%',background:'var(--ph-green-soft, #e6f2ea)',color:'var(--ph-green, #3b7a57)',fontWeight:700}}>{(selected.debtor.firstName || '?').slice(0, 1)}</span>
+                <div style={{minWidth:0}}><h2 style={{margin:0,fontSize:'1.35rem',lineHeight:1.35}}>{borrowerName(selected)}</h2><p style={{margin:'3px 0 0',color:'var(--ph-muted, #85759a)'}}>รหัส {formatBorrowerCode(selected.debtor.borrowersCode)}</p></div>
+              </div>
+              <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+                <button type="button" className="ph-btn ph-btn-sm" onClick={() => {setContractFilter('');setBorrowerDialog(true);}}><FileText size={15}/> ดูสัญญาและประวัติ</button>
+                {onReceivePayment && <button type="button" className="ph-btn ph-btn-sm ph-btn-primary" onClick={() => onReceivePayment(selected.debtor.borrowersCode)}>รับชำระ</button>}
+              </div>
+            </header>
+
+            <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(min(100%, 150px), 1fr))',gap:12,marginTop:22}}>
+              <div style={{padding:16,border:'1px solid var(--ph-line, #e6dcf1)',borderRadius:14}}><span style={{display:'block',color:'var(--ph-muted, #85759a)',fontSize:'.88rem'}}>รับชำระรวม</span><strong style={{display:'block',marginTop:5,color:'var(--ph-green, #3b7a57)',fontSize:'1.3rem'}}>{baht(totalPaid)}</strong></div>
+              <div style={{padding:16,border:'1px solid var(--ph-line, #e6dcf1)',borderRadius:14}}><span style={{display:'block',color:'var(--ph-muted, #85759a)',fontSize:'.88rem'}}>รายการรับชำระ</span><strong style={{display:'block',marginTop:5,fontSize:'1.3rem'}}>{entries.length.toLocaleString('th-TH')} รายการ</strong></div>
+              <div style={{padding:16,border:'1px solid var(--ph-line, #e6dcf1)',borderRadius:14}}><span style={{display:'block',color:'var(--ph-muted, #85759a)',fontSize:'.88rem'}}>จำนวนสัญญา</span><strong style={{display:'block',marginTop:5,fontSize:'1.3rem'}}>{borrowerContracts.length.toLocaleString('th-TH')} สัญญา</strong></div>
+            </div>
+
+            <section aria-label="สัญญาของผู้กู้" style={{marginTop:24}}>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:12,marginBottom:10}}>
+                <h3 style={{margin:0,fontSize:'1.05rem'}}>สัญญาของผู้กู้</h3>
+                <button type="button" className="ph-btn ph-btn-sm" onClick={() => {setContractFilter('');setBorrowerDialog(true);}}>ดูรายละเอียดทั้งหมด</button>
+              </div>
+              <ul style={{display:'grid',gap:8,margin:0,padding:0,listStyle:'none'}}>
+                {borrowerContracts.map((contract) => {
+                  const status = currentContractStatus(contract);
+                  const StatusIcon = status.Icon;
+                  return (
+                    <li key={contract.id} style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:14,flexWrap:'wrap',padding:'13px 15px',border:'1px solid var(--ph-line, #e6dcf1)',borderRadius:13,background:'var(--ws-surface, #fff)'}}>
+                      <div style={{display:'grid',gap:5,minWidth:0}}>
+                        <strong style={{overflowWrap:'anywhere'}}>สัญญา {contract.contractNumber}</strong>
+                        <span style={{display:'flex',alignItems:'center',gap:6,color:status.color,fontSize:'.88rem'}}><StatusIcon size={15}/>{status.label}<span style={{color:'var(--ph-muted, #85759a)'}}>· คงเหลือ {baht(contract.balance?.total ?? 0)}</span></span>
+                      </div>
+                      <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+                        <button type="button" className="ph-btn ph-btn-sm" onClick={() => {setContractFilter(contract.contractNumber);setOpenId('');setBorrowerDialog(true);}}>ดูประวัติ</button>
+                        {onReceivePayment && ['ACTIVE','OVERDUE'].includes(contract.status) && <button type="button" className="ph-btn ph-btn-sm ph-btn-primary" onClick={() => onReceivePayment(contract.debtor.borrowersCode,contract.id)}>รับชำระ</button>}
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
+
+            <div style={{marginTop:24}}>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:12,marginBottom:10}}><h3 style={{margin:0,fontSize:'1.05rem'}}>รายการรับชำระล่าสุด</h3>{entries.length > 3 && <button type="button" className="ph-btn ph-btn-sm" onClick={() => {setContractFilter('');setBorrowerDialog(true);}}>ดูทั้งหมด</button>}</div>
+              {entries.length === 0 ? <p className="ph-none-detail" style={{margin:0,padding:'24px 12px',border:'1px dashed var(--ph-line, #e6dcf1)',borderRadius:14}}>ยังไม่มีประวัติรับชำระของผู้กู้รายนี้</p> : (
+                <ul style={{display:'grid',gap:8,margin:0,padding:0,listStyle:'none'}}>
+                  {entries.slice(0, 3).map((entry) => (
+                    <li key={`${entry.contractNumber}-${entry.id}`}>
+                      <button type="button" onClick={() => {setContractFilter(entry.contractNumber);setOpenId('');setBorrowerDialog(true);}} style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:12,width:'100%',padding:'13px 15px',border:'1px solid var(--ph-line, #e6dcf1)',borderRadius:13,background:'var(--ws-surface, #fff)',textAlign:'left'}}>
+                        <span style={{display:'grid',gap:3,minWidth:0}}><strong style={{overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>สัญญา {entry.contractNumber}</strong><small style={{color:'var(--ph-muted, #85759a)'}}>{dateLabel(entry.date)} · {entry.title}</small></span>
+                        <strong style={{flex:'none',fontVariantNumeric:'tabular-nums'}}>{baht(entry.amount)}</strong>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </section>
+        ) : (
+          <div className="ph-empty ph-pick-hint">
+            <UserRound size={34} aria-hidden />
+            <h2>ค้นหาแล้วเลือกผู้กู้</h2>
+            <p>ช่องนี้จะแสดงยอดรับชำระ สัญญา และรายการล่าสุดของผู้กู้</p>
+          </div>
+        )}
       </div>
 
       {borrowerDialog && selected && (
         <div className="ph-modal ph-borrower-modal" role="dialog" aria-modal="true" aria-label={`ข้อมูลผู้กู้ ${borrowerName(selected)}`} onClick={() => setBorrowerDialog(false)}>
-          <article className="ph-borrower-dialog" onClick={(event) => event.stopPropagation()}>
-            <header className="ph-dialog-header">
-              <div><span>ข้อมูลผู้กู้</span><h2>{borrowerName(selected)}</h2><p>รหัส {formatBorrowerCode(selected.debtor.borrowersCode)}</p></div>
-              <button type="button" className="ph-close ph-dialog-close" aria-label="ปิดรายละเอียดผู้กู้" onClick={() => setBorrowerDialog(false)}><X size={20} /></button>
+          <article className="ph-borrower-dialog" style={{position:'relative',display:'flex',flexDirection:'column',width:'min(1080px, 100%)',maxHeight:'min(90vh, 980px)',overflow:'hidden',border:'1px solid var(--ph-line, #e6dcf1)',borderRadius:22,background:'var(--ph-bg, #f8f3fd)',boxShadow:'0 24px 80px rgba(35,24,50,.2)'}} onClick={(event) => event.stopPropagation()}>
+            <header className="ph-dialog-header" style={{position:'relative',display:'flex',alignItems:'center',justifyContent:'space-between',gap:20,padding:'22px 28px',borderBottom:'1px solid var(--ph-line, #e6dcf1)',background:'var(--ph-surface, #fff)'}}>
+              <div><span style={{color:'var(--ph-muted, #85759a)',fontSize:'.88rem'}}>ข้อมูลผู้กู้</span><h2 style={{margin:'3px 0',fontSize:'1.5rem',lineHeight:1.35}}>{borrowerName(selected)}</h2><p style={{margin:0,color:'var(--ph-muted, #85759a)'}}>รหัส {formatBorrowerCode(selected.debtor.borrowersCode)}</p></div>
+              <button type="button" className="ph-close ph-dialog-close" style={{position:'static',flex:'none',width:42,height:42}} aria-label="ปิดรายละเอียดผู้กู้" onClick={() => setBorrowerDialog(false)}><X size={20} /></button>
             </header>
-        <section className="ph-detail">
+        <section className="ph-detail" style={{display:'grid',gap:20,minHeight:0,overflowY:'auto',padding:'24px 28px 30px'}}>
           {!selected && (
             <div className="ph-empty">
               <UserRound size={34} aria-hidden />
@@ -290,11 +352,7 @@ export default function PaymentHistory({ onReceivePayment, revision = 0 }: {
 
           {selected && (
             <>
-              <div className="ph-summary">
-                <div className="ph-who">
-                  <h2>{borrowerName(selected)}</h2>
-                  <p>รหัส {formatBorrowerCode(selected.debtor.borrowersCode)}</p>
-                </div>
+              <div className="ph-summary" style={{padding:'18px 22px'}}>
                 <dl>
                   <div><dt>รับชำระรวม</dt><dd>{baht(totalPaid)}</dd></div>
                   <div><dt>จำนวนรายการ</dt><dd>{entries.length.toLocaleString('th-TH')}</dd></div>
@@ -302,27 +360,27 @@ export default function PaymentHistory({ onReceivePayment, revision = 0 }: {
                 </dl>
               </div>
 
-              <section className="ph-contracts" aria-label="รายการสัญญาของผู้กู้">
-                <div className="ph-contracts-heading">
-                  <div><h3>สัญญาของผู้กู้</h3><p>เลือกดูประวัติ หรือบันทึกรับชำระตามสัญญา</p></div>
+              <section className="ph-contracts" style={{minWidth:0,padding:18,border:'1px solid var(--ph-line, #e6dcf1)',borderRadius:18,background:'var(--ph-surface, #fff)'}} aria-label="รายการสัญญาของผู้กู้">
+                <div className="ph-contracts-heading" style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:16,marginBottom:14}}>
+                  <div><h3 style={{margin:0,fontSize:'1.05rem'}}>สัญญาของผู้กู้</h3><p style={{margin:'3px 0 0',color:'var(--ph-muted, #85759a)',fontSize:'.9rem'}}>เลือกดูประวัติ หรือบันทึกรับชำระตามสัญญา</p></div>
                   {contractFilter && <button type="button" className="ph-btn ph-btn-sm" onClick={() => setContractFilter('')}>ดูทุกสัญญา</button>}
                 </div>
-                <div className="ph-contract-grid">
+                <div className="ph-contract-grid" style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(min(100%, 340px), 1fr))',gap:12}}>
                   {borrowerContracts.map((contract) => {
                     const status = currentContractStatus(contract);
                     const StatusIcon = status.Icon;
                     const filtered = contractFilter === contract.contractNumber;
                     return (
-                      <article key={contract.id} className={`ph-contract-card${filtered ? ' is-filtered' : ''}`}>
-                        <div className="ph-contract-card-top">
-                          <div><span>เลขที่สัญญา</span><strong>{contract.contractNumber}</strong></div>
-                          <span className="ph-contract-status" style={{color:status.color,background:status.background}}><StatusIcon size={14}/>{status.label}</span>
+                      <article key={contract.id} className={`ph-contract-card${filtered ? ' is-filtered' : ''}`} style={{minWidth:0,padding:16,border:'1px solid var(--ph-line, #e6dcf1)',borderRadius:14,background:'var(--ws-surface, #fff)'}}>
+                        <div className="ph-contract-card-top" style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:12}}>
+                          <div style={{display:'grid',gap:3,minWidth:0}}><span style={{color:'var(--ph-muted, #85759a)',fontSize:'.82rem'}}>เลขที่สัญญา</span><strong style={{overflowWrap:'anywhere',fontSize:'1.05rem'}}>{contract.contractNumber}</strong></div>
+                          <span className="ph-contract-status" style={{display:'inline-flex',flex:'none',alignItems:'center',gap:5,padding:'5px 9px',borderRadius:99,fontSize:'.8rem',fontWeight:600,color:status.color,background:status.background}}><StatusIcon size={14}/>{status.label}</span>
                         </div>
-                        <div className="ph-contract-card-meta">
-                          <div><span>ยอดคงเหลือ</span><strong>{baht(contract.balance?.total ?? 0)}</strong></div>
-                          <div><span>วันครบกำหนด</span><strong>{contract.dueDate ? dateLabel(contract.dueDate) : '—'}</strong></div>
+                        <div className="ph-contract-card-meta" style={{display:'flex',justifyContent:'flex-start',gap:12,margin:'14px 0',paddingTop:12,borderTop:'1px solid var(--ph-line, #e6dcf1)'}}>
+                          <div style={{display:'grid',flex:1,gap:3,minWidth:0}}><span style={{color:'var(--ph-muted, #85759a)',fontSize:'.82rem'}}>ยอดคงเหลือ</span><strong style={{fontSize:'.94rem',fontVariantNumeric:'tabular-nums'}}>{baht(contract.balance?.total ?? 0)}</strong></div>
+                          <div style={{display:'grid',flex:1,gap:3,minWidth:0}}><span style={{color:'var(--ph-muted, #85759a)',fontSize:'.82rem'}}>วันครบกำหนด</span><strong style={{fontSize:'.94rem'}}>{contract.dueDate ? dateLabel(contract.dueDate) : '—'}</strong></div>
                         </div>
-                        <div className="ph-contract-actions">
+                        <div className="ph-contract-actions" style={{display:'flex',justifyContent:'flex-start',flexWrap:'wrap',gap:8}}>
                           <button type="button" className={`ph-btn ph-btn-sm${filtered ? ' is-current' : ''}`} onClick={() => {setContractFilter(filtered ? '' : contract.contractNumber);setOpenId('');}}>{filtered ? 'กำลังดูประวัติ' : 'ดูประวัติ'}</button>
                           {onReceivePayment && ['ACTIVE','OVERDUE'].includes(contract.status) && <button type="button" className="ph-btn ph-btn-sm ph-btn-primary" onClick={() => onReceivePayment(contract.debtor.borrowersCode,contract.id)}>รับชำระ</button>}
                         </div>
