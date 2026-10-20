@@ -1,3 +1,4 @@
+import { filterLoanContracts } from "@/lib/loan-access";
 import { authorizeApiRequest } from "@/lib/authorization";
 import { prisma } from '@/lib/prisma';
 import { loanBalance } from '@/lib/loan-balance';
@@ -12,7 +13,7 @@ export async function GET() {
   if (denied) return denied;
   const today = bangkokDate(new Date());
   const todayStart = new Date(`${today}T00:00:00.000Z`);
-  const contracts = await prisma.contract.findMany({
+  const contracts = await filterLoanContracts(await prisma.contract.findMany({
     where: {
       status: { in: ['ACTIVE', 'OVERDUE'] },
       dueDate: { lt: todayStart },
@@ -31,7 +32,7 @@ export async function GET() {
       payments: true,
     },
     orderBy: [{ dueDate: 'asc' }, { contractNumber: 'asc' }],
-  });
+  }));
 
   const asOf = new Date();
   const rows = contracts.map(({ payments, ...contract }) => ({

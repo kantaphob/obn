@@ -1,3 +1,7 @@
+import { getCurrentAccess } from "./authorization";
+import { canAccessLoanCompany, canReadLoanFinancials } from "./loan-access";
+import { contractCompanyCode } from "./loan-accounting-lock";
+import { loanStatus } from "./loan-status";
 import "server-only";
 import { connection } from "next/server";
 import { prisma } from "@/lib/prisma";
@@ -8,6 +12,8 @@ import { normalizeLoanFinanceCategoryCode, summarizeCompanyLedgerRows, summarize
 
 export async function getLoanDashboardData() {
   await connection();
+  const access = await getCurrentAccess();
+  if (!canReadLoanFinancials(access)) throw new Error("ไม่มีสิทธิ์ดูข้อมูลการเงิน Loan");
   const now = new Date();
   const today = thaiDay(now);
   const dateParts = new Intl.DateTimeFormat("en-CA", {
@@ -20,12 +26,18 @@ export async function getLoanDashboardData() {
   });
   const chartStart = new Date(Date.UTC(year, 0, 1) - 7 * 60 * 60 * 1000);
   const throughToday = new Date(today - 7 * 60 * 60 * 1000);
-  const [contracts, ledgerRows] = await Promise.all([
+  const [unscopedContracts, unscopedLedgerRows] = await Promise.all([
     prisma.contract.findMany({
       select: {
         id: true,
         contractNumber: true,
         status: true,
+        contractType: true,
+        signatureMode: true,
+        signedAt: true,
+        repayType: true,
+        installmentMonths: true,
+        documentData: true,
         principal: true,
         netDisbursed: true,
         startDate: true,
@@ -44,6 +56,8 @@ export async function getLoanDashboardData() {
     }),
     getCompanyLedgerRows(null, throughToday),
   ]);
+  const contracts = unscopedContracts.filter(contract => canAccessLoanCompany(access, contractCompanyCode(contract.documentData))).map(contract => ({ ...contract, status: loanStatus(contract, now) }));
+  const ledgerRows = unscopedLedgerRows.filter(row => canAccessLoanCompany(access, row.companyCode));
   const loanRows = ledgerRows.filter(row => row.source === "LOAN");
   const cashflowRows = loanRows.filter(row => row.transactionDate >= chartStart);
   const groupCashflowRows = ledgerRows.filter(row => row.transactionDate >= chartStart);
@@ -55,7 +69,7 @@ export async function getLoanDashboardData() {
   const upfrontInterestTotal = upfrontInterestRows.reduce((sum, row) => sum + row.amount, 0);
   const capitalRows = loanRows.filter(row => {
     const code = normalizeLoanFinanceCategoryCode(row.categoryCode);
-    return (row.type === "INCOME" && code === "LOAN_CAPITAL_IN") || (row.type === "EXPENSE" && code === "LOAN_CAPITAL_OUT");
+    return code === "LOAN_CAPITAL_IN" || code === "LOAN_CAPITAL_OUT";
   });
 
   const reviewQueue = contracts.filter(contract => contract.status === "AWAITING_DOCUMENT" || contract.status === "READY");

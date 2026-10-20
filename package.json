@@ -16,7 +16,9 @@
     "db:import-postcodes": "node scripts/import-postcodes.mjs",
     "db:import-catalogs": "node scripts/import-reference-catalogs.mjs",
     "db:import-classifiers": "node scripts/import-classifiers.mjs",
-    "db:import-banks": "node scripts/import-banks.mjs"
+    "db:import-banks": "node scripts/import-banks.mjs",
+    "db:import-youtube": "node scripts/import-youtube-csv.mjs",
+    "check:loan": "node scripts/check-loan-regressions.mjs"
   },
   "dependencies": {
     "@better-auth/prisma-adapter": "^1.7.10",

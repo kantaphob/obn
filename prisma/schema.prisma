@@ -21,30 +21,36 @@ model Entry {
 }
 
 model CompanyLedgerEntry {
-  id              String   @id @default(cuid())
-  type            String // INCOME or EXPENSE
-  title           String
-  category        String
+  id                String                  @id @default(cuid())
+  type              String // INCOME or EXPENSE
+  title             String
+  category          String
   financeCategoryId String?
-  financeCategory CompanyFinanceCategory? @relation(fields: [financeCategoryId], references: [id], onDelete: SetNull)
-  amount          Int // satang
-  baseAmount      Int?
-  vatRateBps      Int?
-  vatAmount       Int?
-  whtRateBps      Int?
-  whtAmount       Int?
-  transactionDate DateTime
-  timeRecorded    Boolean  @default(false)
-  documentNumber  String?  @unique
-  companyCode     String?
-  branchCode      String?
-  party           String   @default("")
-  method          String   @default("CASH")
-  reference       String   @default("")
-  note            String   @default("")
-  attachmentUrl   String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  financeCategory   CompanyFinanceCategory? @relation(fields: [financeCategoryId], references: [id], onDelete: SetNull)
+  amount            Int // satang
+  baseAmount        Int?
+  vatRateBps        Int?
+  vatAmount         Int?
+  whtRateBps        Int?
+  whtAmount         Int?
+  transactionDate   DateTime
+  timeRecorded      Boolean                 @default(false)
+  documentNumber    String?                 @unique
+  companyCode       String?
+  branchCode        String?
+  party             String                  @default("")
+  method            String                  @default("CASH")
+  reference         String                  @default("")
+  note              String                  @default("")
+  attachmentUrl     String?
+  investorId        String?
+  investorSnapshot  String?
+  reversalOfId      String?                  @unique
+  receiptBreakdown  String?
+  reversalOfType    String?
+  createdBy         String?
+  createdAt         DateTime                @default(now())
+  updatedAt         DateTime                @updatedAt
 
   @@index([transactionDate])
   @@index([type, transactionDate])
@@ -69,11 +75,11 @@ model CompanyFinanceCategory {
 }
 
 model CompanyLedgerNumberSequence {
-  id           String @id @default(cuid())
-  companyCode  String
-  branchCode   String
-  year         Int
-  lastNumber   Int    @default(0)
+  id          String @id @default(cuid())
+  companyCode String
+  branchCode  String
+  year        Int
+  lastNumber  Int    @default(0)
 
   @@unique([companyCode, branchCode, year])
 }
@@ -108,42 +114,42 @@ enum MasterDataKind {
 }
 
 model Province {
-  id        Int        @id @map("province_id")
-  nameTh    String     @map("name_th")
-  nameEn    String     @map("name_en")
-  districts District[]
+  id             Int               @id @map("province_id")
+  nameTh         String            @map("name_th")
+  nameEn         String            @map("name_en")
+  districts      District[]
   ownerCompanies CompanySequence[] @relation("CompanyOwnerProvince")
-  companyOwners CompanyOwner[] @relation("CompanyOwnerPostcodeProvince")
+  companyOwners  CompanyOwner[]    @relation("CompanyOwnerPostcodeProvince")
 
   @@map("province")
 }
 
 model District {
-  id           Int           @id @map("district_id")
-  provinceId   Int           @map("province_id")
-  nameTh       String        @map("name_th")
-  nameEn       String        @map("name_en")
-  province     Province      @relation(fields: [provinceId], references: [id])
-  subdistricts Subdistrict[]
+  id             Int               @id @map("district_id")
+  provinceId     Int               @map("province_id")
+  nameTh         String            @map("name_th")
+  nameEn         String            @map("name_en")
+  province       Province          @relation(fields: [provinceId], references: [id])
+  subdistricts   Subdistrict[]
   ownerCompanies CompanySequence[] @relation("CompanyOwnerDistrict")
-  companyOwners CompanyOwner[] @relation("CompanyOwnerPostcodeDistrict")
+  companyOwners  CompanyOwner[]    @relation("CompanyOwnerPostcodeDistrict")
 
   @@index([provinceId])
   @@map("district")
 }
 
 model Subdistrict {
-  id         Int      @id @map("subdistrict_id")
-  districtId Int      @map("district_id")
-  nameTh     String   @map("name_th")
-  nameEn     String   @map("name_en")
-  latitude   Float?   @map("lat")
-  longitude  Float?   @map("long")
-  postcode   String?  @map("zipcode")
-  district   District @relation(fields: [districtId], references: [id])
-  borrowers  borrowers[]
+  id             Int               @id @map("subdistrict_id")
+  districtId     Int               @map("district_id")
+  nameTh         String            @map("name_th")
+  nameEn         String            @map("name_en")
+  latitude       Float?            @map("lat")
+  longitude      Float?            @map("long")
+  postcode       String?           @map("zipcode")
+  district       District          @relation(fields: [districtId], references: [id])
+  borrowers      borrowers[]
   ownerCompanies CompanySequence[] @relation("CompanyOwnerSubdistrict")
-  companyOwners CompanyOwner[] @relation("CompanyOwnerPostcodeSubdistrict")
+  companyOwners  CompanyOwner[]    @relation("CompanyOwnerPostcodeSubdistrict")
 
   @@index([districtId])
   @@index([postcode])
@@ -194,8 +200,8 @@ model Classifier {
 }
 
 model Banking {
-  id         String @id @default(cuid())
-  bankCode   String @unique
+  id         String      @id @default(cuid())
+  bankCode   String      @unique
   bankShort  String
   bankFull   String
   bankNameTH String
@@ -329,24 +335,24 @@ enum BorrowerRiskRating {
 }
 
 model BorrowerCodeSequence {
-  id Int @id
+  id    Int @id
   value Int
 }
 
-model loanlogs{
-  id String @id @default(cuid())
-  userId String @default("guest")
+model loanlogs {
+  id         String   @id @default(cuid())
+  userId     String   @default("guest")
   borrowerId String
   contractId String?
-  arId String?
-  apId String?
-  targetId String?
-  action String
-  type String
-  note String?
+  arId       String?
+  apId       String?
+  targetId   String?
+  action     String
+  type       String
+  note       String?
   beforeData String?
-  afterData String?
-  createdAt DateTime @default(now())
+  afterData  String?
+  createdAt  DateTime @default(now())
 
   @@index([borrowerId])
   @@index([contractId])
@@ -359,60 +365,60 @@ model loanlogs{
 }
 
 model borrowers {
-  borrowersCode String @unique
-  id        String  @id @default(cuid())
-  nickname  String?
-  phone     String
-  note      String?
+  borrowersCode String  @unique
+  id            String  @id @default(cuid())
+  nickname      String?
+  phone         String
+  note          String?
 
-  workplace String?
-  status BorrowerStatus?
+  workplace         String?
+  status            BorrowerStatus?
   bankAccountNumber String?
-  payoutChannel BorrowerPayoutChannel?
-  payoutBankCode String?
-  payoutBank Banking? @relation(fields: [payoutBankCode], references: [bankCode], onDelete: Restrict)
-  registeredAt DateTime?
-  facebook String?
-  instagram String?
-  line String?
+  payoutChannel     BorrowerPayoutChannel?
+  payoutBankCode    String?
+  payoutBank        Banking?               @relation(fields: [payoutBankCode], references: [bankCode], onDelete: Restrict)
+  registeredAt      DateTime?
+  facebook          String?
+  instagram         String?
+  line              String?
   // สถานะจากข้อมูลนำเข้าเดิม
-  hasFacebook Boolean?
-  hasInstagram Boolean?
-  hasLine Boolean?
-  riskRating BorrowerRiskRating?
-  approvedLimit Int? // สตางค์
-  usedLimit Int? // สตางค์
-  availableLimit Int? // สตางค์ ตามข้อมูลนำเข้า
-  referrer String?
+  hasFacebook       Boolean?
+  hasInstagram      Boolean?
+  hasLine           Boolean?
+  riskRating        BorrowerRiskRating?
+  approvedLimit     Int? // สตางค์
+  usedLimit         Int? // สตางค์
+  availableLimit    Int? // สตางค์ ตามข้อมูลนำเข้า
+  referrer          String?
 
   // --- ข้อมูลจากบัตรประชาชน (ทุกช่องไม่บังคับ กรอกเองหรืออ่านจากบัตรก็ได้) ---
-  nationalId  String? @unique // เลข 13 หลัก
-  prefixTH    String? // คำนำหน้า (นาย/นาง/นางสาว)
-  firstName   String // ชื่อ (ไทย)
-  lastName    String? // นามสกุล (ไทย)
-  firstNameEN String?
-  lastNameEN  String?
-  gender      String?
-  birthDate   DateTime?
-  address     String? // ที่อยู่ตามบัตร (ข้อความเต็ม)
-  houseNumber String?
-  buildingName String?
-  alley       String?
-  road        String?
-  subdistrictId Int?
-  subdistrict Subdistrict? @relation(fields: [subdistrictId], references: [id], onDelete: SetNull)
-  issueDate   DateTime? // วันออกบัตร
-  expiryDate  DateTime? // วันบัตรหมดอายุ
-  photoUrl    String? // รูปจากบัตร (เก็บเป็นไฟล์ ไม่เก็บในฐานข้อมูล)
+  nationalId     String?      @unique // เลข 13 หลัก
+  prefixTH       String? // คำนำหน้า (นาย/นาง/นางสาว)
+  firstName      String // ชื่อ (ไทย)
+  lastName       String? // นามสกุล (ไทย)
+  firstNameEN    String?
+  lastNameEN     String?
+  gender         String?
+  birthDate      DateTime?
+  address        String? // ที่อยู่ตามบัตร (ข้อความเต็ม)
+  houseNumber    String?
+  buildingName   String?
+  alley          String?
+  road           String?
+  subdistrictId  Int?
+  subdistrict    Subdistrict? @relation(fields: [subdistrictId], references: [id], onDelete: SetNull)
+  issueDate      DateTime? // วันออกบัตร
+  expiryDate     DateTime? // วันบัตรหมดอายุ
+  photoUrl       String? // รูปจากบัตร (เก็บเป็นไฟล์ ไม่เก็บในฐานข้อมูล)
   idCardImageUrl String? // ภาพถ่ายบัตร (ถ้ามี)
 
-  deletedAt DateTime?
+  deletedAt       DateTime?
   deletionHistory borrowersdelete[]
 
-  contracts Contract[]
+  contracts        Contract[]
   loanApplications LoanApplication[]
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
 
   @@index([payoutBankCode])
   @@index([deletedAt])
@@ -420,26 +426,27 @@ model borrowers {
 
 // Keep every deletion event, including events that were subsequently restored.
 model borrowersdelete {
-  id String @id @default(cuid())
-  borrowerId String
-  borrower borrowers @relation(fields: [borrowerId], references: [id], onDelete: Restrict)
+  id            String    @id @default(cuid())
+  borrowerId    String
+  borrower      borrowers @relation(fields: [borrowerId], references: [id], onDelete: Restrict)
   borrowersCode String
-  snapshot String
-  reason String?
-  deletedAt DateTime @default(now())
-  restoredAt DateTime?
+  snapshot      String
+  reason        String?
+  deletedAt     DateTime  @default(now())
+  restoredAt    DateTime?
+
   @@index([borrowerId, deletedAt])
   @@index([restoredAt, deletedAt])
 }
 
 model Contract {
-  id             String @id @default(cuid())
-  contractNumber String @unique
-  previousContractNumber String? @unique
-  renumberedAt DateTime?
-  debtorId       String
-  debtor         borrowers @relation(fields: [debtorId], references: [id])
-  application    LoanApplication?
+  id                     String           @id @default(cuid())
+  contractNumber         String           @unique
+  previousContractNumber String?          @unique
+  renumberedAt           DateTime?
+  debtorId               String
+  debtor                 borrowers        @relation(fields: [debtorId], references: [id])
+  application            LoanApplication?
 
   // ยอดเงิน (สตางค์)
   principal      Int // เงินต้น
@@ -448,38 +455,38 @@ model Contract {
   netDisbursed   Int // ยอดที่ลูกหนี้ได้รับจริง
 
   // รูปแบบสัญญา
-  repayType    RepayType
-  interestMode InterestMode
+  repayType         RepayType
+  interestMode      InterestMode
   interestRateBasis InterestRateBasis @default(CONTRACT_FLAT)
   installmentMonths Int? // จำนวนเดือนสำหรับแผนผ่อน
-  periodDays   Int? // รอบจ่ายดอก (INTEREST_ONLY)
-  startDate    DateTime
-  dueDate      DateTime? // จำเป็นสำหรับ LUMP_SUM
+  periodDays        Int? // รอบจ่ายดอก (INTEREST_ONLY)
+  startDate         DateTime
+  dueDate           DateTime? // จำเป็นสำหรับ LUMP_SUM
 
   // สัญญากู้ยืม (เกิน 2,000 บาท)
-  contractType ContractType @default(NONE)
-  documentUrl  String? // ไฟล์สัญญาที่เซ็นแล้ว
-  signedAt     DateTime?
-  signatureMode SignatureMode @default(PRINT)
-  signatureUrl String?
-  documentData String?
-  consentAccepted Boolean @default(false)
-  consentedAt DateTime?
-  consentText String?
-  witness1     String?
-  witness2     String?
-  guarantor    String?
+  contractType    ContractType  @default(NONE)
+  documentUrl     String? // ไฟล์สัญญาที่เซ็นแล้ว
+  signedAt        DateTime?
+  signatureMode   SignatureMode @default(PRINT)
+  signatureUrl    String?
+  documentData    String?
+  consentAccepted Boolean       @default(false)
+  consentedAt     DateTime?
+  consentText     String?
+  witness1        String?
+  witness2        String?
+  guarantor       String?
 
-  status ContractStatus @default(DRAFT)
-  cancelledAt DateTime?
+  status             ContractStatus @default(DRAFT)
+  cancelledAt        DateTime?
   cancellationReason String?
-  note   String?
-  lateFeePerDay Int @default(5000) // สตางค์ต่อวัน
-  lateFeeWaived Boolean @default(false)
+  note               String?
+  lateFeePerDay      Int            @default(5000) // สตางค์ต่อวัน
+  lateFeeWaived      Boolean        @default(false)
 
-  schedules InterestSchedule[]
+  schedules  InterestSchedule[]
   repayments Repayment[]
-  payments  Payment[]
+  payments   Payment[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -489,42 +496,42 @@ model Contract {
 }
 
 model LoanApplication {
-  id String @id @default(cuid())
-  requestNumber String @unique
-  losNumber String? @unique
-  requestType String @default("LOAN")
-  borrowerId String
-  borrower borrowers @relation(fields: [borrowerId], references: [id], onDelete: Restrict)
+  id               String    @id @default(cuid())
+  requestNumber    String    @unique
+  losNumber        String?   @unique
+  requestType      String    @default("LOAN")
+  borrowerId       String
+  borrower         borrowers @relation(fields: [borrowerId], references: [id], onDelete: Restrict)
   borrowerSnapshot String
-  requestedAmount Int
-  requestedAt DateTime @default(now())
-  source String @default("SYSTEM")
-  contractId String? @unique
-  contract Contract? @relation(fields: [contractId], references: [id], onDelete: Restrict)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  requestedAmount  Int
+  requestedAt      DateTime  @default(now())
+  source           String    @default("SYSTEM")
+  contractId       String?   @unique
+  contract         Contract? @relation(fields: [contractId], references: [id], onDelete: Restrict)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 
   @@index([borrowerId, requestedAt])
 }
 
 model LoanApplicationNumberSequence {
-  year Int @id
-  lastNumber Int @default(0)
-  updatedAt DateTime @updatedAt
+  year       Int      @id
+  lastNumber Int      @default(0)
+  updatedAt  DateTime @updatedAt
 }
 
 // ตารางงวดจ่ายดอก (ใช้กับสัญญาแบบ INTEREST_ONLY)
 model InterestSchedule {
-  id         String         @id @default(cuid())
-  contractId String
-  contract   Contract       @relation(fields: [contractId], references: [id], onDelete: Cascade)
-  periodNo   Int
-  dueDate    DateTime
-  amount     Int // สตางค์
-  principalAmount Int @default(0) // สตางค์
-  interestAmount Int @default(0) // สตางค์
-  status     ScheduleStatus @default(PENDING)
-  payments   Payment[]
+  id              String         @id @default(cuid())
+  contractId      String
+  contract        Contract       @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  periodNo        Int
+  dueDate         DateTime
+  amount          Int // สตางค์
+  principalAmount Int            @default(0) // สตางค์
+  interestAmount  Int            @default(0) // สตางค์
+  status          ScheduleStatus @default(PENDING)
+  payments        Payment[]
 
   @@unique([contractId, periodNo])
 }
@@ -537,49 +544,52 @@ model ContractNumberSequence {
 
 // รายการเงินเข้า-ออกทั้งหมด (ยอดคงค้าง = รวมจากตารางนี้เสมอ)
 model Payment {
-  id         String            @id @default(cuid())
-  contractId String? // ว่างได้ สำหรับทุน/ค่าใช้จ่าย
-  contract   Contract?         @relation(fields: [contractId], references: [id])
-  scheduleId String?
-  schedule   InterestSchedule? @relation(fields: [scheduleId], references: [id])
-  type       PaymentType
-  amount     Int // สตางค์
-  paidAt     DateTime
-  timeRecorded Boolean @default(false)
-  method     PaymentMethod     @default(CASH)
-  note       String?
-  createdAt  DateTime          @default(now())
+  id           String            @id @default(cuid())
+  contractId   String? // ว่างได้ สำหรับทุน/ค่าใช้จ่าย
+  contract     Contract?         @relation(fields: [contractId], references: [id])
+  scheduleId   String?
+  schedule     InterestSchedule? @relation(fields: [scheduleId], references: [id])
+  type         PaymentType
+  amount       Int // สตางค์
+  paidAt       DateTime
+  timeRecorded Boolean           @default(false)
+  method       PaymentMethod     @default(CASH)
+  note         String?
+  createdAt    DateTime          @default(now())
 
   @@index([contractId])
   @@index([paidAt])
 }
 
 model Repayment {
-  id String @id @default(cuid())
-  requestKey String @unique
-  receiptNumber String @unique
-  contractId String
-  contract Contract @relation(fields: [contractId], references: [id], onDelete: Restrict)
-  paidAt DateTime
-  timeRecorded Boolean @default(false)
-  amount Int
-  interestPaid Int
-  penaltyPaid Int
-  principalPaid Int
-  principalBefore Int
-  interestBefore Int
-  penaltyBefore Int
+  reversedAt         DateTime?
+  reversedBy         String?
+  reversalReason     String?
+  id                 String        @id @default(cuid())
+  requestKey         String        @unique
+  receiptNumber      String        @unique
+  contractId         String
+  contract           Contract      @relation(fields: [contractId], references: [id], onDelete: Restrict)
+  paidAt             DateTime
+  timeRecorded       Boolean       @default(false)
+  amount             Int
+  interestPaid       Int
+  penaltyPaid        Int
+  principalPaid      Int
+  principalBefore    Int
+  interestBefore     Int
+  penaltyBefore      Int
   principalRemaining Int
-  interestRemaining Int
-  penaltyRemaining Int
-  totalRemaining Int
-  method PaymentMethod
-  evidenceUrl String?
-  note String?
-  createdAt DateTime @default(now())
+  interestRemaining  Int
+  penaltyRemaining   Int
+  totalRemaining     Int
+  method             PaymentMethod
+  evidenceUrl        String?
+  note               String?
+  createdAt          DateTime      @default(now())
+
   @@index([contractId, paidAt])
 }
-
 
 model LoanContractDraft {
   finalizedContractId String?
@@ -607,40 +617,40 @@ enum CompanySequenceStatus {
 }
 
 model CompanySequence {
-  paymentBankCode String?
+  paymentBankCode      String?
   paymentAccountNumber String?
-  paymentAccountName String?
-  paymentQrUrl String?
+  paymentAccountName   String?
+  paymentQrUrl         String?
 
-  owner CompanyOwner?
-  ownerNationalId String?
-  ownerAddress String?
-  ownerDocumentUrl String?
-  ownerDocumentName String?
-  ownerFirstName String?
-  ownerLastName String?
-  ownerPhone String?
-  ownerEmail String?
-  ownerProvince String?
-  ownerDistrict String?
-  ownerSubdistrict String?
-  ownerMoo String?
-  ownerSoi String?
-  ownerRoad String?
-  ownerProvinceId Int?
-  ownerDistrictId Int?
-  ownerSubdistrictId Int?
-  ownerProvinceRef Province? @relation("CompanyOwnerProvince", fields: [ownerProvinceId], references: [id], onDelete: SetNull)
-  ownerDistrictRef District? @relation("CompanyOwnerDistrict", fields: [ownerDistrictId], references: [id], onDelete: SetNull)
-  ownerSubdistrictRef Subdistrict? @relation("CompanyOwnerSubdistrict", fields: [ownerSubdistrictId], references: [id], onDelete: SetNull)
+  owner               CompanyOwner?
+  ownerNationalId     String?
+  ownerAddress        String?
+  ownerDocumentUrl    String?
+  ownerDocumentName   String?
+  ownerFirstName      String?
+  ownerLastName       String?
+  ownerPhone          String?
+  ownerEmail          String?
+  ownerProvince       String?
+  ownerDistrict       String?
+  ownerSubdistrict    String?
+  ownerMoo            String?
+  ownerSoi            String?
+  ownerRoad           String?
+  ownerProvinceId     Int?
+  ownerDistrictId     Int?
+  ownerSubdistrictId  Int?
+  ownerProvinceRef    Province?     @relation("CompanyOwnerProvince", fields: [ownerProvinceId], references: [id], onDelete: SetNull)
+  ownerDistrictRef    District?     @relation("CompanyOwnerDistrict", fields: [ownerDistrictId], references: [id], onDelete: SetNull)
+  ownerSubdistrictRef Subdistrict?  @relation("CompanyOwnerSubdistrict", fields: [ownerSubdistrictId], references: [id], onDelete: SetNull)
 
-  houseNo String?
-  moo String?
-  soi String?
-  road String?
-  provinceId String?
-  districtId String?
-  subdistrictId String?
+  houseNo                 String?
+  moo                     String?
+  soi                     String?
+  road                    String?
+  provinceId              String?
+  districtId              String?
+  subdistrictId           String?
   id                      String                @id @default(cuid())
   companycode             String                @unique
   logo                    String?
@@ -664,34 +674,34 @@ model CompanySequence {
 }
 
 model CompanyOwner {
-  id String @id @default(cuid())
-  companyCode String @unique
-  company CompanySequence @relation(fields: [companyCode], references: [companycode], onDelete: Cascade, onUpdate: Cascade)
+  id          String          @id @default(cuid())
+  companyCode String          @unique
+  company     CompanySequence @relation(fields: [companyCode], references: [companycode], onDelete: Cascade, onUpdate: Cascade)
 
-  ownerNationalId String?
-  ownerPrefix String?
-  ownerFirstName String?
-  ownerLastName String?
-  ownerPhone String?
-  ownerEmail String?
-  ownerAddress String?
-  ownerMoo String?
-  ownerSoi String?
-  ownerRoad String?
-  ownerProvince String?
-  ownerDistrict String?
-  ownerSubdistrict String?
-  ownerPostcode String?
-  ownerProvinceId Int?
-  ownerDistrictId Int?
-  ownerSubdistrictId Int?
-  ownerProvinceRef Province? @relation("CompanyOwnerPostcodeProvince", fields: [ownerProvinceId], references: [id], onDelete: SetNull)
-  ownerDistrictRef District? @relation("CompanyOwnerPostcodeDistrict", fields: [ownerDistrictId], references: [id], onDelete: SetNull)
+  ownerNationalId     String?
+  ownerPrefix         String?
+  ownerFirstName      String?
+  ownerLastName       String?
+  ownerPhone          String?
+  ownerEmail          String?
+  ownerAddress        String?
+  ownerMoo            String?
+  ownerSoi            String?
+  ownerRoad           String?
+  ownerProvince       String?
+  ownerDistrict       String?
+  ownerSubdistrict    String?
+  ownerPostcode       String?
+  ownerProvinceId     Int?
+  ownerDistrictId     Int?
+  ownerSubdistrictId  Int?
+  ownerProvinceRef    Province?    @relation("CompanyOwnerPostcodeProvince", fields: [ownerProvinceId], references: [id], onDelete: SetNull)
+  ownerDistrictRef    District?    @relation("CompanyOwnerPostcodeDistrict", fields: [ownerDistrictId], references: [id], onDelete: SetNull)
   ownerSubdistrictRef Subdistrict? @relation("CompanyOwnerPostcodeSubdistrict", fields: [ownerSubdistrictId], references: [id], onDelete: SetNull)
-  ownerDocumentUrl String?
-  ownerDocumentName String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  ownerDocumentUrl    String?
+  ownerDocumentName   String?
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
 
   @@index([ownerProvinceId])
   @@index([ownerDistrictId])
@@ -699,18 +709,18 @@ model CompanyOwner {
 }
 
 model BranchCodeSequence {
-  paymentBankCode String?
+  paymentBankCode      String?
   paymentAccountNumber String?
-  paymentAccountName String?
-  paymentQrUrl String?
+  paymentAccountName   String?
+  paymentQrUrl         String?
 
-  houseNo String?
-  moo String?
-  soi String?
-  road String?
-  provinceId String?
-  districtId String?
-  subdistrictId String?
+  houseNo                 String?
+  moo                     String?
+  soi                     String?
+  road                    String?
+  provinceId              String?
+  districtId              String?
+  subdistrictId           String?
   id                      String                @id @default(cuid())
   companycode             String
   branchcode              String                @unique
@@ -730,6 +740,7 @@ model BranchCodeSequence {
 
   @@index([companycode])
 }
+
 //---------------------------------------------------
 // Admin
 //---------------------------------------------------
@@ -742,26 +753,26 @@ enum UserStatus {
 
 // Better Auth identities are separate from business contact records.
 model User {
-  id            String    @id @default(cuid())
-  name          String
-  username      String?   @unique
-  email         String    @unique
-  emailVerified Boolean   @default(false)
-  image         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  role          String?   @default("staff")
-  status        UserStatus @default(ACTIVE)
-  accessConfigured Boolean @default(false)
-  banned        Boolean?  @default(false)
-  banReason     String?
-  banExpires    DateTime?
-  sessions      Session[]
-  accounts      Account[]
-  profile       UserProfile?
-  companyAccess UserCompanyAccess[]
-  appAccess     UserAppAccess[]
-  menuAccess    UserMenuAccess[]
+  id               String              @id @default(cuid())
+  name             String
+  username         String?             @unique
+  email            String              @unique
+  emailVerified    Boolean             @default(false)
+  image            String?
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+  role             String?             @default("staff")
+  status           UserStatus          @default(ACTIVE)
+  accessConfigured Boolean             @default(false)
+  banned           Boolean?            @default(false)
+  banReason        String?
+  banExpires       DateTime?
+  sessions         Session[]
+  accounts         Account[]
+  profile          UserProfile?
+  companyAccess    UserCompanyAccess[]
+  appAccess        UserAppAccess[]
+  menuAccess       UserMenuAccess[]
 }
 
 model UserProfile {
@@ -779,11 +790,11 @@ model UserProfile {
 }
 
 model UserCompanyAccess {
-  id          String         @id @default(cuid())
+  id          String          @id @default(cuid())
   userId      String
   companyCode String
-  createdAt   DateTime       @default(now())
-  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime        @default(now())
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   company     CompanySequence @relation(fields: [companyCode], references: [companycode], onDelete: Cascade, onUpdate: Cascade)
 
   @@unique([userId, companyCode])
@@ -836,7 +847,7 @@ model Account {
   accessToken           String?
   refreshToken          String?
   idToken               String?
-  accessTokenExpiresAt DateTime?
+  accessTokenExpiresAt  DateTime?
   refreshTokenExpiresAt DateTime?
   scope                 String?
   password              String?
@@ -865,14 +876,175 @@ model Role {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
+
 //---------------------------------------------------
 // YouTube Family Subscription
 //---------------------------------------------------
 model YoutubeFamilySubscription {
-  id String @id @default(cuid())
+  id         String @id @default(cuid())
   familyName String
-  mailacc String @unique
-  
+  mailacc    String @unique
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model YoutubeMember {
+  id           String                 @id @default(cuid())
+  name         String                 @unique
+  contactEmail String?
+  phone        String?
+  line         String?
+  facebook     String?
+  instagram    String?
+  createdAt    DateTime               @default(now())
+  updatedAt    DateTime               @updatedAt
+  accounts     YoutubeMemberAccount[]
+}
+
+model YoutubeMemberAccount {
+  id        String               @id @default(cuid())
+  memberId  String
+  email     String               @unique
+  createdAt DateTime             @default(now())
+  updatedAt DateTime             @updatedAt
+  member    YoutubeMember        @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  seats     YoutubeBillingSeat[]
+
+  @@index([memberId])
+}
+
+model YoutubeBillingGroup {
+  id        String               @id @default(cuid())
+  importKey String               @unique
+  name      String
+  dueDay    Int?
+  status    String               @default("DRAFT")
+  createdAt DateTime             @default(now())
+  updatedAt DateTime             @updatedAt
+  seats     YoutubeBillingSeat[]
+
+  @@index([status])
+}
+
+model YoutubeBillingSeat {
+  id            String                @id @default(cuid())
+  groupId       String
+  position      Int
+  sourceRowKey  String                @unique
+  displayName   String?
+  email         String?
+  contactMethod String?
+  billingMonths Int?
+  sourceStatus  String?
+  priceSatang   Int?
+  paymentStatus String                @default("UNRECORDED")
+  accountId     String?
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
+  group         YoutubeBillingGroup   @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  memberAccount YoutubeMemberAccount? @relation(fields: [accountId], references: [id], onDelete: SetNull)
+
+  @@unique([groupId, position])
+  @@index([groupId])
+  @@index([email])
+  @@index([paymentStatus])
+  @@index([accountId])
+}
+
+// Loan operations: identity records are referenced by ID and financial rows keep snapshots.
+model LoanInvestor {
+  createdBy  String   @default(" ")
+  id         String   @id @default(cuid())
+  nationalId String   @unique
+  title      String
+  firstName  String
+  lastName   String
+  phone      String
+  email      String   @default("")
+  address    String
+  active     Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model LoanFollowUp {
+  id             String   @id @default(cuid())
+  contractId     String
+  outcome        String
+  note           String
+  assigneeId     String?
+  assigneeName   String?
+  promisedAt     DateTime?
+  promisedAmount Int      @default(0)
+  status         String   @default("OPEN")
+  createdBy      String
+  completedAt    DateTime?
+  createdAt      DateTime @default(now())
+  @@index([contractId, createdAt])
+  @@index([status, promisedAt])
+}
+
+model LoanCapitalRequest {
+  id               String   @id @default(cuid())
+  requestKey       String   @unique
+  direction        String
+  amount           Int
+  companyCode      String
+  branchCode       String
+  investorId       String?
+  investorSnapshot String?
+  method           String
+  reference        String
+  note             String
+  status           String   @default("PENDING")
+  requestedBy      String
+  reviewedBy       String?
+  reviewedAt       DateTime?
+  reviewNote       String?
+  ledgerEntryId    String?  @unique
+  createdAt        DateTime @default(now())
+  @@index([status, createdAt])
+}
+
+model LoanAccountingPeriod {
+  snapshot    String?
+  id          String   @id @default(cuid())
+  companyCode String
+  throughDate DateTime
+  status      String   @default("CLOSED")
+  reason      String
+  createdBy   String
+  reopenedBy  String?
+  reopenedAt  DateTime?
+  createdAt   DateTime @default(now())
+  @@index([companyCode, status, throughDate])
+}
+
+model LoanReconciliation {
+  id              String   @id @default(cuid())
+  companyCode     String
+  asOf            DateTime
+  method          String
+  reference       String
+  statementAmount Int
+  ledgerAmount    Int
+  difference      Int
+  note            String
+  createdBy       String
+  createdAt       DateTime @default(now())
+  @@index([companyCode, asOf])
+}
+
+model LoanCashPlan {
+  id          String   @id @default(cuid())
+  companyCode String
+  direction   String
+  title       String
+  amount      Int
+  dueDate     DateTime
+  status      String   @default("OPEN")
+  createdBy   String
+  createdAt   DateTime @default(now())
+  @@index([companyCode, status, dueDate])
 }

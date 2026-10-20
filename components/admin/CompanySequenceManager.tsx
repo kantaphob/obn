@@ -238,7 +238,8 @@ function Editor({
 
   function renderField(field: FieldDef) {
     const span = field.wide ? 'sm:col-span-2' : '';
-    const initialValue = field.key.startsWith('owner') ? (item as Company | null)?.owner?.[field.key as keyof CompanyOwner] : (item as unknown as Record<string, unknown> | null)?.[field.key];
+    const rawInitialValue = field.key.startsWith('owner') ? (item as Company | null)?.owner?.[field.key as keyof CompanyOwner] : (item as unknown as Record<string, unknown> | null)?.[field.key];
+    const initialValue = typeof rawInitialValue === "string" || typeof rawInitialValue === "number" ? rawInitialValue : "";
     if (field.key === 'ownerPrefix') return <label key={field.key} className={labelClass}>{field.label}
       <select name={field.key} defaultValue={initialValue ?? ''} disabled={busy} className={fieldClass}>
         <option value="">เลือกคำนำหน้า</option><option>นาย</option><option>นาง</option><option>นางสาว</option><option>ดร.</option><option>อื่น ๆ</option>

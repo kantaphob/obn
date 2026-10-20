@@ -1,3 +1,5 @@
+import { thaiDay } from "@/lib/loan-balance";
+import { assertLoanCompanyAccess, canAccessLoanDraft } from "@/lib/loan-access";
 import { authorizeApiRequest } from "@/lib/authorization";
 import { createLoanApplication, loanApplicationFields, loanRequestTypes } from '@/lib/loan-application';
 import { after } from 'next/server';
@@ -149,6 +151,7 @@ export async function POST(request: Request) {
       ? ContractStatus.READY
       : ContractStatus.AWAITING_DOCUMENT;
 
+  if (repayType === RepayType.INSTALLMENT && months && thaiDay(dueDate!) !== thaiDay(monthlyDate(startDate!, months))) return Response.json({ error: "วันครบกำหนดต้องตรงกับวันครบงวดสุดท้ายตามจำนวนเดือน" }, { status: 400 });
   const interestRateBasis = repayType === RepayType.INSTALLMENT
     ? InterestRateBasis.MONTHLY_FLAT
     : InterestRateBasis.CONTRACT_FLAT;
@@ -202,7 +205,7 @@ export async function POST(request: Request) {
   const personalLender = documentInput.lenderType === 'PERSON';
   let lenderDocumentUrl = '', lenderDocumentName = '';
   let lenderCompany: { companyCode: string; branchCode: string; name: string; taxId: string; address: string; postcode: string; phone: string } | null = null;
-  if (contractType !== ContractType.NONE) {
+  if (contractType !== ContractType.NONE || text(documentInput.branchCode, 5)) {
     const branchCode = text(documentInput.branchCode, 5);
     if (!/^\d{5}$/.test(branchCode)) return Response.json({ error: "กรุณาเลือกสาขาที่ใช้ทำสัญญาและจ่ายเงิน" }, { status: 400 });
     const branch = await prisma.branchCodeSequence.findUnique({
@@ -225,6 +228,8 @@ export async function POST(request: Request) {
       phone: personalLender ? owner?.ownerPhone || '' : branch.company.phone || "",
     };
   }
+  if (!lenderCompany) return Response.json({ error: "กรุณาเลือกบริษัทและสาขาสำหรับสัญญาทุกรายการ" }, { status: 400 });
+  try { await assertLoanCompanyAccess(lenderCompany.companyCode); } catch { return Response.json({ error: "กรุณาเลือกบริษัทที่มีสิทธิ์ก่อนสร้างสัญญา" }, { status: 403 }); }
   const documentPayload:Record<string,unknown> = {};
   for (const [key,defaultValue] of Object.entries(emptyDocumentSettings)) {
     if (key === "attachments") continue;
@@ -268,6 +273,7 @@ export async function POST(request: Request) {
   const draftId = typeof data.draftId === "string" && /^[a-f0-9-]{36}$/.test(data.draftId) ? data.draftId : null;
   if (draftId) {
     const previous = await prisma.loanContractDraft.findUnique({where:{id:draftId}});
+    if (previous && !await canAccessLoanDraft(previous.dataJson)) return Response.json({error:"ไม่มีสิทธิ์เข้าถึงร่างของบริษัทนี้"},{status:403});
     if (previous && previous.borrowerId !== debtorId) return Response.json({error:"ร่างไม่ตรงกับผู้กู้ที่เลือก"},{status:400});
     if (previous?.finalizedContractId) {
       const finalized=await prisma.contract.findUniqueOrThrow({where:{id:previous.finalizedContractId},include:{application:true}});
@@ -294,7 +300,7 @@ export async function POST(request: Request) {
       documentPayload[signature.key]=file.url;
     }
     const scheduleRows = repayType === RepayType.INSTALLMENT
-      ? makeInstallmentSchedule({ principal, interestAmount, months: months!, startDate })
+      ? makeInstallmentSchedule({ principal, interestAmount: interestMode === InterestMode.UPFRONT ? 0 : interestAmount, months: months!, startDate })
       : [{
           periodNo: 1,
           dueDate,

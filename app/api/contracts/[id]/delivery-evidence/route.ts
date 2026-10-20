@@ -1,3 +1,4 @@
+import { authorizeLoanContract } from "@/lib/loan-access";
 import { authorizeApiRequest } from "@/lib/authorization";
 import { prisma } from '@/lib/prisma';
 import { POST as upload } from '../../attachments/route';
@@ -13,6 +14,7 @@ export async function DELETE(request:Request, context:{params:Promise<{id:string
  const body=await request.json().catch(()=>null);
  if(typeof body?.url!=='string' || !body.url.startsWith('/api/contracts/attachments/'))return Response.json({error:'ข้อมูลหลักฐานไม่ถูกต้อง'},{status:400});
  const {id}=await context.params;
+ const companyDenied = await authorizeLoanContract(id); if (companyDenied) return companyDenied;
  try {
   await prisma.$transaction(async tx=>{
    const locked=await tx.contract.updateMany({where:{id},data:{updatedAt:new Date()}});
@@ -39,6 +41,7 @@ export async function POST(request:Request, context:{params:Promise<{id:string}>
   const denied = await authorizeApiRequest("contracts", "write");
   if (denied) return denied;
  const {id}=await context.params;
+ const companyDenied = await authorizeLoanContract(id); if (companyDenied) return companyDenied;
  const existing=await prisma.contract.findUnique({where:{id},select:{id:true,contractNumber:true,debtorId:true}});
  if(!existing)return Response.json({error:'ไม่พบสัญญา'},{status:404});
  const form=await request.formData().catch(()=>null);

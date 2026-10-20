@@ -1,3 +1,6 @@
+import { assertLoanCompanyAccess } from "@/lib/loan-access";
+import { authorizeLoanContract } from "@/lib/loan-access";
+import { assertLoanPeriodOpen, contractCompanyCode } from "@/lib/loan-accounting-lock";
 import { authorizeApiRequest } from "@/lib/authorization";
 import { after } from 'next/server';
 import { syncLoanGoogleSheet } from '@/lib/integrations/google-sheets';
@@ -16,7 +19,7 @@ function monthlyDate(start: Date, offset: number) {
 function scheduleRows(input: { principal: number; interestAmount: number; months: number | null; repayType: string; startDate: Date; dueDate: Date | null; interestMode: string }) {
   if (input.repayType === RepayType.INSTALLMENT && input.months) return Array.from({ length: input.months }, (_, i) => {
     const principalAmount = i === input.months! - 1 ? input.principal - Math.floor(input.principal / input.months!) * i : Math.floor(input.principal / input.months!);
-    const interestAmount = i === input.months! - 1 ? input.interestAmount - Math.floor(input.interestAmount / input.months!) * i : Math.floor(input.interestAmount / input.months!);
+    const interestAmount = input.interestMode === InterestMode.UPFRONT ? 0 : i === input.months! - 1 ? input.interestAmount - Math.floor(input.interestAmount / input.months!) * i : Math.floor(input.interestAmount / input.months!);
     return { periodNo: i + 1, dueDate: monthlyDate(input.startDate, i + 1), principalAmount, interestAmount, amount: principalAmount + interestAmount };
   });
   if (!input.dueDate) return [];
@@ -29,6 +32,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
   const origin = request.headers.get('origin');
   if (origin && origin !== new URL(request.url).origin) return Response.json({ error: 'ไม่อนุญาตคำขอจากเว็บไซต์อื่น' }, { status: 403 });
   const { id } = await context.params;
+ const companyDenied = await authorizeLoanContract(id); if (companyDenied) return companyDenied;
   const data = await request.json().catch(() => null) as Record<string, unknown> | null;
   if (!data) return Response.json({ error: 'ข้อมูลไม่ถูกต้อง' }, { status: 400 });
 
@@ -40,14 +44,25 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
   if (termsOnly) {
     try {
       await prisma.$transaction(async tx => {
-        const contract = await tx.contract.findUnique({ where: { id } });
+        await tx.contract.update({ where: { id }, data: { updatedAt: new Date() } });
+        const contract = await tx.contract.findUnique({ where: { id }, include: { payments: true } });
         if (!contract) throw new Error('ไม่พบสัญญา');
+        await assertLoanCompanyAccess(contractCompanyCode(contract.documentData));
+        await assertLoanPeriodOpen(tx, contractCompanyCode(contract.documentData), contract.startDate);
+        if (contract.payments.some(payment => payment.amount !== 0 && ['DISBURSEMENT', 'PRINCIPAL', 'INTEREST', 'PENALTY'].includes(payment.type))) throw new Error('สัญญานี้จ่ายเงินแล้ว ต้องแก้ผ่านแบบแก้ไขเงื่อนไขเต็ม');
         if (contract.status !== ContractStatus.READY && contract.status !== ContractStatus.RESERVED) throw new Error('สัญญาที่จ่ายเงินแล้วต้องแก้ผ่านแบบแก้ไขพร้อมคำนวณย้อนหลัง');
-        const updated = await tx.contract.update({ where: { id }, data: { interestMode: data.interestMode as InterestMode } });
+        const mode = data.interestMode as InterestMode;
+        const netDisbursed = mode === InterestMode.UPFRONT ? contract.principal - contract.interestAmount : contract.principal;
+        if (netDisbursed <= 0) throw new Error('ยอดจ่ายสุทธิต้องมากกว่าศูนย์');
+        await tx.payment.updateMany({ where: { contractId: id }, data: { scheduleId: null } });
+        await tx.interestSchedule.deleteMany({ where: { contractId: id } });
+        const rows = scheduleRows({ principal: contract.principal, interestAmount: contract.interestAmount, months: contract.installmentMonths, repayType: contract.repayType, startDate: contract.startDate, dueDate: contract.dueDate, interestMode: mode });
+        await tx.interestSchedule.createMany({ data: rows.map(row => ({ ...row, contractId: id })) });
+        const updated = await tx.contract.update({ where: { id }, data: { interestMode: mode, netDisbursed } });
         await writeLoanLog(tx, {
           borrowerId: contract.debtorId, contractId: id, targetId: id, type: 'CONTRACT', action: 'UPDATE',
           note: `แก้ไขรูปแบบดอกเบี้ยสัญญา ${contract.contractNumber}`,
-          beforeData: { interestMode: contract.interestMode }, afterData: { interestMode: updated.interestMode },
+          beforeData: { interestMode: contract.interestMode }, afterData: { interestMode: updated.interestMode, netDisbursed: updated.netDisbursed },
         });
       });
       after(async()=>{await syncLoanGoogleSheet();});
@@ -67,10 +82,16 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
   const lateFeePerDay = data.lateFeePerDay;
   const lateFeeWaived = data.lateFeeWaived;
   const startDate = typeof data.startDate === 'string' ? new Date(`${data.startDate}T12:00:00.000+07:00`) : new Date(NaN);
-  const dueDate = typeof data.dueDate === 'string' && data.dueDate ? new Date(`${data.dueDate}T12:00:00.000+07:00`) : null;
+  let dueDate = typeof data.dueDate === 'string' && data.dueDate ? new Date(`${data.dueDate}T12:00:00.000+07:00`) : null;
   if (!Number.isSafeInteger(principal) || (principal as number) <= 0 || typeof interestRate !== 'number' || !Number.isFinite(interestRate) || interestRate < 0 || interestRate > 100 || !Object.values(RepayType).includes(repayType as RepayType) || !Object.values(InterestMode).includes(interestMode as InterestMode) || !Number.isSafeInteger(lateFeePerDay) || (lateFeePerDay as number) < 0 || typeof lateFeeWaived !== 'boolean' || !Number.isFinite(startDate.getTime()) || (dueDate && !Number.isFinite(dueDate.getTime())) || (months !== null && (!Number.isSafeInteger(months) || months < 1 || months > 360)) || (repayType === RepayType.INSTALLMENT && months === null) || (repayType !== RepayType.INSTALLMENT && months !== null) || (periodDays !== null && (!Number.isSafeInteger(periodDays) || periodDays < 1 || periodDays > 3650))) {
     return Response.json({ error: 'กรุณาตรวจสอบยอดเงิน เงื่อนไข และวันที่สัญญา' }, { status: 400 });
   }
+  if (repayType === RepayType.INSTALLMENT && months) {
+    const finalDate = monthlyDate(startDate, months);
+    if (dueDate && thaiDay(dueDate) !== thaiDay(finalDate)) return Response.json({ error: 'วันครบกำหนดต้องตรงกับงวดสุดท้าย' }, { status: 400 });
+    dueDate = finalDate;
+  }
+  if (dueDate && thaiDay(dueDate) <= thaiDay(startDate)) return Response.json({ error: 'วันครบกำหนดต้องหลังวันเริ่มสัญญา' }, { status: 400 });
   if (repayType !== RepayType.INSTALLMENT && !dueDate) return Response.json({ error: 'กรุณาระบุวันครบกำหนด' }, { status: 400 });
   const interestRateBasis = repayType === RepayType.INSTALLMENT ? InterestRateBasis.MONTHLY_FLAT : InterestRateBasis.CONTRACT_FLAT;
   const interestAmount = Math.round((principal as number) * interestRate / 100 * (interestRateBasis === InterestRateBasis.MONTHLY_FLAT ? (months ?? 0) : 1));
@@ -81,7 +102,12 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
       // Serialize concurrent changes and repayment writes using the contract row.
       await tx.contract.update({ where: { id }, data: { updatedAt: new Date() } });
       const current = await tx.contract.findUniqueOrThrow({ where: { id }, include: { payments: true, repayments: { orderBy: [{ paidAt: 'asc' }, { createdAt: 'asc' }] }, schedules: true } });
+      await assertLoanCompanyAccess(contractCompanyCode(current.documentData));
+      await assertLoanPeriodOpen(tx, contractCompanyCode(current.documentData), current.startDate);
+      await assertLoanPeriodOpen(tx, contractCompanyCode(current.documentData), startDate);
+      for (const payment of current.payments) await assertLoanPeriodOpen(tx, contractCompanyCode(current.documentData), payment.paidAt);
       if (current.status === ContractStatus.CANCELLED) throw new Error('สัญญาที่ถูกยกเลิกแล้วไม่สามารถแก้ไขได้');
+      if (current.repayments.some(receipt => receipt.reversedAt)) throw new Error('สัญญาที่มีใบรับกลับรายการแล้วต้องเก็บเงื่อนไขเดิม กรุณาสร้างสัญญาปรับโครงสร้างแยก');
       const receiptNotes = new Set(current.repayments.map(r => `รับชำระ ${r.receiptNumber}`));
       const recalculatedPayments = current.payments.filter(p => p.note && receiptNotes.has(p.note));
       const orphanedSplits = current.payments.filter(p => [PaymentType.INTEREST, PaymentType.PRINCIPAL, PaymentType.PENALTY].some(type => type === p.type) && !p.note?.startsWith('รับชำระ '));
@@ -91,7 +117,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
       const basePayments = current.payments.filter(p => !p.note || !receiptNotes.has(p.note));
       const interestModeValue = interestMode as InterestMode;
       const netDisbursed = interestModeValue === InterestMode.UPFRONT ? (principal as number) - interestAmount : principal as number;
-      const terms = { principal: principal as number, interestRate, interestAmount, interestMode: interestModeValue, interestRateBasis, startDate, dueDate, lateFeePerDay: lateFeePerDay as number, lateFeeWaived, status: ContractStatus.ACTIVE };
+      const terms = { principal: principal as number, interestRate, interestAmount, interestMode: interestModeValue, interestRateBasis, startDate, dueDate, lateFeePerDay: lateFeePerDay as number, lateFeeWaived, status: ContractStatus.ACTIVE, installmentMonths: months };
       const newPayments: { type: string; amount: number; paidAt: Date }[] = basePayments.map(({ type, amount, paidAt }) => ({ type, amount, paidAt }));
       const allocations: Array<{ id: string; allocation: ReturnType<typeof allocateRepayment> }> = [];
       for (const receipt of current.repayments) {

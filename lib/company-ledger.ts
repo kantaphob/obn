@@ -4,6 +4,9 @@ import { isLoanFinanceCategoryCode } from "@/lib/company-ledger-summary";
 
 export type CompanyLedgerRow = {
   id: string;
+  investorId?: string | null;
+  reversalOfId?: string | null;
+  reversalOfType?: string | null;
   type: "INCOME" | "EXPENSE";
   title: string;
   category: string;
@@ -51,7 +54,7 @@ const loanPaymentLabels: Record<string, { type: CompanyLedgerRow["type"]; title:
   CAPITAL_OUT: { type: "EXPENSE", title: "ถอนทุน", categoryCode: "LOAN_CAPITAL_OUT" },
 };
 
-export async function getCompanyLedgerRows(from: Date | null, to: Date | null): Promise<CompanyLedgerRow[]> {
+export async function getCompanyLedgerRows(from: Date | null, to: Date | null, client: Pick<typeof prisma, "companyLedgerEntry" | "payment" | "repayment" | "companyFinanceCategory"> = prisma): Promise<CompanyLedgerRow[]> {
   const dateFilter = from || to
     ? { transactionDate: { ...(from ? { gte: from } : {}), ...(to ? { lt: new Date(to.getTime() + 24 * 60 * 60 * 1000) } : {}) } }
     : {};
@@ -60,8 +63,8 @@ export async function getCompanyLedgerRows(from: Date | null, to: Date | null): 
     : {};
 
   const [manualEntries, payments, repayments, categories] = await Promise.all([
-    prisma.companyLedgerEntry.findMany({ where: dateFilter, include: { financeCategory: true }, orderBy: [{ transactionDate: "desc" }, { createdAt: "desc" }] }),
-    prisma.payment.findMany({
+    client.companyLedgerEntry.findMany({ where: dateFilter, include: { financeCategory: true }, orderBy: [{ transactionDate: "desc" }, { createdAt: "desc" }] }),
+    client.payment.findMany({
       where: paymentDateFilter,
       include: {
         contract: {
@@ -74,7 +77,7 @@ export async function getCompanyLedgerRows(from: Date | null, to: Date | null): 
       },
       orderBy: [{ paidAt: "desc" }, { createdAt: "desc" }],
     }),
-    prisma.repayment.findMany({
+    client.repayment.findMany({
       where: paymentDateFilter,
       include: {
         contract: {
@@ -87,7 +90,7 @@ export async function getCompanyLedgerRows(from: Date | null, to: Date | null): 
       },
       orderBy: [{ paidAt: "desc" }, { createdAt: "desc" }],
     }),
-    prisma.companyFinanceCategory.findMany({}),
+    client.companyFinanceCategory.findMany({}),
   ]);
 
   const categoryByCode = new Map(categories.map((category) => [category.code, category.name]));
@@ -96,9 +99,14 @@ export async function getCompanyLedgerRows(from: Date | null, to: Date | null): 
     if (entry.type !== "INCOME" && entry.type !== "EXPENSE") return [];
     const { financeCategory, ...manualEntry } = entry;
     const categoryCode = financeCategory?.code ?? "";
+    let loanReceiptBreakdown: { principal: number; interest: number; penalty: number } | undefined;
+    if (entry.receiptBreakdown) {
+      try { const data = JSON.parse(entry.receiptBreakdown); if ([data.principal, data.interest, data.penalty].every(Number.isSafeInteger)) loanReceiptBreakdown = data; } catch { /* Legacy rows have no structured split. */ }
+    }
     const isLoanFinanceEntry = isLoanFinanceCategoryCode(categoryCode);
     return [{
       ...manualEntry,
+      loanReceiptBreakdown,
       type: entry.type,
       category: financeCategory?.name ?? categoryByName.get(`${entry.type}:${entry.category}`) ?? entry.category,
       categoryCode,
@@ -139,7 +147,7 @@ export async function getCompanyLedgerRows(from: Date | null, to: Date | null): 
   const loanRows: CompanyLedgerRow[] = payments.flatMap((payment) => {
     // The receipt history stores the full receipt separately. Ignore its component rows here
     // for both current notes and imported legacy notes that include the original receipt number.
-    if (repayments.some(({ receiptNumber }) => payment.note?.includes(receiptNumber))) return [];
+    if (/^(รับชำระ|กลับรายการ) RC-/.test(payment.note || "") || repayments.some(({ receiptNumber }) => payment.note?.includes(receiptNumber))) return [];
     const label = loanPaymentLabels[payment.type];
     if (!label) return [];
     const contract = payment.contract;

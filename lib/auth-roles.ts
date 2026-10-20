@@ -39,6 +39,7 @@ export const rolePermissionChoices = [
   { key: "dashboard:read", label: "ดูภาพรวม" },
   { key: "borrowers:read", label: "ดูข้อมูลผู้กู้" },
   { key: "borrowers:write", label: "เพิ่มและแก้ไขข้อมูลผู้กู้" },
+  { key: "loan:approve", label: "อนุมัติทุนและรอบบัญชี Loan" },
   { key: "contracts:read", label: "ดูสัญญา" },
   { key: "contracts:write", label: "สร้างและแก้ไขสัญญา" },
   { key: "repayments:read", label: "ดูการชำระเงิน" },

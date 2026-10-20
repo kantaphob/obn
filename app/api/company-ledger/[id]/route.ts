@@ -1,3 +1,5 @@
+import { assertLoanPeriodOpen } from "@/lib/loan-accounting-lock";
+import { writeLoanLog } from "@/lib/loan-logs";
 import { authorizeApiRequest, getCurrentAccess } from "@/lib/authorization";
 import { prisma } from "@/lib/prisma";
 import { calculateCompanyLedgerTax } from "@/lib/company-ledger-tax";
@@ -63,7 +65,16 @@ export async function PATCH(request: Request, context: Context) {
     return Response.json({ error: "กรุณาเลือกหมวดหมู่ Loan ที่เปิดใช้งานสำหรับประเภทรายการนี้" }, { status: 400 });
   }
 
-  const entry = await prisma.companyLedgerEntry.update({
+  if (["LOAN_CAPITAL_IN", "LOAN_CAPITAL_OUT", "LEGACY_CAPITAL_START", "LEGACY_CAPITAL_WITHDRAWAL"].includes(category.code)) return Response.json({ error: "รายการทุนใช้หน้าบัญชีทุนและกลับรายการเพื่อรักษาประวัติ" }, { status: 409 });
+  let entry;
+  try { entry = await prisma.$transaction(async tx => {
+    await tx.loanAccountingPeriod.updateMany({ where: { id: "__loan_write_lock__" }, data: { status: "CLOSED" } });
+    const current = await tx.companyLedgerEntry.findUniqueOrThrow({ where: { id } });
+    if (await tx.loanCapitalRequest.findFirst({ where: { ledgerEntryId: id } })) throw new Error("รายการทุนที่อนุมัติแล้วต้องใช้กลับรายการเพื่อแก้ไข");
+    if (current.reversalOfId || await tx.companyLedgerEntry.findUnique({ where: { reversalOfId: id } })) throw new Error("รายการกลับบัญชีแล้ว แก้ไขไม่ได้");
+    await assertLoanPeriodOpen(tx, current.companyCode, current.transactionDate);
+    await assertLoanPeriodOpen(tx, current.companyCode, transactionDate);
+    const saved = await tx.companyLedgerEntry.update({
     where: { id },
     data: {
       type,
@@ -79,6 +90,9 @@ export async function PATCH(request: Request, context: Context) {
       note: text(data.note, 1000),
     },
   });
+    await writeLoanLog(tx, { borrowerId: "", userId: access?.session.user.id, targetId: id, type: "ACCOUNTING", action: "UPDATE", beforeData: current, afterData: saved, note: title });
+    return saved;
+  }); } catch (error) { return Response.json({ error: error instanceof Error ? error.message : "แก้ไขไม่สำเร็จ" }, { status: 409 }); }
   return Response.json(entry);
 }
 
@@ -91,6 +105,5 @@ export async function DELETE(request: Request, context: Context) {
   const existing = await prisma.companyLedgerEntry.findUnique({ where: { id }, select: { id: true, title: true, documentNumber: true, companyCode: true } });
   if (!existing) return Response.json({ error: "ไม่พบรายการใบรับ/จ่าย" }, { status: 404 });
   if (access?.accessConfigured && (!existing.companyCode || !access.companyCodes.includes(existing.companyCode))) return Response.json({ error: "บัญชีนี้ไม่มีสิทธิ์เข้าถึงบริษัทที่เลือก" }, { status: 403 });
-  await prisma.companyLedgerEntry.delete({ where: { id } });
-  return Response.json({ ok: true, deleted: existing });
+  return Response.json({ error: "รายการบัญชีต้องเก็บประวัติ กรุณาใช้กลับรายการในหน้ากระทบยอดและปิดรอบ" }, { status: 409 });
 }

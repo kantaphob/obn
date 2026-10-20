@@ -84,7 +84,7 @@ export default function Approvals() {
     }
   }, []);
 
-  useEffect(() => { void loadContracts(); }, [loadContracts]);
+  useEffect(() => { const timer = window.setTimeout(() => { void loadContracts(); }, 0); return () => window.clearTimeout(timer); }, [loadContracts]);
 
   const counts = useMemo(() => ({
     awaiting: contracts.filter(row => row.status === 'AWAITING_DOCUMENT').length,

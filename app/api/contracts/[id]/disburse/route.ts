@@ -1,3 +1,7 @@
+import { loanStatus } from "@/lib/loan-status";
+import { assertLoanCompanyAccess } from "@/lib/loan-access";
+import { authorizeLoanContract } from "@/lib/loan-access";
+import { assertLoanPeriodOpen, contractCompanyCode } from "@/lib/loan-accounting-lock";
 import { authorizeApiRequest } from "@/lib/authorization";
 import { after } from 'next/server';
 import { syncLoanGoogleSheet } from '@/lib/integrations/google-sheets';
@@ -30,6 +34,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
   }
 
   const { id } = await context.params;
+ const companyDenied = await authorizeLoanContract(id); if (companyDenied) return companyDenied;
   const form = await request.formData().catch(() => null);
   if (!form) return Response.json({ error: 'ข้อมูลที่ส่งมาไม่ถูกต้อง' }, { status: 400 });
 
@@ -89,7 +94,9 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
         where: { id },
         include: { payments: true, debtor: { select: { borrowersCode: true, firstName: true, lastName: true, nickname: true } } },
       });
-      if (contract.status !== ContractStatus.READY) throw new Error('จ่ายได้เฉพาะสัญญาที่พร้อมจ่ายเงิน');
+      await assertLoanCompanyAccess(contractCompanyCode(contract.documentData));
+      await assertLoanPeriodOpen(tx, contractCompanyCode(contract.documentData), paidAt);
+      if (loanStatus(contract) !== ContractStatus.READY) throw new Error('จ่ายได้เฉพาะสัญญาที่พร้อมจ่ายเงิน');
       if (bangkokDate(contract.startDate) > bangkokDate(new Date())) throw new Error('ยังไม่ถึงวันเริ่มสัญญา');
       if (bangkokDate(paidAt) < bangkokDate(contract.startDate)) throw new Error('วันที่จ่ายต้องไม่ก่อนวันเริ่มสัญญา');
       if (contract.payments.some(payment => payment.type === PaymentType.DISBURSEMENT)) throw new Error('สัญญานี้มีรายการจ่ายเงินแล้ว');

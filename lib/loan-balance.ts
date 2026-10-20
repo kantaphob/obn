@@ -1,4 +1,6 @@
 export type BalanceContract = {
+    installmentMonths?: number | null;
+    repayType?: string;
     principal: number;
     interestRate: number;
     interestAmount: number;
@@ -25,6 +27,26 @@ function anniversary(start: number, offset: number) {
     const last = new Date(Date.UTC(d.getUTCFullYear(), m + 1, 0)).getUTCDate();
     return Date.UTC(d.getUTCFullYear(), m, Math.min(d.getUTCDate(), last));
 }
+// Monthly interest falls due at the end of each period. Allocate the stored
+// contractual total in satang, with any remainder in the final period.
+export function monthlyInterestPlan(contract: Pick<BalanceContract, "startDate" | "dueDate" | "interestAmount" | "installmentMonths">) {
+    const start = thaiDay(contract.startDate);
+    let count = contract.installmentMonths || 0;
+    if (!count && contract.dueDate) {
+        const due = thaiDay(contract.dueDate);
+        for (let offset = 1; offset <= 1200; offset++) {
+            count = offset;
+            if (anniversary(start, offset) >= due) break;
+        }
+    }
+    count = Math.min(1200, Math.max(1, count));
+    const regular = Math.floor(contract.interestAmount / count);
+    return Array.from({ length: count }, (_, index) => ({
+        periodNo: index + 1,
+        dueDay: anniversary(start, index + 1),
+        interest: index === count - 1 ? contract.interestAmount - regular * index : regular,
+    }));
+}
 export function loanBalance(contract: BalanceContract, asOf: Date) {
     const day = thaiDay(asOf), start = thaiDay(contract.startDate), due = contract.dueDate ? thaiDay(contract.dueDate) : null;
     const payments = contract.payments.filter(p => thaiDay(p.paidAt) <= day);
@@ -33,26 +55,23 @@ export function loanBalance(contract: BalanceContract, asOf: Date) {
     let chargedInterest = 0;
     if (day >= start && contract.interestMode !== 'UPFRONT') {
         if (contract.interestRateBasis === 'MONTHLY_FLAT') {
-            const monthly = Math.round(contract.principal * contract.interestRate / 100);
-            for (let offset = 0; offset < 1200; offset++) {
-                const chargeDay = anniversary(start, offset);
-                if (chargeDay > day || (due !== null && chargeDay >= due))
-                    break;
-                const principalRepaid = payments.filter(p => p.type === 'PRINCIPAL' && thaiDay(p.paidAt) < chargeDay).reduce((sum, p) => sum + p.amount, 0);
-                if (principalRepaid >= contract.principal)
-                    break;
-                chargedInterest += monthly;
+            const plan = monthlyInterestPlan(contract);
+            for (const period of plan) {
+                if (period.dueDay > day) break;
+                const principalRepaid = payments.filter(p => p.type === 'PRINCIPAL' && thaiDay(p.paidAt) < period.dueDay).reduce((sum, p) => sum + p.amount, 0);
+                if (principalRepaid >= contract.principal) break;
+                chargedInterest += period.interest;
             }
         }
         else
             chargedInterest = contract.interestAmount;
     }
     // Interest is kept separate from principal. Overdue charges start the day after maturity.
-    const overdueDays = due === null || contract.lateFeeWaived ? 0 : Math.max(0, Math.floor((day - due) / 86400000));
+    const overdueDays = due === null ? 0 : Math.max(0, Math.floor((day - due) / 86400000));
     const interest = Math.max(0, chargedInterest - totalPaid('INTEREST'));
-    const penalty = Math.max(0, overdueDays * contract.lateFeePerDay - totalPaid('PENALTY'));
+    const penalty = contract.lateFeeWaived ? 0 : Math.max(0, overdueDays * contract.lateFeePerDay - totalPaid('PENALTY'));
     const balance = { principal, interest, penalty, total: principal + interest + penalty, chargedInterest, overdueDays };
-    if (contract.status === 'CLOSED')
+    if (contract.status === 'CLOSED' && !contract.payments.some(payment => payment.amount > 0 && ['PRINCIPAL', 'INTEREST', 'PENALTY'].includes(payment.type) && thaiDay(payment.paidAt) > day))
         return { ...balance, principal: 0, interest: 0, penalty: 0, total: 0 };
     if (!Object.values(balance).every(Number.isSafeInteger) || balance.total > 2147483647)
         throw new Error('ยอดค้างเกินขอบเขตที่รองรับ');

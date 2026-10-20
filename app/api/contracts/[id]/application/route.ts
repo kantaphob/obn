@@ -1,3 +1,4 @@
+import { authorizeLoanContract } from "@/lib/loan-access";
 import { authorizeApiRequest } from "@/lib/authorization";
 import { prisma } from '@/lib/prisma';
 import { loanApplicationFields, loanRequestTypes } from '@/lib/loan-application';
@@ -11,6 +12,7 @@ export async function PATCH(request:Request,context:{params:Promise<{id:string}>
  const data=await request.json().catch(()=>null);
  if(!data || typeof data.requestType!=='string' || !Object.hasOwn(loanRequestTypes,data.requestType) || (data.losNumber!==null && typeof data.losNumber!=='string') || (typeof data.losNumber==='string' && data.losNumber.length>100))return Response.json({error:'กรุณาตรวจประเภทคำขอและเลข LOS (ไม่เกิน 100 ตัวอักษร)'},{status:400});
  const {id}=await context.params;
+ const companyDenied = await authorizeLoanContract(id); if (companyDenied) return companyDenied;
  try {
   const saved=await prisma.$transaction(async tx=>{
    const application=await tx.loanApplication.findUnique({where:{contractId:id}});

@@ -7,7 +7,6 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowDownLeft, ArrowDownToLine, ArrowUpRight, CalendarDays, Check, ChevronLeft, ChevronRight, CircleDollarSign, FileText, Paperclip, Plus, Search, Upload, Wallet, X } from 'lucide-react';
 import { summarizeCompanyLedgerRows } from '@/lib/company-ledger-summary';
-import ConfirmDelete from '@/components/ui/ConfirmDelete';
 import './ledger.css';
 
 type LedgerType = 'INCOME' | 'EXPENSE';
@@ -76,8 +75,6 @@ export default function Ledger() {
   const [formOpen, setFormOpen] = useState(false);
   const [entryTypeChosen, setEntryTypeChosen] = useState(false);
   const [editingEntry, setEditingEntry] = useState<LedgerEntry | null>(null);
-  const [deletingEntry, setDeletingEntry] = useState<LedgerEntry | null>(null);
-  const [deleting, setDeleting] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
@@ -284,24 +281,6 @@ export default function Ledger() {
     }
   }
 
-  async function deleteEntry(entry: LedgerEntry) {
-    if (deleting) return;
-    setDeleting(true);
-    setError('');
-    try {
-      const response = await fetch(`/api/company-ledger/${encodeURIComponent(entry.id)}`, { method: 'DELETE' });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'ลบรายการไม่สำเร็จ');
-      setDeletingEntry(null);
-      setNotice(`ลบรายการ ${entry.documentNumber ?? entry.title} แล้ว`);
-      await load();
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'ลบรายการไม่สำเร็จ');
-    } finally {
-      setDeleting(false);
-    }
-  }
-
   function exportCsv() {
     const link = document.createElement('a');
     link.href = `/api/company-ledger/export?${new URLSearchParams({ from, to, source: 'LOAN' })}`;
@@ -344,7 +323,7 @@ export default function Ledger() {
             <td><span className="cl-category">{entry.category}</span></td><td>{entry.party || <span className="cl-muted">—</span>}</td>
             <td className="cl-muted">{entry.method === 'BANK_TRANSFER' ? 'โอนเงิน' : entry.method === 'CARD' ? 'บัตร' : entry.method === 'OTHER' ? 'อื่นๆ' : 'เงินสด'}</td>
             <td className={`align-right cl-amount ${entry.type === 'INCOME' ? 'positive' : 'negative'}`}><span>{entry.type === 'INCOME' ? '+' : '−'}{currency(entry.amount)}</span>{!isSystemLoanEntry(entry) && (entry.vatRateBps !== null || entry.whtRateBps !== null) && <small className="cl-tax-breakdown">ฐาน {currency(entry.baseAmount ?? entry.amount)}{entry.vatRateBps !== null ? ` · VAT ${currency(entry.vatAmount ?? 0)}` : ''}{entry.whtRateBps !== null ? ` · WHT −${currency(entry.whtAmount ?? 0)}` : ''}</small>}</td>
-            <td>{!isSystemLoanEntry(entry) ? <div className="cl-row-actions"><LoanActionButton action="edit" className="edit" aria-label={`แก้ไข ${entry.title}`} onClick={() => openEditEntry(entry)}>แก้ไข</LoanActionButton><LoanActionButton action="delete" className="delete" aria-label={`ลบ ${entry.title}`} onClick={() => setDeletingEntry(entry)}>ลบ</LoanActionButton></div> : <span className="cl-muted">ระบบ</span>}</td>
+            <td>{!isSystemLoanEntry(entry) ? <div className="cl-row-actions"><LoanActionButton action="edit" className="edit" aria-label={`แก้ไข ${entry.title}`} onClick={() => openEditEntry(entry)}>แก้ไข</LoanActionButton><Link className="cl-button" href="/dashboard/loan/accounting">กลับรายการ</Link></div> : <span className="cl-muted">ระบบ</span>}</td>
           </tr>)}
             {!loading && visibleEntries.length === 0 && <tr><td colSpan={7}><div className="cl-empty"><span><FileText size={23}/></span><strong>{query || typeFilter !== 'ALL' ? 'ไม่พบรายการที่ตรงกับตัวกรอง' : 'ยังไม่มีรายการ Loan ในช่วงวันที่เลือก'}</strong><p>{query || typeFilter !== 'ALL' ? 'ลองเปลี่ยนคำค้นหรือเลือกประเภทรายการอื่น' : 'รายการจากระบบสินเชื่อและหมวดเงินทุน Loan จะแสดงที่นี่'}</p>{!query && typeFilter === 'ALL' && <button className="cl-button primary" type="button" onClick={openNewEntry}><Plus size={16}/> เพิ่มรายการ Loan</button>}</div></td></tr>}
           {loading && <tr><td colSpan={7}><div className="cl-loading"><span className="cl-spinner"/> กำลังโหลดรายการ…</div></td></tr>}
@@ -425,6 +404,6 @@ export default function Ledger() {
         </form>
       </section>
     </div>}
-    {deletingEntry && <ConfirmDelete name={deletingEntry.documentNumber ? `${deletingEntry.documentNumber} · ${deletingEntry.title}` : deletingEntry.title} busy={deleting} onCancel={() => setDeletingEntry(null)} onConfirm={() => void deleteEntry(deletingEntry)} />}
+
   </main>;
 }

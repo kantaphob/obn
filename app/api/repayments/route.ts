@@ -1,4 +1,8 @@
-import { authorizeApiRequest } from "@/lib/authorization";
+import { filterLoanContracts } from "@/lib/loan-access";
+import { assertLoanCompanyAccess } from "@/lib/loan-access";
+import { syncLoanScheduleStatus } from "@/lib/loan-schedule-status";
+import { assertLoanPeriodOpen, contractCompanyCode } from "@/lib/loan-accounting-lock";
+import { authorizeApiRequest, getCurrentAccess } from "@/lib/authorization";
 import { loanApplicationFields } from '@/lib/loan-application';
 import { access } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
@@ -17,14 +21,17 @@ export async function GET(request: Request) {
     if (!Number.isFinite(asOf.getTime()))
         return Response.json({ error: 'วันที่ไม่ถูกต้อง' }, { status: 400 });
     const contractId = params.get('contractId');
-    const [contracts, legacyEntries] = await Promise.all([
+    const [unscopedContracts, unscopedLegacyEntries] = await Promise.all([
         prisma.contract.findMany({ where: contractId ? { id: contractId } : undefined, include: { application:true, debtor: { select: { borrowersCode: true, firstName: true, lastName: true, phone: true, nickname: true, address: true, houseNumber: true } }, payments: true, repayments: { orderBy: [{ paidAt: 'desc' }, { createdAt: 'desc' }] } }, orderBy: { createdAt: 'desc' } }),
         prisma.companyLedgerEntry.findMany({
             where: { type: 'INCOME', title: { in: ['รับดอกเบี้ย', 'รับชำระเงินต้น', 'รับชำระเงินต้นพร้อมดอกเบี้ย'] }, note: { contains: 'นำเข้าจากบัญชีเดิม' } },
-            select: { id: true, title: true, amount: true, transactionDate: true, party: true, reference: true, note: true, method: true },
+            select: { id: true, title: true, amount: true, transactionDate: true, party: true, reference: true, note: true, method: true, companyCode: true },
             orderBy: { transactionDate: 'desc' },
         }),
     ]);
+    const contracts = await filterLoanContracts(unscopedContracts);
+    const access = await getCurrentAccess();
+    const legacyEntries = access?.accessConfigured ? unscopedLegacyEntries.filter(entry => Boolean(entry.companyCode && access.companyCodes.includes(entry.companyCode))) : unscopedLegacyEntries;
     const branchInfoOf = (documentData: string | null) => {
         if (!documentData) return { branchCode: '', companyCode: '' };
         try {
@@ -135,6 +142,8 @@ export async function POST(request: Request) {
             }
             await tx.contract.update({ where: { id: contractId }, data: { updatedAt: new Date(), ...(typeof waivePenalty === 'boolean' ? { lateFeeWaived: waivePenalty } : {}) } });
             const contract = await tx.contract.findUniqueOrThrow({ where: { id: contractId }, include: { payments: true } });
+      await assertLoanCompanyAccess(contractCompanyCode(contract.documentData));
+            await assertLoanPeriodOpen(tx, contractCompanyCode(contract.documentData), date);
             if (!['ACTIVE', 'OVERDUE'].includes(contract.status))
                 throw new Error('รับชำระได้เฉพาะสัญญาที่จ่ายเงินแล้วและยังไม่ปิดยอด');
             if (thaiDay(date) < thaiDay(contract.startDate))
@@ -172,6 +181,7 @@ export async function POST(request: Request) {
                     afterData: { status: 'CLOSED' },
                 });
             }
+            await syncLoanScheduleStatus(tx, contractId);
             return receipt;
         });
         return Response.json(saved, { status: 201 });

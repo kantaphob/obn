@@ -1,3 +1,4 @@
+import { authorizeLoanContract } from "@/lib/loan-access";
 import { authorizeApiRequest } from "@/lib/authorization";
 import { prisma } from '@/lib/prisma';
 import { formatBorrowerCode } from '@/lib/borrower-code';
@@ -14,6 +15,7 @@ export async function POST(request: Request) {
     if (!valid)
         return Response.json({ error: 'ชนิดไฟล์ไม่ตรงกับเนื้อหา' }, { status: 400 });
     const contractId = body?.get('contractId');
+    if (typeof contractId === 'string' && contractId) { const scopeDenied = await authorizeLoanContract(contractId); if (scopeDenied) return scopeDenied; }
     const borrowerId = body?.get('borrowerId');
     const contractNumber = body?.get('contractNumber');
     const contract = typeof contractId === 'string' && contractId

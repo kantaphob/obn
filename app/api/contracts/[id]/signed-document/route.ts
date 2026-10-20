@@ -1,3 +1,4 @@
+import { authorizeLoanContract } from "@/lib/loan-access";
 import { authorizeApiRequest } from "@/lib/authorization";
 import { prisma } from '@/lib/prisma';
 import { POST as upload } from '../../attachments/route';
@@ -9,6 +10,7 @@ export async function POST(request:Request, context:{params:Promise<{id:string}>
   const denied = await authorizeApiRequest("contracts", "write");
   if (denied) return denied;
  const {id}=await context.params;
+ const companyDenied = await authorizeLoanContract(id); if (companyDenied) return companyDenied;
  const existing=await prisma.contract.findUnique({where:{id},select:{status:true,signatureMode:true,contractNumber:true,debtorId:true}});
  if(!existing)return Response.json({error:'ไม่พบสัญญา'},{status:404});
  if(!['AWAITING_DOCUMENT','RESERVED'].includes(existing.status)||existing.signatureMode!=='PRINT')return Response.json({error:'สัญญานี้ไม่อยู่ระหว่างรอเอกสารลงนาม'},{status:409});

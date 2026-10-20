@@ -11,6 +11,7 @@ import { formatBorrowerCode } from '@/lib/borrower-code';
 type Receipt = {
   id: string;
   receiptNumber: string;
+  reversedAt?: string | null;
   paidAt: string;
   timeRecorded: boolean;
   createdAt: string;
@@ -163,7 +164,7 @@ export default function PaymentHistory({ onReceivePayment, revision = 0 }: {
     const list: Entry[] = borrowerContracts
       .filter((contract) => !contractFilter || contract.contractNumber === contractFilter)
       .flatMap((contract): Entry[] => [
-        ...contract.repayments.map((receipt) => ({
+        ...contract.repayments.filter(receipt => !receipt.reversedAt).map((receipt) => ({
           id: receipt.id,
           contractNumber: contract.contractNumber,
           date: receipt.paidAt,

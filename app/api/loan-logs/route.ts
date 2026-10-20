@@ -1,4 +1,5 @@
-import { authorizeApiRequest } from "@/lib/authorization";
+import { filterLoanContracts } from "@/lib/loan-access";
+import { authorizeApiRequest, getCurrentAccess } from "@/lib/authorization";
 import { prisma } from '@/lib/prisma';
 import { formatBorrowerCode } from '@/lib/borrower-code';
 
@@ -13,13 +14,16 @@ export async function GET(request: Request) {
   const userIds = [...new Set(logs.map(log => log.userId).filter(id => id && id !== 'guest'))];
   const [borrowers, contracts, users] = await Promise.all([
     borrowerIds.length ? prisma.borrowers.findMany({ where: { id: { in: borrowerIds } }, select: { id: true, borrowersCode: true, prefixTH: true, firstName: true, lastName: true, nickname: true } }) : [],
-    contractIds.length ? prisma.contract.findMany({ where: { id: { in: contractIds } }, select: { id: true, contractNumber: true } }) : [],
+    contractIds.length ? prisma.contract.findMany({ where: { id: { in: contractIds } }, select: { id: true, contractNumber: true, documentData: true } }) : [],
     userIds.length ? prisma.user.findMany({ where: { id: { in: userIds } }, select: { id: true, name: true, username: true, profile: { select: { firstName: true, lastName: true } } } }) : [],
   ]);
   const borrowerById = new Map(borrowers.map(row => [row.id, row]));
-  const contractById = new Map(contracts.map(row => [row.id, row]));
+  const allowedContracts = await filterLoanContracts(contracts);
+  const contractById = new Map(allowedContracts.map(row => [row.id, { id: row.id, contractNumber: row.contractNumber }]));
+  const access = await getCurrentAccess();
+  const permittedLogs = access?.accessConfigured ? logs.filter(log => log.contractId && contractById.has(log.contractId)) : logs;
   const userById = new Map(users.map(row => [row.id, row]));
-  const rows = logs.map(log => {
+  const rows = permittedLogs.map(log => {
     const borrower = borrowerById.get(log.borrowerId);
     return {
       ...log,

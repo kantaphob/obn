@@ -1,3 +1,5 @@
+import { assertLoanPeriodOpen } from "@/lib/loan-accounting-lock";
+import { writeLoanLog } from "@/lib/loan-logs";
 import { authorizeApiRequest, getCurrentAccess } from "@/lib/authorization";
 import { prisma } from "@/lib/prisma";
 import { getCompanyLedgerRows } from "@/lib/company-ledger";
@@ -80,9 +82,13 @@ export async function POST(request: Request) {
   const financeCategory = await prisma.companyFinanceCategory.findFirst({ where: { id: categoryId, direction: type, isActive: true } });
   if (!financeCategory || !isLoanFinanceCategoryCode(financeCategory.code)) return Response.json({ error: "กรุณาเลือกหมวดหมู่ Loan ที่เปิดใช้งานสำหรับประเภทรายการนี้" }, { status: 400 });
 
+  if (["LOAN_CAPITAL_IN", "LOAN_CAPITAL_OUT", "LEGACY_CAPITAL_START", "LEGACY_CAPITAL_WITHDRAWAL"].includes(financeCategory.code)) return Response.json({ error: "เพิ่มทุนและถอนทุนผ่านหน้าบัญชีทุน เพื่อระบุผู้ลงทุนและอนุมัติรายการ" }, { status: 409 });
+
   let entry;
   try {
     entry = await prisma.$transaction(async (tx) => {
+      await tx.loanAccountingPeriod.updateMany({ where: { id: "__loan_write_lock__" }, data: { status: "CLOSED" } });
+      await assertLoanPeriodOpen(tx, companyCode, transactionDate);
       const company = await tx.companySequence.findFirst({ where: { companycode: companyCode, type: "COMPANY", status: "ACTIVE" }, select: { companycode: true } });
       const branch = branchCode === companyCode
         ? { branchcode: companyCode }
@@ -98,8 +104,9 @@ export async function POST(request: Request) {
       if (sequence.lastNumber > 999999) throw new Error("เลขที่รายการของสาขานี้ครบ 999999 รายการแล้ว");
       const documentNumber = `OBN-L-${String(year % 100).padStart(2, "0")}-${companyCode}-${branchCode}-${String(sequence.lastNumber).padStart(6, "0")}`;
 
-      return tx.companyLedgerEntry.create({
+      const saved = await tx.companyLedgerEntry.create({
         data: {
+          createdBy: access?.session.user.id,
           type,
           title,
           category: financeCategory.name,
@@ -116,9 +123,11 @@ export async function POST(request: Request) {
           note: text(data.note, 1000),
         },
       });
+      await writeLoanLog(tx, { borrowerId: "", userId: access?.session.user.id, targetId: saved.id, type: "ACCOUNTING", action: "CREATE", afterData: { amount: saved.amount, type: saved.type, categoryId: saved.financeCategoryId }, note: saved.title });
+      return saved;
     });
   } catch (cause) {
-    if (cause instanceof Error && (cause.message === "ไม่พบสำนักงานใหญ่หรือสาขาที่เปิดใช้งาน" || cause.message.startsWith("เลขที่รายการของสาขานี้ครบ"))) {
+    if (cause instanceof Error && (cause.message.includes("รอบบัญชี") || cause.message === "ไม่พบสำนักงานใหญ่หรือสาขาที่เปิดใช้งาน" || cause.message.startsWith("เลขที่รายการของสาขานี้ครบ"))) {
       return Response.json({ error: cause.message }, { status: 400 });
     }
     console.error("Company ledger entry creation failed:", cause);

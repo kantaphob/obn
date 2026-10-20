@@ -1,8 +1,9 @@
+import { authorizeLoanContract } from "@/lib/loan-access";
 import { authorizeApiRequest } from "@/lib/authorization";
 import { ContractStatus } from '@/generated/prisma/enums';
 import { prisma } from '@/lib/prisma';
 
-const cancellableStatuses = [
+const cancellableStatuses: ContractStatus[] = [
   ContractStatus.RESERVED,
   ContractStatus.READY,
   ContractStatus.AWAITING_DOCUMENT,
@@ -23,6 +24,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
   }
 
   const { id } = await context.params;
+ const companyDenied = await authorizeLoanContract(id); if (companyDenied) return companyDenied;
   try {
     const contract = await prisma.$transaction(async tx => {
       // Serialize cancellation against a concurrent payout or contract edit.

@@ -1,3 +1,4 @@
+import { filterLoanContracts } from "@/lib/loan-access";
 import { authorizeApiRequest } from "@/lib/authorization";
 import { prisma } from '@/lib/prisma';
 import { loanBalance } from '@/lib/loan-balance';
@@ -6,12 +7,15 @@ import { formatBorrowerCode } from '@/lib/borrower-code';
 export async function GET() {
   const denied = await authorizeApiRequest("contracts", "read");
   if (denied) return denied;
-  const contracts = await prisma.contract.findMany({
+  const contracts = await filterLoanContracts(await prisma.contract.findMany({
     where: { status: { in: ['ACTIVE', 'OVERDUE'] } },
     select: {
       id: true,
       contractNumber: true,
       status: true,
+      documentData: true,
+      installmentMonths: true,
+      repayType: true,
       principal: true,
       interestRate: true,
       interestRateBasis: true,
@@ -25,7 +29,7 @@ export async function GET() {
       payments: { select: { type: true, amount: true, paidAt: true } },
     },
     orderBy: [{ dueDate: 'asc' }, { contractNumber: 'asc' }],
-  });
+  }));
 
   const asOf = new Date();
   const rows = contracts.map(({ payments, ...contract }) => ({

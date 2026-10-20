@@ -1,69 +1,15 @@
+import { filterLoanContracts } from "@/lib/loan-access";
+import { loanStatus } from "@/lib/loan-status";
 import { authorizeApiRequest } from "@/lib/authorization";
 import { loanApplicationFields } from '@/lib/loan-application';
 import { prisma } from '@/lib/prisma';
 import { formatBorrowerCode } from '@/lib/borrower-code';
-import { ContractStatus, ContractType, PaymentType, SignatureMode } from '@/generated/prisma/enums';
-import { loanBalance, thaiDay } from '@/lib/loan-balance';
+import { PaymentType } from '@/generated/prisma/enums';
 
 export async function GET() {
   const denied = await authorizeApiRequest("contracts", "read");
   if (denied) return denied;
-  const today = new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'Asia/Bangkok', year: 'numeric', month: '2-digit', day: '2-digit',
-  }).format(new Date());
-  const todayStart = new Date(`${today}T00:00:00.000Z`);
-  const todayEnd = new Date(`${today}T23:59:59.999+07:00`);
-  const noDisbursement = { payments: { none: { type: PaymentType.DISBURSEMENT } } };
-
-  // Reconcile legacy statuses without making a contract with a recorded payout payable again.
-  await prisma.contract.updateMany({
-    where: { status: ContractStatus.DRAFT, ...noDisbursement, OR: [
-      { contractType: ContractType.NONE }, { signatureMode: SignatureMode.DIGITAL }, { signedAt: { not: null } },
-    ] },
-    data: { status: ContractStatus.READY },
-  });
-  await prisma.contract.updateMany({
-    where: { status: ContractStatus.DRAFT, ...noDisbursement, contractType: { not: ContractType.NONE }, signatureMode: SignatureMode.PRINT, signedAt: null },
-    data: { status: ContractStatus.AWAITING_DOCUMENT },
-  });
-  await prisma.contract.updateMany({
-    where: { status: ContractStatus.RESERVED, ...noDisbursement, startDate: { lte: todayEnd }, OR: [
-      { contractType: ContractType.NONE }, { signatureMode: SignatureMode.DIGITAL }, { signedAt: { not: null } },
-    ] },
-    data: { status: ContractStatus.READY },
-  });
-  await prisma.contract.updateMany({
-    where: { status: ContractStatus.RESERVED, ...noDisbursement, startDate: { lte: todayEnd }, contractType: { not: ContractType.NONE }, signatureMode: SignatureMode.PRINT, signedAt: null },
-    data: { status: ContractStatus.AWAITING_DOCUMENT },
-  });
-  await prisma.contract.updateMany({
-    where: { status: ContractStatus.ACTIVE, dueDate: { lt: todayStart } },
-    data: { status: ContractStatus.OVERDUE },
-  });
-
-  // Repayment receipts prove that the loan was already paid out, even for older
-  // contracts whose original DISBURSEMENT ledger row is missing.
-  const readyWithMoneyHistory = await prisma.contract.findMany({
-    where: {
-      status: ContractStatus.READY,
-      OR: [
-        { payments: { some: { type: PaymentType.DISBURSEMENT } } },
-        { repayments: { some: {} } },
-      ],
-    },
-    include: { payments: true },
-  });
-  for (const contract of readyWithMoneyHistory) {
-    const balance = loanBalance(contract, new Date());
-    const repairedStatus = balance.total === 0
-      ? ContractStatus.CLOSED
-      : contract.dueDate && thaiDay(new Date()) > thaiDay(contract.dueDate)
-        ? ContractStatus.OVERDUE
-        : ContractStatus.ACTIVE;
-    await prisma.contract.updateMany({ where: { id: contract.id, status: ContractStatus.READY }, data: { status: repairedStatus } });
-  }
-
-  const contracts = await prisma.contract.findMany({
+  const contracts = await filterLoanContracts(await prisma.contract.findMany({
     include: {
       application:true,
       debtor: { select: { borrowersCode: true, firstName: true, lastName: true, phone: true, nickname: true } },
@@ -78,7 +24,7 @@ export async function GET() {
       payments: { select: { id: true, note: true, amount: true, type: true, paidAt: true, method: true } },
     },
     orderBy: [{ updatedAt: 'desc' }, { createdAt: 'desc' }, { id: 'desc' }],
-  });
+  }));
 
   const rows = contracts.map(({ payments, ...contract }) => {
     const disbursement = payments
@@ -97,6 +43,7 @@ export async function GET() {
 
     return {
       ...contract,
+      status: loanStatus({ ...contract, payments }),
       ...loanApplicationFields(contract.application),
       disbursement: disbursement ? {
         id: disbursement.id,

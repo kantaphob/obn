@@ -21,10 +21,12 @@ export function summarizeLoanFinanceRows(rows: ReadonlyArray<{
   type: "INCOME" | "EXPENSE";
   amount: number;
   categoryCode: string;
+  reversalOfType?: string | null;
   loanReceiptBreakdown?: { principal: number; interest: number; penalty: number };
 }>) {
   const totals = { principalReceived: 0, interestReceived: 0, penaltyReceived: 0, capitalReceived: 0, unallocatedReceipts: 0, otherIncome: 0, disbursed: 0, capitalWithdrawn: 0, operatingExpenses: 0 };
-  for (const row of rows) {
+  for (const original of rows) {
+    const row = original.reversalOfType === "INCOME" || original.reversalOfType === "EXPENSE" ? { ...original, type: original.reversalOfType, amount: -original.amount, loanReceiptBreakdown: original.loanReceiptBreakdown ? { principal: -original.loanReceiptBreakdown.principal, interest: -original.loanReceiptBreakdown.interest, penalty: -original.loanReceiptBreakdown.penalty } : undefined } : original;
     const categoryCode = normalizeLoanFinanceCategoryCode(row.categoryCode);
     if (row.type === "INCOME") {
       if (row.loanReceiptBreakdown) {

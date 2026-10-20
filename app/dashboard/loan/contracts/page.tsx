@@ -130,6 +130,11 @@ export default function Contracts() {
     if (responses.some(response => !response.ok)) throw new Error('โหลดสัญญาไม่สำเร็จ');
     setDrafts(newestFirst(data[0]));
     setContracts(newestFirst(data[1]));
+    const linkedId = new URLSearchParams(window.location.search).get("contractId");
+    if (linkedId) {
+      const linked = (data[1] as Row[]).find(row => row.id === linkedId);
+      if (linked) setEditingContract(linked);
+    }
   }, []);
 
   useEffect(() => {

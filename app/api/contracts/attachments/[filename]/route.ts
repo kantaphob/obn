@@ -1,3 +1,4 @@
+import { authorizeLoanFile } from "@/lib/loan-access";
 import { authorizeApiRequest } from "@/lib/authorization";
 import { readFile } from 'node:fs/promises';
 import { storedUploadPath } from '@/lib/borrower-file-storage';
@@ -8,6 +9,7 @@ export async function GET(_request: Request, { params }: {
 }) {
   const denied = await authorizeApiRequest("contracts", "read");
   if (denied) return denied;
+  const fileDenied = await authorizeLoanFile(_request.url); if (fileDenied) return fileDenied;
     const { filename } = await params;
     if (!/^[A-Za-z0-9ก-๛._-]+\.(jpg|png|webp|pdf)$/i.test(filename))
         return new Response(null, { status: 404 });

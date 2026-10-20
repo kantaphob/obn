@@ -1,0 +1,1 @@
+ALTER TABLE "LoanInvestor" ADD COLUMN "createdBy" TEXT NOT NULL DEFAULT ' ';

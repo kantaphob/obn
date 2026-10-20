@@ -293,16 +293,23 @@ export const SYSTEMS: Record<SystemKey, System> = {
           l("approvals", "พิจารณาอนุมัติ", FileCheck2),
           l("ap", "ใบแจ้งหนี้", Receipt),
           l("ar", "ลูกหนี้", UserRound),
+          l("schedules", "ตารางงวด", CalendarDays),
+          l("calendar", "ปฏิทินรับเงิน", CalendarDays),
+          l("borrower-overview", "ภาพรวมผู้กู้", UserRound),
         ],
       },
       {
-        title: "ชำระเงิน",
+        title: "การเงิน",
         items: [
           l("ledger", "สมุดบันชี", Receipt),
           l("payments", "รับชำระและประวัติ", Receipt),
+          l("capital-account", "บัญชีทุน", Receipt),
+          l("profit", "ผลดำเนินงาน", BarChart3),
+          l("forecast", "คาดการณ์เงินสด", BarChart3),
+          l("accounting", "กระทบยอดและปิดรอบ", Receipt),
         ],
       },
-      { title: "ติดตามหนี้", items: [l("overdue", "ค้างชำระ", AlarmClock)] },
+      { title: "ติดตามหนี้", items: [l("overdue", "ค้างชำระ", AlarmClock), l("collections", "งานติดตามหนี้", AlarmClock)] },
       {
         title: "ลูกค้า",
         items: [
@@ -324,7 +331,16 @@ export const SYSTEMS: Record<SystemKey, System> = {
     color: "#94a3b8",
     icon: SquarePlay,
     stats: [],
-    groups: [{ title: "ภาพรวม", items: [yt("", "ภาพรวม Yture", LayoutDashboard)] }],
+    groups: [
+      {
+        title: "YouTube",
+        items: [
+          yt("", "ภาพรวม", LayoutDashboard),
+          yt("members", "สมาชิก", Users),
+          yt("group", "กลุ่ม", Users),
+        ],
+      },
+    ],
   },
   netflix: {
     key: "netflix",

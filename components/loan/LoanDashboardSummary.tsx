@@ -1,3 +1,6 @@
+import { canReadLoanFinancials } from "@/lib/loan-access";
+import { getCurrentAccess } from "@/lib/authorization";
+import LoanClosingSummary from "./LoanClosingSummary";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { getLoanDashboardData } from "@/lib/loan-dashboard";
@@ -7,10 +10,12 @@ import { summarizeCompanyLedgerRows } from "@/lib/company-ledger-summary";
 const money = (value: number) => new Intl.NumberFormat("th-TH", { style: "currency", currency: "THB" }).format(value / 100);
 
 export default async function LoanDashboardSummary() {
+  const access = await getCurrentAccess();
+  if (!canReadLoanFinancials(access) || !access) return null;
   const { year, now, ledgerRows, outstanding, annualCashflow, finance, upfrontInterestTotal, cashflow, overdue, overdueBalance } = await getLoanDashboardData();
   const [companies, branches] = await Promise.all([
-    prisma.companySequence.findMany({ where: { type: "COMPANY" }, select: { companycode: true, nameTH: true, nameEN: true } }),
-    prisma.branchCodeSequence.findMany({ where: { type: "BRANCH" }, select: { companycode: true, branchcode: true, nameTH: true, nameEN: true } }),
+    prisma.companySequence.findMany({ where: { type: "COMPANY", ...(access.accessConfigured ? { companycode: { in: access.companyCodes } } : {}) }, select: { companycode: true, nameTH: true, nameEN: true } }),
+    prisma.branchCodeSequence.findMany({ where: { type: "BRANCH", ...(access.accessConfigured ? { companycode: { in: access.companyCodes } } : {}) }, select: { companycode: true, branchcode: true, nameTH: true, nameEN: true } }),
   ]);
   const allTime = summarizeCompanyLedgerRows(ledgerRows);
   const branchRows = companies.flatMap((company) => {
@@ -46,6 +51,7 @@ export default async function LoanDashboardSummary() {
       <div><p className="text-[10px] font-semibold tracking-[2px] text-teal-700">OBN GROUP FINANCE</p><h2 id="group-loan-title" className="mt-1 text-xl font-semibold text-slate-800">ภาพรวมรับ–จ่าย OBN · {companies.length} บริษัท</h2><p className="mt-1 text-xs text-slate-500">รวมรายการสะสมจากสำนักงานใหญ่และทุกสาขา · อัปเดตทุก 10 วินาที · ล่าสุด {new Intl.DateTimeFormat("th-TH", { timeZone: "Asia/Bangkok", hour: "2-digit", minute: "2-digit", second: "2-digit" }).format(now)}</p></div>
       <Link href="/dashboard/loan" className="inline-flex items-center gap-2 rounded-full bg-teal-800 px-4 py-2 text-xs font-medium text-white">ดูภาพรวมสินเชื่อ <ArrowUpRight size={15} aria-hidden="true" /></Link>
     </header>
+    <LoanClosingSummary />
     <dl className="grid gap-3 md:grid-cols-3">{metrics.map(metric => <div key={metric.label} className="rounded-2xl border border-teal-100 bg-gradient-to-br from-teal-50 to-white p-4"><dt className="text-xs text-slate-600">{metric.label}</dt><dd className="mt-2 break-words text-2xl font-semibold tabular-nums text-teal-900">{money(metric.amount)}</dd><dd className="mt-2 text-[11px] text-slate-500">{metric.note}</dd></div>)}</dl>
     <section className="mt-4 overflow-hidden rounded-2xl border border-slate-100" aria-labelledby="obn-branch-ledger-title">
       <header className="flex flex-wrap items-end justify-between gap-2 p-4"><div><h3 id="obn-branch-ledger-title" className="text-sm font-semibold text-slate-800">รับ–จ่ายแยกตามบริษัทและสาขา</h3><p className="mt-1 text-[10px] text-slate-500">ยอดสะสมตั้งแต่รายการแรก · รายการที่ไม่มีรหัสสาขาจัดเป็นสำนักงานใหญ่</p></div><Link href="/dashboard/loan/ledger" className="inline-flex items-center gap-1 text-xs font-medium text-teal-700">เปิดสมุดบัญชี <ArrowUpRight size={13} aria-hidden="true" /></Link></header>

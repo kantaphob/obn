@@ -1,3 +1,6 @@
+import { canReadLoanFinancials } from "@/lib/loan-access";
+import { getCurrentAccess } from "@/lib/authorization";
+import LoanClosingSummary from "./LoanClosingSummary";
 import Link from "next/link";
 import {
   AlarmClock,
@@ -37,6 +40,8 @@ function borrowerName(borrower: {
 }
 
 export default async function LoanOverview() {
+  const access = await getCurrentAccess();
+  if (!canReadLoanFinancials(access) || !access) return null;
   const { now, year, dateParts, contracts, cashflowRows, lifetimeFinance, cashBalance, contractsById, upfrontInterestRows, upfrontInterestTotal, capitalRows, openContracts, dueToday, overdue, overdueBalance, recentReviewQueue, reviewPrincipalTotal, overdueFollowups, loanCashflow: cashflow, loanAnnualCashflow: annualCashflow, finance, outstanding, pendingDisbursement } = await getLoanDashboardData();
   const system = SYSTEMS.loan;
   const capitalFacts = [
@@ -45,9 +50,10 @@ export default async function LoanOverview() {
     { label: "เงินต้นคงเหลือกับผู้กู้", value: outstanding.principal, note: "เงินต้นตามสัญญาที่ยังไม่คืน รวมส่วนหักดอกล่วงหน้า" },
   ];
   const interestReceiptRows = cashflowRows.flatMap(row => {
-    if (row.type !== "INCOME") return [];
+    if (row.type !== "INCOME" && row.reversalOfType !== "INCOME") return [];
     const amount = row.loanReceiptBreakdown?.interest ?? (normalizeLoanFinanceCategoryCode(row.categoryCode) === "LOAN_INTEREST" ? row.amount : 0);
-    return amount > 0 ? [{ id: row.id, title: row.title, date: row.transactionDate, amount }] : [];
+    const signedAmount = row.reversalOfType === "INCOME" ? -amount : amount;
+    return signedAmount !== 0 ? [{ id: row.id, title: row.title, date: row.transactionDate, amount: signedAmount }] : [];
   });
   const interestDueRows = openContracts.filter(contract => contract.balance.interest > 0);
   const annualExpenseDetails = [
@@ -78,6 +84,7 @@ export default async function LoanOverview() {
       <div><p className="loan-dashboard-eyebrow">FINANCIAL WORKSPACE</p><h1>ภาพรวม{system.label}</h1><p>ทุกความเคลื่อนไหวของเงินและสินเชื่อ ในมุมมองเดียว</p></div>
       <div className="loan-dashboard-meta"><span className="loan-live-badge"><i /> อัปเดตทุก 10 วินาที</span><span className="loan-year-badge"><CalendarDays size={15} /> ปี {year + 543} · ถึง {dateLabel(now)}</span></div>
     </header>
+    <LoanClosingSummary />
 
     <div className="loan-summary-grid">
     <section className="loan-cashflow loan-primary-finance" aria-labelledby="loan-primary-capital-title">
@@ -146,7 +153,7 @@ export default async function LoanOverview() {
     </section>
 
     <section className="loan-cashflow" aria-labelledby="loan-capital-title">
-      <header className="loan-cashflow-heading"><div><p>CAPITAL / ประวัติเงินทุน</p><h2 id="loan-capital-title">รายการใส่ทุนและถอนทุน</h2></div><Link href="/dashboard/loan/ledger">เพิ่ม / ถอนทุนในสมุดบัญชี <ArrowUpRight size={15} /></Link></header>
+      <header className="loan-cashflow-heading"><div><p>CAPITAL / ประวัติเงินทุน</p><h2 id="loan-capital-title">รายการใส่ทุนและถอนทุน</h2></div><Link href="/dashboard/loan/capital-account">เพิ่ม / ถอนทุนและผู้ลงทุน <ArrowUpRight size={15} /></Link></header>
       <details className="loan-monthly-data"><summary>ประวัติเงินทุน {capitalRows.length.toLocaleString("th-TH")} รายการ</summary><div><table><caption className="sr-only">รายการเพิ่มทุนและถอนทุนทั้งหมดถึงวันนี้</caption><thead><tr><th>วันที่</th><th>รายการ</th><th>เพิ่มทุน</th><th>ถอนทุน</th></tr></thead><tbody>{capitalRows.map(row => <tr key={row.id}><td>{dateLabel(row.transactionDate)}</td><td>{row.title}</td><td>{row.type === "INCOME" ? money(row.amount) : "—"}</td><td>{row.type === "EXPENSE" ? money(row.amount) : "—"}</td></tr>)}{!capitalRows.length && <tr><td colSpan={4}>ยังไม่มีรายการทุนที่บันทึก</td></tr>}</tbody></table></div></details>
       <p className="loan-chart-footnote">เพิ่มทุนในสมุดบัญชี: เลือกรายรับ → เงินทุนเข้า · ถอนทุน: เลือกรายจ่าย → เงินทุนออก ยอดจะอัปเดตใน Dashboard อัตโนมัติ</p>
     </section>
