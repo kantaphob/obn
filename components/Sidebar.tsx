@@ -2,9 +2,9 @@
 
 import { useEffect, useState, type CSSProperties } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { ChevronDown, Menu, X, PanelLeft } from "lucide-react";
-import SidebarMenu from "./SidebarMenu";
+import SidebarMenu, { navItemIsActive } from "./SidebarMenu";
 import { flattenNavItems, getSystem, type NavItem } from "@/lib/nav";
 import { workspaceStyles as styles } from "./ui/workspace-styles";
 import { useUserAccess } from "@/components/UserAccessProvider";
@@ -13,11 +13,12 @@ function filterMenu(items: NavItem[], hrefs: string[]): NavItem[] {
   return items.map((item) => {
     const children = item.children ? filterMenu(item.children, hrefs) : undefined;
     return { ...item, ...(children ? { children } : {}) };
-  }).filter((item) => hrefs.includes(item.href) || Boolean(item.children?.length));
+  }).filter((item) => hrefs.includes(item.href.split("?")[0]) || Boolean(item.children?.length));
 }
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const system = getSystem(pathname);
   const { access, loading: accessLoading } = useUserAccess();
   const navigationHrefs = access?.appKeys.includes("dashboard")
@@ -50,9 +51,11 @@ export default function Sidebar() {
     <div className={`${styles.windowBar} ${sidebarCollapsed ? "min-[761px]:flex-col min-[761px]:gap-3" : ""}`}><span role="status" aria-label={connectionLabel} title={`${connectionLabel} (สถานะจากเบราว์เซอร์)`} className="flex shrink-0 items-center gap-1.5">{lights.map(light => <span key={light.label} aria-hidden="true" className={`size-2.5 rounded-full border border-white/35 ${light.active ? light.color : "bg-[#92988f]/30"}`} />)}</span><button type="button" onClick={() => setSidebarCollapsed(value => !value)} aria-expanded={!sidebarCollapsed} aria-controls="sidebar-content" aria-label={sidebarCollapsed ? "ขยาย Sidebar" : "ยุบ Sidebar"} title={sidebarCollapsed ? "ขยาย Sidebar" : "ยุบ Sidebar"} className="grid size-9 place-items-center rounded-lg border border-current/20 text-[color:var(--text)] hover:bg-white/15 focus-visible:outline-current"><PanelLeft size={20} aria-hidden="true" /></button></div>
     {sidebarCollapsed && <nav aria-label={`ไอคอนเมนู${system.label}`} className="hidden min-[761px]:block">
       {visibleGroups.map(group => <div key={group.title} className="mb-3 grid gap-2 border-b border-current/15 pb-3">
-        {flattenNavItems(group.items).filter(item => !item.children?.length).map(({ href, label, icon: ItemIcon }) => {
-          const selected = pathname === href || (href !== system.href && pathname.startsWith(`${href}/`));
-          return <Link key={href} href={href} title={`${group.title} — ${label}`} aria-label={label} aria-current={selected ? "page" : undefined} className={`grid size-11 place-items-center rounded-xl border text-inherit! focus-visible:outline-current ${selected ? "border-white/50 bg-[color-mix(in_srgb,var(--accent)_25%,var(--surface))] shadow-[inset_1px_1px_3px_#fff4,3px_4px_8px_#0002]" : "border-transparent hover:bg-white/15"}`}><ItemIcon size={22} aria-hidden="true" /></Link>;
+        {flattenNavItems(group.items).filter(item => !item.children?.length).map((item) => {
+          const selected = navItemIsActive(item, pathname, searchParams.get("view"));
+          const href = item.query ? `${item.href}?${new URLSearchParams(item.query).toString()}` : item.href;
+          const ItemIcon = item.icon;
+          return <Link key={`${item.href}:${item.label}`} href={href} title={`${group.title} — ${item.label}`} aria-label={item.label} aria-current={selected ? "page" : undefined} className={`grid size-11 place-items-center rounded-xl border text-inherit! focus-visible:outline-current ${selected ? "border-white/50 bg-[color-mix(in_srgb,var(--accent)_25%,var(--surface))] shadow-[inset_1px_1px_3px_#fff4,3px_4px_8px_#0002]" : "border-transparent hover:bg-white/15"}`}><ItemIcon size={22} aria-hidden="true" /></Link>;
         })}
       </div>)}
     </nav>}

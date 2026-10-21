@@ -43,7 +43,7 @@ import {
   ChartNoAxesCombined,
 } from "lucide-react";
 
-export type NavItem = { label: string; href: string; icon: LucideIcon; children?: NavItem[] };
+export type NavItem = { label: string; href: string; icon: LucideIcon; query?: Record<string, string>; children?: NavItem[] };
 export type NavGroup = { title: string; items: NavItem[] };
 export type SystemKey =
   | "dashboard"
@@ -82,6 +82,25 @@ const yt = make("/dashboard/youtube");
 const nf = make("/dashboard/netflix");
 const ad = make("/admin");
 
+/** Shared company navigation taxonomy. Empty categories are omitted. */
+export const COMPANY_MENU_CATEGORIES = [
+  { key: "overview", title: "ภาพรวม" },
+  { key: "customers", title: "ลูกค้า สมาชิก และคู่ค้า" },
+  { key: "operations", title: "งานหลัก" },
+  { key: "inventory", title: "สินค้าและวัสดุ" },
+  { key: "finance", title: "การเงินและบัญชี" },
+  { key: "reports", title: "รายงานและวางแผน" },
+  { key: "history", title: "ประวัติและเอกสาร" },
+] as const;
+
+type CompanyMenuCategory = (typeof COMPANY_MENU_CATEGORIES)[number]["key"];
+
+function companyMenuGroups(items: Partial<Record<CompanyMenuCategory, NavItem[]>>): NavGroup[] {
+  return COMPANY_MENU_CATEGORIES.flatMap(({ key, title }) =>
+    items[key]?.length ? [{ title, items: items[key]! }] : [],
+  );
+}
+
 export const SYSTEMS: Record<SystemKey, System> = {
   dashboard: {
     key: "dashboard",
@@ -100,10 +119,10 @@ export const SYSTEMS: Record<SystemKey, System> = {
         ],
       },
       {
-        title: "Accounts",
+        title: "บัญชีและการเงิน",
         items: [
           { label: "สมุดบัญชี", href: "/dashboard/accounts", icon: Receipt },
-          { label: "ดุลยบัญชี", href: "/dashboard/accounts/trial-balance", icon: BarChart3 },
+          { label: "งบทดลอง", href: "/dashboard/accounts/trial-balance", icon: BarChart3 },
           {
             label: "งานบัญชีประจำวัน", href: "/dashboard/accounts/daily", icon: CalendarDays,
             children: [
@@ -135,18 +154,13 @@ export const SYSTEMS: Record<SystemKey, System> = {
         ],
       },
       {
-        title: "Human Resources",
+        title: "บุคลากร",
+        items: [{ label: "พนักงาน", href: "/dashboard/employees", icon: Users }],
+      },
+      {
+        title: "เข้าสู่ระบบบริษัท",
         items: [
-          {
-            label: "พนักงาน",
-            href: "/dashboard/employees",
-            icon: Users,
-          },
-          {
-            label: "ขายการเกษตร",
-            href: "/dashboard/agricultures",
-            icon: Sprout,
-          },
+          { label: "ขายการเกษตร", href: "/dashboard/agricultures", icon: Sprout },
           { label: "ปล่อยสินเชื่อ", href: "/dashboard/loan", icon: HandCoins },
         ],
       },
@@ -173,33 +187,30 @@ export const SYSTEMS: Record<SystemKey, System> = {
       "รายจ่ายเดือนนี้",
       "งวดงานรอรับเงิน",
     ],
-    groups: [
-      { title: "ภาพรวม", items: [c("", "ภาพรวมก่อสร้าง", LayoutDashboard)] },
-      {
-        title: "โครงการ",
-        items: [
-          c("projects", "รายการโครงการ", HardHat),
-          c("progress", "ความคืบหน้างาน", ClipboardList),
-          c("boq", "แบบและ BOQ", Ruler),
-        ],
-      },
-      {
-        title: "จัดซื้อและวัสดุ",
-        items: [
-          c("purchase-orders", "ใบสั่งซื้อ", ShoppingCart),
-          c("materials", "วัสดุคงคลัง", Boxes),
-          c("subcontractors", "ผู้รับเหมาช่วง", Users),
-        ],
-      },
-      {
-        title: "การเงิน",
-        items: [
-          c("ledger", "สมุดบัญชีรับ–จ่าย", BookOpen),
-          c("billing", "เบิกงวดงาน", Receipt),
-          c("costs", "ต้นทุนและกำไร", BarChart3),
-        ],
-      },
-    ],
+    groups: companyMenuGroups({
+      overview: [
+        c("", "ภาพรวม", LayoutDashboard),
+      ],
+      customers: [
+        c("subcontractors", "ผู้รับเหมาช่วง", Users),
+      ],
+      operations: [
+        c("projects", "รายการโครงการ", HardHat),
+        c("progress", "ความคืบหน้างาน", ClipboardList),
+        c("boq", "แบบและ BOQ", Ruler),
+        c("purchase-orders", "ใบสั่งซื้อ", ShoppingCart),
+      ],
+      inventory: [
+        c("materials", "วัสดุคงคลัง", Boxes),
+      ],
+      finance: [
+        c("ledger", "สมุดบัญชีรับ–จ่าย", BookOpen),
+        c("billing", "เบิกงวดงาน", Receipt),
+      ],
+      reports: [
+        c("costs", "ต้นทุนและกำไร", BarChart3),
+      ],
+    }),
   },
 
   buildin: {
@@ -216,32 +227,27 @@ export const SYSTEMS: Record<SystemKey, System> = {
       "คิวติดตั้งสัปดาห์นี้",
       "ยอดค้างชำระ",
     ],
-    groups: [
-      { title: "ภาพรวม", items: [b("", "ภาพรวมบิ้วอิน", LayoutDashboard)] },
-      {
-        title: "งานขาย",
-        items: [
-          b("quotations", "ใบเสนอราคา", FileText),
-          b("customers", "ลูกค้า", UserRound),
-        ],
-      },
-      {
-        title: "งานผลิตและติดตั้ง",
-        items: [
-          b("work-orders", "ใบสั่งงาน", ClipboardList),
-          b("installations", "ตารางติดตั้ง", CalendarDays),
-          b("materials", "วัสดุและอุปกรณ์", Boxes),
-        ],
-      },
-      {
-        title: "การเงิน",
-        items: [
-          b("ledger", "สมุดบัญชีรับ–จ่าย", BookOpen),
-          b("invoices", "ใบแจ้งหนี้", Receipt),
-          b("payments", "รับชำระเงิน", Wallet),
-        ],
-      },
-    ],
+    groups: companyMenuGroups({
+      overview: [
+        b("", "ภาพรวม", LayoutDashboard),
+      ],
+      customers: [
+        b("customers", "ลูกค้า", UserRound),
+      ],
+      operations: [
+        b("quotations", "ใบเสนอราคา", FileText),
+        b("work-orders", "ใบสั่งงาน", ClipboardList),
+        b("installations", "ตารางติดตั้ง", CalendarDays),
+      ],
+      inventory: [
+        b("materials", "วัสดุและอุปกรณ์", Boxes),
+      ],
+      finance: [
+        b("ledger", "สมุดบัญชีรับ–จ่าย", BookOpen),
+        b("invoices", "ใบแจ้งหนี้", Receipt),
+        b("payments", "รับชำระเงิน", Wallet),
+      ],
+    }),
   },
 
   agricultures: {
@@ -253,35 +259,32 @@ export const SYSTEMS: Record<SystemKey, System> = {
     color: "#7ccf6a",
     icon: Sprout,
     stats: ["ยอดขายวันนี้", "สินค้าใกล้หมด", "ใบสั่งขายรอส่ง", "ลูกหนี้คงค้าง"],
-    groups: [
-      { title: "ภาพรวม", items: [a("", "ภาพรวมการเกษตร", LayoutDashboard)] },
-      {
-        title: "สินค้าและสต็อก",
-        items: [
-          a("products", "สินค้า", Package),
-          a("stock", "สต็อกคงเหลือ", Boxes),
-          a("lots", "ล็อตและวันหมดอายุ", AlarmClock),
-          a("categories", "หมวดหมู่", AlarmClock),
-          a("classifier", "ลักษณะนาม", AlarmClock),
-        ],
-      },
-      {
-        title: "งานขาย",
-        items: [
-          a("sales-orders", "ใบสั่งขาย", ShoppingCart),
-          a("customers", "ลูกค้าและตัวแทน", Users),
-          a("deliveries", "ใบส่งของ", Truck),
-        ],
-      },
-      {
-        title: "การเงิน",
-        items: [
-          a("ledger", "สมุดบัญชีรับ–จ่าย", BookOpen),
-          a("receivables", "ลูกหนี้", Receipt),
-          a("reports", "รายงานยอดขาย", BarChart3),
-        ],
-      },
-    ],
+    groups: companyMenuGroups({
+      overview: [
+        a("", "ภาพรวม", LayoutDashboard),
+      ],
+      customers: [
+        a("customers", "ลูกค้าและตัวแทน", Users),
+      ],
+      operations: [
+        a("sales-orders", "ใบสั่งขาย", ShoppingCart),
+        a("deliveries", "ใบส่งของ", Truck),
+      ],
+      inventory: [
+        a("products", "สินค้า", Package),
+        a("stock", "สต็อกคงเหลือ", Boxes),
+        a("lots", "ล็อตและวันหมดอายุ", AlarmClock),
+        a("categories", "หมวดหมู่สินค้า", Package),
+        a("classifier", "ลักษณนาม", Ruler),
+      ],
+      finance: [
+        a("ledger", "สมุดบัญชีรับ–จ่าย", BookOpen),
+        a("receivables", "ลูกหนี้", HandCoins),
+      ],
+      reports: [
+        a("reports", "รายงานยอดขาย", BarChart3),
+      ],
+    }),
   },
 
   loan: {
@@ -298,45 +301,41 @@ export const SYSTEMS: Record<SystemKey, System> = {
       "ครบกำหนดชำระวันนี้",
       "ยอดค้างชำระ",
     ],
-    groups: [
-      { title: "ภาพรวม", items: [
-        l("", "ภาพรวมสินเชื่อ", LayoutDashboard) ,
-        l("logs", "บันทึกการทำงาน", FileText) ,
-      ] },
-      {
-        title: "สินเชื่อ",
-        items: [
-          l("contracts", "สัญญากู้", ScrollText),
-          l("approvals", "พิจารณาอนุมัติ", FileCheck2),
-          l("ap", "ใบแจ้งหนี้", Receipt),
-          l("ar", "ลูกหนี้", UserRound),
-          l("schedules", "ตารางงวด", CalendarDays),
-          l("calendar", "ปฏิทินรับเงิน", CalendarDays),
-          l("borrower-overview", "ภาพรวมผู้กู้", UserRound),
-        ],
-      },
-      {
-        title: "การเงิน",
-        items: [
-          l("ledger", "สมุดบัญชีรับ–จ่าย", BookOpen),
-          l("payments", "รับชำระและประวัติ", Receipt),
-          l("capital-account", "บัญชีทุน", Receipt),
-          l("profit", "ผลดำเนินงาน", BarChart3),
-          l("forecast", "คาดการณ์เงินสด", BarChart3),
-          l("accounting", "กระทบยอดและปิดรอบ", Receipt),
-        ],
-      },
-      { title: "ติดตามหนี้", items: [l("overdue", "ค้างชำระ", AlarmClock), l("collections", "งานติดตามหนี้", AlarmClock)] },
-      {
-        title: "ลูกค้า",
-        items: [
-          l("borrowers", "ผู้กู้", UserRound),
-          l("deleted", "ถังขยะ", Trash2),
-          l("collaterals", "หลักประกัน", Landmark),
-          l("docs", "เอกสาร", FileText),
-        ],
-      },
-    ],
+    groups: companyMenuGroups({
+      overview: [
+        l("", "ภาพรวม", LayoutDashboard),
+        l("borrower-overview", "ภาพรวมผู้กู้", UserRound),
+      ],
+      customers: [
+        l("borrowers", "ผู้กู้", UserRound),
+        l("collaterals", "หลักประกัน", Landmark),
+      ],
+      operations: [
+        l("contracts", "สัญญากู้", ScrollText),
+        l("approvals", "พิจารณาอนุมัติ", FileCheck2),
+        l("schedules", "ตารางงวด", CalendarDays),
+        l("calendar", "ปฏิทินรับเงิน", CalendarDays),
+        l("overdue", "ค้างชำระ", AlarmClock),
+        l("collections", "งานติดตามหนี้", AlarmClock),
+      ],
+      finance: [
+        l("ledger", "สมุดบัญชีรับ–จ่าย", BookOpen),
+        l("ap", "ใบแจ้งหนี้", Receipt),
+        l("ar", "ลูกหนี้", HandCoins),
+        l("payments", "รับชำระและประวัติ", Receipt),
+        l("capital-account", "บัญชีทุน", Receipt),
+        l("accounting", "กระทบยอดและปิดรอบ", Receipt),
+      ],
+      reports: [
+        l("profit", "ผลดำเนินงาน", BarChart3),
+        l("forecast", "คาดการณ์เงินสด", BarChart3),
+      ],
+      history: [
+        l("logs", "บันทึกการทำงาน", History),
+        l("docs", "เอกสาร", FileText),
+        l("deleted", "ถังขยะ", Trash2),
+      ],
+    }),
   },
 
   youtube: {
@@ -348,22 +347,31 @@ export const SYSTEMS: Record<SystemKey, System> = {
     color: "#94a3b8",
     icon: SquarePlay,
     stats: [],
-    groups: [
-      {
-        title: "YouTube",
-        items: [
-          yt("", "ภาพรวม", LayoutDashboard),
-          yt("group", "กลุ่มและบัญชี", Users),
-          yt("collections", "เรียกเก็บสมาชิก", HandCoins),
-          yt("invoices", "ใบแจ้งหนี้และกำหนดจ่าย", Receipt),
-          yt("members", "รายชื่อสมาชิก", Users),
-          yt("ledger", "สมุดบัญชีรับ–จ่าย", BookOpen),
-          yt("reports", "รายงานเงินรับล่วงหน้า", BarChart3),
-          yt("logs", "Log การทำงาน", History),
-          yt("archive", "คลังรายการ", Archive),
-        ],
-      },
-    ],
+    groups: companyMenuGroups({
+      overview: [
+        yt("", "ภาพรวม", LayoutDashboard),
+      ],
+      customers: [
+        yt("members", "รายชื่อสมาชิก", Users),
+      ],
+      operations: [
+        yt("group", "กลุ่มและบัญชี", Users),
+      ],
+      finance: [
+        { ...yt("ledger", "สมุดบัญชีรับ–จ่าย", BookOpen), query: { view: "records" } },
+        { ...yt("invoices", "ใบแจ้งหนี้สมาชิก", Receipt), query: { view: "invoices" } },
+        yt("collections", "ลูกหนี้และรับชำระสมาชิก (AR)", HandCoins),
+        { ...yt("invoices", "ใบแจ้งหนี้เจ้าหนี้", Receipt), query: { view: "payables" } },
+        { ...yt("ledger", "อนุมัติและจ่ายหนี้ (AP)", HandCoins), query: { view: "approvals" } },
+      ],
+      reports: [
+        yt("reports", "รายงานเงินรับล่วงหน้า", BarChart3),
+      ],
+      history: [
+        yt("logs", "บันทึกการทำงาน", History),
+        yt("archive", "คลังรายการ", Archive),
+      ],
+    }),
   },
   netflix: {
     key: "netflix",
@@ -373,15 +381,20 @@ export const SYSTEMS: Record<SystemKey, System> = {
     href: "/dashboard/netflix",
     color: "#94a3b8",
     icon: Clapperboard,
-    stats: [],
-    groups: [{
-      title: "Netflix",
-      items: [
+    stats: [ "สมาชิกทั้งหมด", "สมาชิกใหม่วันนี้", "รายได้วันนี้", "รายได้เดือนนี้"],
+    groups: companyMenuGroups({
+      overview: [
         nf("", "ภาพรวม", LayoutDashboard),
-        nf("groups", "กลุ่มสมาชิก", Users),
-        nf("ledger", "สมุดรับ–จ่าย", BookOpen),
       ],
-    }],
+      customers: [
+        nf("groups", "กลุ่มสมาชิก", Users),
+      ],
+      finance: [
+        nf("ledger", "สมุดบัญชีรับ–จ่าย", BookOpen),
+        nf("ap", "ใบแจ้งหนี้", Receipt),
+        nf("ar", "ลูกหนี้", HandCoins),
+      ],
+    }),
   },
   admin: {
     key: "admin",
@@ -393,7 +406,12 @@ export const SYSTEMS: Record<SystemKey, System> = {
     icon: ShieldUser,
     stats: ["ผู้ใช้ทั้งหมด", "บทบาท", "เข้าสู่ระบบวันนี้"],
     groups: [
-      { title: "ภาพรวม", items: [ad("", "ภาพรวมผู้ดูแล", LayoutDashboard)] },
+      {
+        title: "ภาพรวม",
+        items: [
+          ad("", "ภาพรวมผู้ดูแล", LayoutDashboard),
+        ],
+      },
       {
         title: "ผู้ใช้และสิทธิ์",
         items: [
@@ -402,32 +420,42 @@ export const SYSTEMS: Record<SystemKey, System> = {
         ],
       },
       {
-        title: "ข้อมูลหลัก",
+        title: "บริษัทและสาขา",
+        items: [
+          ad("companies", "ข้อมูลบริษัท", Settings),
+          ad("branches", "สาขา", Building2Icon),
+        ],
+      },
+      {
+        title: "ข้อมูลสินค้าและวัสดุ",
         items: [
           ad("things", "ข้อมูลสิ่งของและสินค้า", ClipboardList),
           ad("material", "วัสดุก่อสร้าง", Boxes),
           ad("unit", "หน่วยนับ", Ruler),
           ad("classifier", "ลักษณนาม", ScrollText),
+        ],
+      },
+      {
+        title: "ข้อมูลการเงิน",
+        items: [
           ad("banking", "ข้อมูลธนาคาร", CreditCard),
-          ad("postcode", "รหัสไปรษณีย์", Landmark),
-        ],
-      },
-      {
-        title: "ระบบ",
-        items: [
-          ad("companies", "ข้อมูลบริษัท", Settings),
-          ad("branches", "สาขา", Building2Icon),
-          ad("audit-log", "บันทึกกิจกรรม", ShieldCheck),
-        ],
-      },
-      {
-        title: "หมวดหมู่",
-        items: [
           ad(
             "company-finance-categories",
             "หมวดหมู่การเงินของบริษัท",
             FileCheck2,
           ),
+        ],
+      },
+      {
+        title: "ข้อมูลที่อยู่",
+        items: [
+          ad("postcode", "รหัสไปรษณีย์", Landmark),
+        ],
+      },
+      {
+        title: "ตรวจสอบระบบ",
+        items: [
+          ad("audit-log", "บันทึกกิจกรรม", ShieldCheck),
         ],
       },
     ],
