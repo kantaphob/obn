@@ -1,5 +1,7 @@
 import { authorizeApiRequest, getCurrentAccess } from "@/lib/authorization";
+import { prisma } from "@/lib/prisma";
 import { getCompanyLedgerRows } from "@/lib/company-ledger";
+import { resolveBusinessSystemScope } from "@/lib/company-system";
 
 function csv(value: string) { return `"${value.replaceAll('"', '""')}"`; }
 function dateInput(value: string | null) {
@@ -17,9 +19,22 @@ export async function GET(request: Request) {
   const to = dateInput(params.get("to"));
   const source = params.get("source");
   const ledgerRows = await getCompanyLedgerRows(from, to);
-  const companyScopedEntries = access?.accessConfigured ? ledgerRows.filter((entry) => entry.companyCode && access.companyCodes.includes(entry.companyCode)) : ledgerRows;
+  const loanScope = source === "LOAN" ? await (async () => {
+    const [companies, branches] = await Promise.all([
+      prisma.companySequence.findMany({ where: { type: "COMPANY", status: "ACTIVE", ...(access?.accessConfigured ? { companycode: { in: access.companyCodes } } : {}) }, select: { companycode: true, nameTH: true, nameEN: true } }),
+      prisma.branchCodeSequence.findMany({ where: { type: "BRANCH", status: "ACTIVE", ...(access?.accessConfigured ? { companycode: { in: access.companyCodes } } : {}) }, select: { companycode: true, branchcode: true, nameTH: true, nameEN: true } }),
+    ]);
+    return resolveBusinessSystemScope("LOAN", companies, branches);
+  })() : null;
+  const soleLoanCompanyCode = loanScope?.companyCodes.size === 1 ? [...loanScope.companyCodes][0] : null;
+  const canReadUnassignedLoanHistory = Boolean(soleLoanCompanyCode && (!access?.accessConfigured || access.companyCodes.includes(soleLoanCompanyCode)));
+  const companyScopedEntries = access?.accessConfigured ? ledgerRows.filter((entry) => entry.companyCode
+    ? access.companyCodes.includes(entry.companyCode)
+    : source === "LOAN" && canReadUnassignedLoanHistory) : ledgerRows;
   const entries = source === "MANUAL" || source === "LOAN"
-    ? companyScopedEntries.filter((entry) => entry.source === source)
+    ? companyScopedEntries.filter((entry) => entry.source === source && (source !== "LOAN" || (entry.companyCode
+      ? loanScope?.allowsLocation(entry.companyCode, entry.branchCode)
+      : canReadUnassignedLoanHistory)))
     : companyScopedEntries;
   const rows = [
     ["วันที่", "เวลา", "เลขที่รายการ", "รหัสสำนักงานใหญ่", "รหัสสาขา", "ประเภท", "รายการ", "หมวดหมู่", "ผู้เกี่ยวข้อง", "ช่องทาง", "เลขอ้างอิง", "แหล่งข้อมูล", "ยอดฐาน (บาท)", "VAT (%)", "VAT (บาท)", "WHT (%)", "WHT (บาท)", "รายรับสุทธิ (บาท)", "รายจ่ายสุทธิ (บาท)", "หมายเหตุ"],

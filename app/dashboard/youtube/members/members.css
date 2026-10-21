@@ -8,7 +8,7 @@
 .ym-primaryButton, .ym-exportButton, .ym-rowAction, .ym-cancelButton { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 38px; padding: 0 13px; border: 1px solid var(--line); border-radius: 9px; background: #fff; color: #37443b; font: inherit; font-size: 11px; font-weight: 650; white-space: nowrap; cursor: pointer; }
 .ym-primaryButton { border-color: #167d50; background: #168253; color: #fff; box-shadow: 0 3px 8px #16825322; }
 .ym-primaryButton:hover { background: #116c43; }
-.ym-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 13px; margin-bottom: 16px; }
+.ym-metrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 13px; margin-bottom: 16px; }
 .ym-metricCard, .ym-panel { border: 1px solid var(--line); border-radius: 13px; background: #fff; box-shadow: 0 2px 8px #19231d06; }
 .ym-metricCard { position: relative; display: flex; min-height: 130px; flex-direction: column; align-items: flex-start; padding: 16px 17px; }
 .ym-metricIcon { position: absolute; top: 15px; right: 15px; display: grid; width: 35px; height: 35px; place-items: center; border-radius: 10px; background: #eff3f0; color: #547060; }
@@ -35,40 +35,41 @@
 .ym-selectWrap > span { color: #a0a9a2; }
 .ym-tableWrap { overflow-x: auto; }
 .ym-table { width: 100%; border-collapse: collapse; text-align: left; }
-.ym-table th { padding: 10px 9px; border-top: 1px solid #edf0ed; border-bottom: 1px solid #edf0ed; background: #fafbfa; color: #89928b; font-size: 9px; font-weight: 600; white-space: nowrap; }
-.ym-table td { padding: 11px 9px; border-bottom: 1px solid #f0f2f0; color: #5e6b62; font-size: 10px; white-space: nowrap; }
+.ym-table th { padding: 11px 10px; border-top: 1px solid #edf0ed; border-bottom: 1px solid #edf0ed; background: #fafbfa; color: #69766d; font-size: 11px; font-weight: 650; white-space: nowrap; }
+.ym-table td { padding: 12px 10px; border-bottom: 1px solid #f0f2f0; color: #526057; font-size: 12px; white-space: nowrap; }
 .ym-person { justify-content: flex-start; gap: 9px; min-width: 195px; }
 .ym-person > div { display: grid; gap: 3px; }
-.ym-person strong { color: #27332b; font-size: 10px; font-weight: 650; }
-.ym-person span:not(.ym-avatar) { color: #98a19a; font-size: 9px; }
-.ym-memberAccounts { display: grid; gap: 5px; white-space: normal; }
-.ym-memberAccounts span { color: #41534a; font-size: 10px; }
+.ym-person strong { color: #27332b; font-size: 12px; font-weight: 650; }
+.ym-person span:not(.ym-avatar) { color: #7d8981; font-size: 11px; }
+.ym-memberAccounts { display: grid; min-width: 0; gap: 5px; white-space: normal; }
+.ym-memberAccounts span { min-width: 0; overflow-wrap: anywhere; color: #41534a; font-size: 12px; }
+.ym-memberAccounts small { color: #87928b; font-size: 10px; }
 .ym-contactDetails { display: grid; gap: 5px; max-width: 270px; white-space: normal; }
-.ym-contactDetails span { display: flex; align-items: center; gap: 5px; color: #52645a; font-size: 10px; overflow-wrap: anywhere; }
-.ym-contactDetails .ym-socialDetails { color: #8a958d; font-size: 9px; }
+.ym-contactDetails span { display: flex; align-items: center; gap: 5px; color: #52645a; font-size: 11px; overflow-wrap: anywhere; }
+.ym-contactDetails .ym-socialDetails { color: #718077; font-size: 11px; }
 .ym-groupList { display: flex; flex-wrap: wrap; gap: 5px; max-width: 230px; white-space: normal; }
-.ym-groupList span { padding: 4px 7px; border: 1px solid #e5eee7; border-radius: 6px; background: #f4f8f5; color: #486953; font-size: 9px; }
-.ym-noAccount { display: inline-flex; padding: 5px 7px; border-radius: 6px; background: #fff5e9; color: #a56b20; font-size: 9px; }
-.ym-rowActions { display: flex; align-items: center; gap: 6px; }
-.ym-iconButton { display: inline-flex; align-items: center; justify-content: center; gap: 4px; min-height: 29px; padding: 0 7px; border: 1px solid var(--line); border-radius: 7px; background: #fff; color: #46614f; font: inherit; font-size: 9px; cursor: pointer; }
+.ym-groupList span { padding: 5px 8px; border: 1px solid #e5eee7; border-radius: 6px; background: #f4f8f5; color: #486953; font-size: 11px; }
+.ym-noAccount { display: inline-flex; padding: 5px 8px; border-radius: 6px; background: #f1f4f2; color: #68766d; font-size: 11px; }
+.ym-rowActions { display: flex; align-items: center; gap: 7px; }
+.ym-iconButton { display: inline-flex; align-items: center; justify-content: center; gap: 5px; min-height: 36px; padding: 0 9px; border: 1px solid var(--line); border-radius: 8px; background: #fff; color: #46614f; font: inherit; font-size: 11px; cursor: pointer; }
 .ym-deleteButton { color: #a54c45; }
 .ym-iconButton:hover { background: #f7faf8; }
 .ym-avatar { display: grid; flex: 0 0 31px; width: 31px; height: 31px; place-items: center; border-radius: 50%; background: #e7f1e9; color: #36734e; font-size: 11px; font-weight: 700; }
 .ym-groupName { display: inline-block; max-width: 175px; overflow: hidden; color: #627067; text-overflow: ellipsis; vertical-align: middle; }
-.ym-seatPill { padding: 5px 7px; border-radius: 6px; background: #f0f4f1; color: #56695d; font-size: 9px; }
+.ym-seatPill { padding: 6px 8px; border-radius: 6px; background: #f0f4f1; color: #56695d; font-size: 11px; }
 .ym-money { display: block; color: #26352b; font-size: 10px; }
 .ym-rate { display: block; margin-top: 3px; color: #9aa39c; font-size: 9px; }
 .ym-paid, .ym-unpaid { display: inline-flex; align-items: center; gap: 5px; padding: 5px 7px; border-radius: 99px; background: #edf7f0; color: #27804e; font-size: 9px; }
 .ym-paid i, .ym-unpaid i { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
 .ym-unpaid { background: #fff5e9; color: #b77924; }
 .ym-rowAction { min-height: 28px; padding: 0 7px; color: #397858; font-size: 9px; }
-.ym-tableFooter { gap: 12px; padding-top: 12px; color: #89928b; font-size: 10px; }
+.ym-tableFooter { gap: 12px; padding-top: 12px; color: #738077; font-size: 11px; }
 .ym-empty { display: grid; justify-items: center; gap: 8px; padding: 38px 12px; color: #91a097; font-size: 11px; }
 .ym-empty strong { color: #536157; font-size: 12px; }
 .ym-draftNote { margin-top: 12px; color: #929b94; font-size: 10px; }
 .ym-draftNote > span { margin-right: 7px; padding: 4px 7px; border-radius: 5px; background: #eff3f0; color: #607269; font-weight: 650; }
 .ym-backdrop { position: fixed; z-index: 30; inset: 0; display: grid; place-items: center; padding: 20px; background: #17211bb3; }
-.ym-dialog { width: min(100%, 570px); overflow: hidden; border: 1px solid #e6ebe7; border-radius: 16px; background: #fff; box-shadow: 0 24px 80px #14221935; }
+.ym-dialog { width: min(100%, 640px); max-height: calc(100dvh - 40px); overflow-y: auto; border: 1px solid #e6ebe7; border-radius: 16px; background: #fff; box-shadow: 0 24px 80px #14221935; }
 .ym-dialogHeader { padding: 19px 21px; border-bottom: 1px solid #edf0ed; }
 .ym-dialogHeader > div { justify-content: flex-start; gap: 10px; }
 .ym-dialogIcon { display: grid; width: 37px; height: 37px; place-items: center; border-radius: 11px; background: #eaf5ee; color: #188252; }
@@ -85,6 +86,22 @@
 .ym-field input::placeholder, .ym-field textarea::placeholder { color: #aab2ac; }
 .ym-field > span { color: #89928b; font-size: 9px; font-weight: 450; }
 .ym-emailField { grid-column: 1 / -1; }
+.ym-emailField { min-width: 0; margin: 2px 0 0; padding: 12px; border: 1px solid #e6ece7; border-radius: 10px; background: #fbfcfb; }
+.ym-emailField legend { padding: 0 5px; color: #536258; font-size: 10px; font-weight: 650; }
+.ym-emailField > p { margin: 0 0 10px; color: #849087; font-size: 9px; }
+.ym-emailList { display: grid; gap: 8px; }
+.ym-emailRow { display: flex; min-width: 0; gap: 7px; }
+.ym-emailRow input { flex: 1; min-width: 0; height: 38px; padding: 0 10px; border: 1px solid #e2e8e3; border-radius: 8px; outline: 0; background: #fff; color: #28352c; font: inherit; font-size: 11px; }
+.ym-emailRow input:focus { border-color: #8cbba0; box-shadow: 0 0 0 3px #18825218; }
+.ym-emailRow input::placeholder { color: #aab2ac; }
+.ym-removeEmailButton { display: grid; flex: 0 0 38px; width: 38px; height: 38px; place-items: center; border: 1px solid #e6ebe7; border-radius: 8px; background: #fff; color: #78837b; cursor: pointer; }
+.ym-removeEmailButton:hover { border-color: #e4c7c4; background: #fff8f7; color: #a54c45; }
+.ym-addEmailButton { display: inline-flex; align-items: center; gap: 5px; min-height: 31px; margin-top: 9px; padding: 0 9px; border: 1px solid #dce9df; border-radius: 7px; background: #f3f8f4; color: #397858; font: inherit; font-size: 9px; font-weight: 600; cursor: pointer; }
+.ym-addEmailButton:hover { background: #eaf4ed; }
+.ym-emailField > span { display: block; margin-top: 8px; color: #89928b; font-size: 9px; }
+.ym-extraFields { grid-column: 1 / -1; border-top: 1px solid #edf0ed; padding-top: 12px; }
+.ym-extraFields summary { color: #647168; font-size: 10px; font-weight: 600; cursor: pointer; }
+.ym-extraFields[open] summary { margin-bottom: 12px; }
 .ym-formError { margin: 12px 0; color: #b5473c; font-size: 11px; }
 .ym-chargePreview { gap: 9px; margin-top: 17px; padding: 12px; border: 1px solid #e8eee9; border-radius: 9px; background: #f7faf8; }
 .ym-chargePreview > div { display: grid; gap: 5px; }
@@ -108,11 +125,30 @@
   .ym-table td:nth-child(2)::before { content: "บัญชี YouTube"; }
   .ym-table td:nth-child(3)::before { content: "ข้อมูลติดต่อ"; }
   .ym-table td:nth-child(4)::before { content: "กลุ่ม"; }
-  .ym-table td:nth-child(5)::before { content: "จำนวนบัญชี / จัดการ"; }
-  .ym-table td:nth-child(n+2)::before { flex: 0 0 86px; color: #89928b; font-size: 9px; }
+  .ym-table td:nth-child(5)::before { content: "จัดการ"; }
+  .ym-table td:nth-child(n+2)::before { flex: 0 0 86px; color: #69766d; font-size: 11px; }
   .ym-table td:nth-child(5) { border-bottom: 0; }
   .ym-person { min-width: 0; }
+  .ym-rowActions { flex-wrap: wrap; justify-content: flex-end; }
   .ym-groupName { max-width: 75%; text-align: right; }
-  .ym-tableFooter { font-size: 9px; }
+  .ym-tableFooter { font-size: 10px; }
 }
 @media (max-width: 480px) { .ym-pageHeader { align-items: flex-start; flex-direction: column; } .ym-primaryButton { align-self: stretch; } .ym-formGrid { grid-template-columns: 1fr; } .ym-chargePreview { align-items: flex-start; flex-direction: column; } .ym-chargePreview > div { grid-template-columns: 115px 1fr; align-items: center; } }
+.ym-page.yu-shell { width: min(100%, 1440px); padding: 32px; }
+.ym-page .ym-pageHeader h1 { font-size: 28px; color: #193e2c; }
+.ym-page .ym-pageHeader p, .ym-page .ym-panelHeader p { font-size: 13px; line-height: 1.6; }
+.ym-page .ym-panelHeader h2 { font-size: 18px; }
+.ym-page .ym-metricLabel { font-size: 13px; }
+.ym-page .ym-metricFoot, .ym-page .ym-tableFooter { font-size: 12px; }
+.ym-page .ym-table { font-size: 13px; }
+.ym-page .ym-person strong { font-size: 14px; }
+.ym-page .ym-person span, .ym-page .ym-contactDetails, .ym-page .ym-groupList span, .ym-page .ym-noAccount { font-size: 12px; }
+.ym-page .ym-iconButton { min-height: 36px; font-size: 12px; }
+.ym-page .ym-primaryButton { min-height: 42px; font-size: 13px; }
+.ym-page .ym-search { min-height: 43px; }
+.ym-page .ym-search input { font-size: 13px; }
+@media (max-width: 1000px) { .ym-page.yu-shell { padding: 24px 20px; } }
+@media (max-width: 600px) { .ym-page.yu-shell { padding: 20px 14px; } }
+
+.ym-dialog { margin: auto; padding: 0; width: min(calc(100% - 32px), 640px); }
+.ym-dialog::backdrop { background: #17211bb3; }

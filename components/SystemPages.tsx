@@ -5,6 +5,9 @@ import { workspaceStyles as styles } from "./ui/workspace-styles";
 import { Suspense } from "react";
 import LoanDashboardSummary from "./loan/LoanDashboardSummary";
 import CompanyDirectory from "./CompanyDirectory";
+import WealthAssets from "./wealth/WealthAssets";
+import WealthNetWorth from "./wealth/WealthNetWorth";
+import DashboardFinanceReport from "./DashboardFinanceReport";
 
 export function SystemHome({ system }: { system: System }) {
   return <div className={styles.page}>
@@ -22,5 +25,5 @@ export function SubPage({ system, group, label }: { system: System; group: strin
 }
 
 export function GroupOverview() {
-  return <CompanyDirectory><Suspense fallback={<div className="mb-6 rounded-2xl bg-white/70 p-6 text-sm text-slate-500" role="status">กำลังโหลดภาพรวมการเงิน OBN…</div>}><LoanDashboardSummary /></Suspense></CompanyDirectory>;
+  return <CompanyDirectory><DashboardFinanceReport /><Suspense fallback={<div className="mb-6 rounded-2xl bg-white/70 p-6 text-sm text-slate-500" role="status">กำลังโหลดภาพรวมการเงิน Loan…</div>}><LoanDashboardSummary /></Suspense><WealthNetWorth /><WealthAssets compact /></CompanyDirectory>;
 }

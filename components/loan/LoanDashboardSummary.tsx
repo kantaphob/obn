@@ -6,6 +6,7 @@ import { ArrowUpRight } from "lucide-react";
 import { getLoanDashboardData } from "@/lib/loan-dashboard";
 import { prisma } from "@/lib/prisma";
 import { summarizeCompanyLedgerRows } from "@/lib/company-ledger-summary";
+import { resolveBusinessSystemScope } from "@/lib/company-system";
 
 const money = (value: number) => new Intl.NumberFormat("th-TH", { style: "currency", currency: "THB" }).format(value / 100);
 
@@ -17,12 +18,19 @@ export default async function LoanDashboardSummary() {
     prisma.companySequence.findMany({ where: { type: "COMPANY", ...(access.accessConfigured ? { companycode: { in: access.companyCodes } } : {}) }, select: { companycode: true, nameTH: true, nameEN: true } }),
     prisma.branchCodeSequence.findMany({ where: { type: "BRANCH", ...(access.accessConfigured ? { companycode: { in: access.companyCodes } } : {}) }, select: { companycode: true, branchcode: true, nameTH: true, nameEN: true } }),
   ]);
-  const allTime = summarizeCompanyLedgerRows(ledgerRows);
-  const branchRows = companies.flatMap((company) => {
-    const companyRows = ledgerRows.filter((row) => row.companyCode === company.companycode);
+  const loanScope = resolveBusinessSystemScope("LOAN", companies, branches);
+  const loanCompanies = companies.filter((company) => loanScope.companyCodes.has(company.companycode));
+  const loanBranches = loanScope.visibleBranches;
+  const soleLoanCompanyCode = loanScope.companyCodes.size === 1 ? [...loanScope.companyCodes][0] : null;
+  const canReadUnassignedLoanHistory = Boolean(soleLoanCompanyCode && (!access.accessConfigured || access.companyCodes.includes(soleLoanCompanyCode)));
+  const loanLedgerRows = ledgerRows.filter((row) => row.source === "LOAN"
+    && (row.companyCode ? loanScope.allowsLocation(row.companyCode, row.branchCode) : canReadUnassignedLoanHistory));
+  const allTime = summarizeCompanyLedgerRows(loanLedgerRows);
+  const branchRows = loanCompanies.flatMap((company) => {
+    const companyRows = loanLedgerRows.filter((row) => row.companyCode === company.companycode);
     const branchByCode = new Map<string, { branchcode: string; name: string }>();
     branchByCode.set(company.companycode, { branchcode: company.companycode, name: "สำนักงานใหญ่" });
-    branches.filter((branch) => branch.companycode === company.companycode).forEach((branch) => {
+    loanBranches.filter((branch) => branch.companycode === company.companycode).forEach((branch) => {
       branchByCode.set(branch.branchcode, { branchcode: branch.branchcode, name: branch.nameTH || branch.nameEN || `สาขา ${branch.branchcode}` });
     });
     companyRows.forEach((row) => {
@@ -35,20 +43,20 @@ export default async function LoanDashboardSummary() {
       return { company: company.nameTH || company.nameEN || company.companycode, companyCode: company.companycode, ...branch, ...totals, count: rows.length };
     });
   });
-  const unassignedRows = ledgerRows.filter((row) => !row.companyCode);
+  const unassignedRows = loanLedgerRows.filter((row) => !row.companyCode);
   if (unassignedRows.length) {
     const totals = summarizeCompanyLedgerRows(unassignedRows);
     branchRows.push({ company: "ยังไม่ระบุบริษัท", companyCode: "", branchcode: "", name: "ยังไม่ระบุสาขา", ...totals, count: unassignedRows.length });
   }
   const metrics = [
-    { label: "เงินสดสุทธิ OBN รวม 5 บริษัท", amount: allTime.net, note: `รับ ${money(allTime.income)} · จ่าย ${money(allTime.expense)}` },
-    { label: "รายรับสะสมทุกบริษัท", amount: allTime.income, note: `${ledgerRows.filter((row) => row.type === "INCOME").length.toLocaleString("th-TH")} รายการ · ทุกแหล่งรับเงิน` },
-    { label: "รายจ่ายสะสมทุกบริษัท", amount: allTime.expense, note: `${ledgerRows.filter((row) => row.type === "EXPENSE").length.toLocaleString("th-TH")} รายการ · ทุกแหล่งจ่ายเงิน` },
+    { label: "เงินสดสุทธิ Loan", amount: allTime.net, note: `รับ ${money(allTime.income)} · จ่าย ${money(allTime.expense)}` },
+    { label: "รายรับสะสม Loan", amount: allTime.income, note: `${loanLedgerRows.filter((row) => row.type === "INCOME").length.toLocaleString("th-TH")} รายการ · ระบบ Loan` },
+    { label: "รายจ่ายสะสม Loan", amount: allTime.expense, note: `${loanLedgerRows.filter((row) => row.type === "EXPENSE").length.toLocaleString("th-TH")} รายการ · ระบบ Loan` },
   ];
   const maxFlow = Math.max(1, ...cashflow.flatMap(month => [month.income, month.expense]));
   return <section aria-labelledby="group-loan-title" className="mb-7 rounded-3xl border border-white/80 bg-white/75 p-5 shadow-[0_8px_30px_#315b4910] sm:p-6">
     <header className="mb-5 flex flex-wrap items-center justify-between gap-3">
-      <div><p className="text-[10px] font-semibold tracking-[2px] text-teal-700">OBN GROUP FINANCE</p><h2 id="group-loan-title" className="mt-1 text-xl font-semibold text-slate-800">ภาพรวมรับ–จ่าย OBN · {companies.length} บริษัท</h2><p className="mt-1 text-xs text-slate-500">รวมรายการสะสมจากสำนักงานใหญ่และทุกสาขา · อัปเดตทุก 10 วินาที · ล่าสุด {new Intl.DateTimeFormat("th-TH", { timeZone: "Asia/Bangkok", hour: "2-digit", minute: "2-digit", second: "2-digit" }).format(now)}</p></div>
+      <div><p className="text-[10px] font-semibold tracking-[2px] text-teal-700">LOAN FINANCE</p><h2 id="group-loan-title" className="mt-1 text-xl font-semibold text-slate-800">ภาพรวมรับ–จ่าย Loan · {loanCompanies.length} บริษัท</h2><p className="mt-1 text-xs text-slate-500">รวมรายการของบริษัทที่ผูกกับระบบ Loan จากสำนักงานใหญ่และทุกสาขา · อัปเดตทุก 10 วินาที · ล่าสุด {new Intl.DateTimeFormat("th-TH", { timeZone: "Asia/Bangkok", hour: "2-digit", minute: "2-digit", second: "2-digit" }).format(now)}</p></div>
       <Link href="/dashboard/loan" className="inline-flex items-center gap-2 rounded-full bg-teal-800 px-4 py-2 text-xs font-medium text-white">ดูภาพรวมสินเชื่อ <ArrowUpRight size={15} aria-hidden="true" /></Link>
     </header>
     <LoanClosingSummary />

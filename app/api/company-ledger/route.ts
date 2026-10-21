@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { getCompanyLedgerRows } from "@/lib/company-ledger";
 import { calculateCompanyLedgerTax } from "@/lib/company-ledger-tax";
 import { isLoanFinanceCategoryCode } from "@/lib/company-ledger-summary";
+import { resolveBusinessSystemScope } from "@/lib/company-system";
 
 const TYPES = ["INCOME", "EXPENSE"] as const;
 const METHODS = ["CASH", "BANK_TRANSFER", "CARD", "OTHER"] as const;
@@ -42,9 +43,22 @@ export async function GET(request: Request) {
   const query = text(params.get("q"), 100);
 
   const entries = await getCompanyLedgerRows(from, to);
-  const companyScopedEntries = access?.accessConfigured ? entries.filter((entry) => entry.companyCode && access.companyCodes.includes(entry.companyCode)) : entries;
+  const loanScope = source === "LOAN" ? await (async () => {
+    const [companies, branches] = await Promise.all([
+      prisma.companySequence.findMany({ where: { type: "COMPANY", status: "ACTIVE", ...(access?.accessConfigured ? { companycode: { in: access.companyCodes } } : {}) }, select: { companycode: true, nameTH: true, nameEN: true } }),
+      prisma.branchCodeSequence.findMany({ where: { type: "BRANCH", status: "ACTIVE", ...(access?.accessConfigured ? { companycode: { in: access.companyCodes } } : {}) }, select: { companycode: true, branchcode: true, nameTH: true, nameEN: true } }),
+    ]);
+    return resolveBusinessSystemScope("LOAN", companies, branches);
+  })() : null;
+  const soleLoanCompanyCode = loanScope?.companyCodes.size === 1 ? [...loanScope.companyCodes][0] : null;
+  const canReadUnassignedLoanHistory = Boolean(soleLoanCompanyCode && (!access?.accessConfigured || access.companyCodes.includes(soleLoanCompanyCode)));
+  const companyScopedEntries = access?.accessConfigured ? entries.filter((entry) => entry.companyCode
+    ? access.companyCodes.includes(entry.companyCode)
+    : source === "LOAN" && canReadUnassignedLoanHistory) : entries;
   const filtered = companyScopedEntries.filter((entry) => {
-    if (source === "LOAN" && entry.source !== "LOAN") return false;
+    if (source === "LOAN" && (entry.source !== "LOAN" || !(entry.companyCode
+      ? loanScope?.allowsLocation(entry.companyCode, entry.branchCode)
+      : canReadUnassignedLoanHistory))) return false;
     if (source === "MANUAL" && entry.source !== "MANUAL") return false;
     if (type && type !== "ALL" && TYPES.includes(type as (typeof TYPES)[number]) && entry.type !== type) return false;
     if (!query) return true;
@@ -89,11 +103,15 @@ export async function POST(request: Request) {
     entry = await prisma.$transaction(async (tx) => {
       await tx.loanAccountingPeriod.updateMany({ where: { id: "__loan_write_lock__" }, data: { status: "CLOSED" } });
       await assertLoanPeriodOpen(tx, companyCode, transactionDate);
-      const company = await tx.companySequence.findFirst({ where: { companycode: companyCode, type: "COMPANY", status: "ACTIVE" }, select: { companycode: true } });
+      const company = await tx.companySequence.findFirst({ where: { companycode: companyCode, type: "COMPANY", status: "ACTIVE" }, select: { companycode: true, nameTH: true, nameEN: true } });
       const branch = branchCode === companyCode
-        ? { branchcode: companyCode }
-        : await tx.branchCodeSequence.findFirst({ where: { companycode: companyCode, branchcode: branchCode, type: "BRANCH", status: "ACTIVE" }, select: { branchcode: true } });
-      if (!company || !branch) throw new Error("ไม่พบสำนักงานใหญ่หรือสาขาที่เปิดใช้งาน");
+        ? null
+        : await tx.branchCodeSequence.findFirst({ where: { companycode: companyCode, branchcode: branchCode, type: "BRANCH", status: "ACTIVE" }, select: { companycode: true, branchcode: true, nameTH: true, nameEN: true } });
+      const isLoanLocation = branchCode === companyCode
+        ? Boolean(company && resolveBusinessSystemScope("LOAN", [company], []).allowsLocation(companyCode, companyCode))
+        : Boolean(company && branch && resolveBusinessSystemScope("LOAN", [company], [branch]).allowsLocation(companyCode, branchCode));
+      if (!company || !isLoanLocation) throw new Error("เลือกได้เฉพาะสถานที่ทำรายการของระบบ Loan");
+      if (branchCode !== companyCode && !branch) throw new Error("ไม่พบสำนักงานใหญ่หรือสาขาที่เปิดใช้งาน");
 
       const year = Number(new Intl.DateTimeFormat("en", { timeZone: "Asia/Bangkok", year: "numeric" }).format(transactionDate));
       const sequence = await tx.companyLedgerNumberSequence.upsert({
@@ -127,7 +145,7 @@ export async function POST(request: Request) {
       return saved;
     });
   } catch (cause) {
-    if (cause instanceof Error && (cause.message.includes("รอบบัญชี") || cause.message === "ไม่พบสำนักงานใหญ่หรือสาขาที่เปิดใช้งาน" || cause.message.startsWith("เลขที่รายการของสาขานี้ครบ"))) {
+    if (cause instanceof Error && (cause.message.includes("รอบบัญชี") || cause.message === "ไม่พบสำนักงานใหญ่หรือสาขาที่เปิดใช้งาน" || cause.message.startsWith("เลือกได้เฉพาะสถานที่ทำรายการของระบบ Loan") || cause.message.startsWith("เลขที่รายการของสาขานี้ครบ"))) {
       return Response.json({ error: cause.message }, { status: 400 });
     }
     console.error("Company ledger entry creation failed:", cause);

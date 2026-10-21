@@ -1,0 +1,48 @@
+.yb-panel { margin: 18px 0; padding: 20px; border: 1px solid #e7ece8; border-radius: 13px; background: white; color: #27332b; }
+.yb-panel h2, .yb-panel h3 { margin: 0 0 6px; font-size: 16px; }
+.yb-panel h3 { margin-top: 24px; font-size: 14px; }
+.yb-panel header p, .yb-note { color: #748178; font-size: 11px; line-height: 1.7; }
+.yb-metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 16px 0; }
+.yb-metrics > div { display: grid; gap: 6px; padding: 14px; border-radius: 10px; background: #f3faf5; }
+.yb-metrics span { font-size: 11px; color: #627067; }
+.yb-metrics strong { font-size: 20px; color: #168253; }
+.yb-tableWrap { overflow: auto; }
+.yb-panel table { width: 100%; border-collapse: collapse; font-size: 11px; text-align: left; }
+.yb-panel th { color: #758078; font-weight: 600; background: #fafcfa; }
+.yb-panel th, .yb-panel td { padding: 11px; border-bottom: 1px solid #edf0ed; white-space: nowrap; }
+.yb-panel small { display: block; margin-top: 4px; color: #849087; font-size: 10px; }
+.yb-panel button, .yb-dialog button { min-height: 36px; padding: 6px 12px; border: 1px solid #dce7df; border-radius: 8px; background: white; color: #27744d; font: inherit; cursor: pointer; }
+.yb-panel button:disabled, .yb-dialog button:disabled { opacity: .5; cursor: not-allowed; }
+.yb-dialog { width: min(92vw, 480px); max-height: 90vh; overflow: auto; padding: 24px; border: 1px solid #e4ebe6; border-radius: 16px; color: #27332b; }
+.yb-dialog::backdrop { background: #17211bb3; }
+.yb-dialog h2 { margin: 0 0 8px; font-size: 19px; }
+.yb-dialog p { font-size: 12px; }
+.yb-dialog dl { display: grid; gap: 12px; padding: 15px; border-radius: 10px; background: #f3faf5; font-size: 12px; }
+.yb-dialog dl > div { display: flex; justify-content: space-between; gap: 12px; }
+.yb-dialog dd { margin: 0; font-weight: 650; }
+.yb-dialog label { display: grid; gap: 6px; font-size: 12px; }
+.yb-dialog input, .yb-dialog select, .yb-dialog textarea { padding: 10px; border: 1px solid #dce7df; border-radius: 8px; font: inherit; }
+.yb-dialog textarea { min-height: 76px; resize: vertical; }
+.yb-dialog .yb-confirm { display: flex; align-items: flex-start; gap: 9px; margin-top: 14px; padding: 11px; border: 1px solid #dce7df; border-radius: 8px; background: #f7fbf8; line-height: 1.5; }
+.yb-dialog .yb-confirm input { flex: 0 0 auto; width: 16px; height: 16px; margin: 2px 0 0; padding: 0; accent-color: #188252; }
+.yb-historyFilters { display: flex; flex-wrap: wrap; align-items: end; gap: 8px; margin: 12px 0; }
+.yb-historyFilters > input, .yb-historyFilters > select, .yb-historyFilters label input { min-height: 36px; padding: 7px 9px; border: 1px solid #dce7df; border-radius: 8px; background: white; color: #27332b; font: inherit; font-size: 11px; }
+.yb-historyFilters > input { flex: 1 1 220px; }
+.yb-historyFilters label { display: grid; gap: 4px; color: #748178; font-size: 10px; }
+.yb-historyFilters button { min-height: 36px; }
+.yb-dialog footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; }
+.yb-dialog .yb-primary { background: #188252; color: white; }
+.yb-error { color: #b5473c; }
+.yb-success { color: #168253; font-size: 12px; }
+@media (max-width: 650px) { .yb-metrics { grid-template-columns: 1fr; } .yb-panel { padding: 14px; } }
+.yu-shell .yb-historyFilters { margin: 16px 0; gap: 12px; }
+.yu-shell .yb-historyFilters label { font-size: 12px; }
+.yu-shell .yb-historyFilters select, .yu-shell .yb-historyFilters input { min-height: 40px; font-size: 13px; }
+.yb-dialog { width: min(94vw, 520px); padding: 26px; font-size: 14px; }
+.yb-dialog h2 { font-size: 22px; }
+.yb-dialog p, .yb-dialog label, .yb-dialog dl { font-size: 13px; }
+.yb-dialog label { margin-top: 14px; gap: 7px; }
+.yb-dialog input, .yb-dialog select { min-height: 42px; }
+.yb-dialog button { min-height: 42px; padding: 9px 15px; font-size: 13px; }
+.yb-dialog .yb-confirm input { min-height: 0; }
+.yb-dialog { margin: auto; }

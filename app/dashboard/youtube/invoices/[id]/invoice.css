@@ -1,0 +1,9 @@
+.yu-invoicePaper { max-width: 960px; margin: 0 auto; }
+@media print {
+  body * { visibility: hidden; }
+  .yu-invoicePaper, .yu-invoicePaper * { visibility: visible; }
+  .yu-invoicePaper { position: absolute; inset: 0 auto auto 0; width: 100%; max-width: none; margin: 0; padding: 12mm; border: 0; box-shadow: none; }
+  .yu-printActions { display: none !important; }
+  .yu-invoicePaper .yu-tableWrap { overflow: visible; }
+  @page { size: A4; margin: 10mm; }
+}

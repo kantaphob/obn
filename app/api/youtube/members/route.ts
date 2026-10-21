@@ -1,10 +1,12 @@
 import { prisma } from "@/lib/prisma";
 import { authorizeYoutubeMember, parseYoutubeMemberInput, readYoutubeMemberBody } from "@/lib/youtube-members";
+import { getCurrentAccess } from "@/lib/authorization";
+import { recordYoutubeActivity } from "@/lib/youtube-activity";
 
 export async function GET() {
   const denied = await authorizeYoutubeMember(false);
   if (denied) return denied;
-  const members = await prisma.youtubeMember.findMany({
+  const members = await prisma.youtubeMember.findMany({ where: { archivedAt: null },
     include: { accounts: { orderBy: { email: "asc" } } },
     orderBy: { name: "asc" },
   });
@@ -16,6 +18,7 @@ export async function POST(request: Request) {
   if (denied) return denied;
   const input = parseYoutubeMemberInput(await readYoutubeMemberBody(request));
   if ("error" in input) return Response.json({ error: input.error }, { status: 400 });
+  if (input.emails.length) return Response.json({ error: "ไม่สามารถเพิ่มหรือแก้ไขอีเมลบัญชี YouTube ในระบบสมาชิกได้" }, { status: 403 });
 
   const [members, accounts] = await Promise.all([
     prisma.youtubeMember.findMany({ select: { name: true } }),
@@ -29,7 +32,9 @@ export async function POST(request: Request) {
     return Response.json({ error: "มีอีเมลบัญชีนี้ผูกกับสมาชิกอื่นแล้ว" }, { status: 409 });
   }
 
-  const member = await prisma.youtubeMember.create({
+  const access = await getCurrentAccess();
+  const member = await prisma.$transaction(async (tx) => {
+    const saved = await tx.youtubeMember.create({
     data: {
       name: input.name,
       contactEmail: input.contactEmail || null,
@@ -40,6 +45,9 @@ export async function POST(request: Request) {
       accounts: { create: input.emails.map((email) => ({ email })) },
     },
     include: { accounts: { orderBy: { email: "asc" } } },
+  });
+    if (access?.session?.user) await recordYoutubeActivity(access.session.user, { action: "CREATE", entityType: "MEMBER", entityId: saved.id, entityLabel: saved.name, summary: "เพิ่มข้อมูลสมาชิก" }, tx);
+    return saved;
   });
   return Response.json({ member }, { status: 201 });
 }

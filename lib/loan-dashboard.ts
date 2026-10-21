@@ -9,11 +9,20 @@ import { loanBalance, thaiDay } from "@/lib/loan-balance";
 import { getUpfrontInterestRows } from "@/lib/loan-upfront-interest";
 import { getCompanyLedgerRows } from "@/lib/company-ledger";
 import { normalizeLoanFinanceCategoryCode, summarizeCompanyLedgerRows, summarizeLoanFinanceRows } from "@/lib/company-ledger-summary";
+import { resolveBusinessSystemScope } from "@/lib/company-system";
 
 export async function getLoanDashboardData() {
   await connection();
   const access = await getCurrentAccess();
-  if (!canReadLoanFinancials(access)) throw new Error("ไม่มีสิทธิ์ดูข้อมูลการเงิน Loan");
+  if (!access || !canReadLoanFinancials(access)) throw new Error("ไม่มีสิทธิ์ดูข้อมูลการเงิน Loan");
+  const [loanCompanies, loanBranches] = await Promise.all([
+    prisma.companySequence.findMany({ where: { type: "COMPANY", status: "ACTIVE", ...(access.accessConfigured ? { companycode: { in: access.companyCodes } } : {}) }, select: { companycode: true, nameTH: true, nameEN: true } }),
+    prisma.branchCodeSequence.findMany({ where: { type: "BRANCH", status: "ACTIVE", ...(access.accessConfigured ? { companycode: { in: access.companyCodes } } : {}) }, select: { companycode: true, branchcode: true, nameTH: true, nameEN: true } }),
+  ]);
+  const loanScope = resolveBusinessSystemScope("LOAN", loanCompanies, loanBranches);
+  const loanCompanyCodes = loanScope.companyCodes;
+  const soleLoanCompanyCode = loanCompanyCodes.size === 1 ? [...loanCompanyCodes][0] : null;
+  const canReadUnassignedLoanHistory = Boolean(soleLoanCompanyCode && (!access.accessConfigured || access.companyCodes.includes(soleLoanCompanyCode)));
   const now = new Date();
   const today = thaiDay(now);
   const dateParts = new Intl.DateTimeFormat("en-CA", {
@@ -56,8 +65,12 @@ export async function getLoanDashboardData() {
     }),
     getCompanyLedgerRows(null, throughToday),
   ]);
-  const contracts = unscopedContracts.filter(contract => canAccessLoanCompany(access, contractCompanyCode(contract.documentData))).map(contract => ({ ...contract, status: loanStatus(contract, now) }));
-  const ledgerRows = unscopedLedgerRows.filter(row => canAccessLoanCompany(access, row.companyCode));
+  const contracts = unscopedContracts.filter(contract => {
+    const companyCode = contractCompanyCode(contract.documentData);
+    return canAccessLoanCompany(access, companyCode) && (companyCode ? loanCompanyCodes.has(companyCode) : canReadUnassignedLoanHistory);
+  }).map(contract => ({ ...contract, status: loanStatus(contract, now) }));
+  const ledgerRows = unscopedLedgerRows.filter(row => row.source === "LOAN" && canAccessLoanCompany(access, row.companyCode)
+    && (row.companyCode ? loanScope.allowsLocation(row.companyCode, row.branchCode) : canReadUnassignedLoanHistory));
   const loanRows = ledgerRows.filter(row => row.source === "LOAN");
   const cashflowRows = loanRows.filter(row => row.transactionDate >= chartStart);
   const groupCashflowRows = ledgerRows.filter(row => row.transactionDate >= chartStart);

@@ -55,9 +55,10 @@ const loanPaymentLabels: Record<string, { type: CompanyLedgerRow["type"]; title:
 };
 
 export async function getCompanyLedgerRows(from: Date | null, to: Date | null, client: Pick<typeof prisma, "companyLedgerEntry" | "payment" | "repayment" | "companyFinanceCategory"> = prisma): Promise<CompanyLedgerRow[]> {
-  const dateFilter = from || to
-    ? { transactionDate: { ...(from ? { gte: from } : {}), ...(to ? { lt: new Date(to.getTime() + 24 * 60 * 60 * 1000) } : {}) } }
-    : {};
+  const dateFilter = {
+    settlementStatus: "PAID",
+    ...(from || to ? { transactionDate: { ...(from ? { gte: from } : {}), ...(to ? { lt: new Date(to.getTime() + 24 * 60 * 60 * 1000) } : {}) } } : {}),
+  };
   const paymentDateFilter = from || to
     ? { paidAt: { ...(from ? { gte: from } : {}), ...(to ? { lt: new Date(to.getTime() + 24 * 60 * 60 * 1000) } : {}) } }
     : {};

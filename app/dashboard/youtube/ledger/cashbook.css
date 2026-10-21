@@ -1,0 +1,50 @@
+.yc-page { max-width: 1500px; margin: auto; padding: 28px; color: #27332b; }
+.yc-header, .yc-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.yc-header h1 { display: flex; align-items: center; gap: 10px; margin: 7px 0; font-size: 24px; }
+.yc-header p { margin: 5px 0; color: #748178; font-size: 12px; }
+.yc-actions button, .yc-more { display: inline-flex; align-items: center; gap: 6px; min-height: 38px; padding: 8px 12px; border: 1px solid #dce7df; border-radius: 9px; background: white; color: #27744d; font: inherit; font-size: 12px; cursor: pointer; }
+.yc-actions button:disabled { opacity: .5; cursor: not-allowed; }
+.yc-filters { display: grid; grid-template-columns: 1fr 1fr 1.4fr 1.8fr; gap: 12px; margin: 20px 0; }
+.yc-filters label, .yc-dialog label { display: grid; gap: 6px; font-size: 11px; }
+.yc-filters input, .yc-filters select, .yc-dialog input, .yc-dialog select, .yc-dialog textarea { min-width: 0; min-height: 38px; padding: 8px 10px; border: 1px solid #dce7df; border-radius: 8px; background: white; color: #27332b; font: inherit; }
+.yc-metrics { grid-template-columns: repeat(auto-fit, minmax(175px, 1fr)); }
+.yc-income { color: #168253; font-weight: 650; }
+.yc-expense { color: #ae564d; font-weight: 650; }
+.yc-note { max-width: 260px; white-space: normal; }
+.yc-formGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.yc-rowActions { display: flex; gap: 6px; }
+.yc-rowActions button { display: inline-flex; align-items: center; gap: 4px; padding: 6px 8px; border: 1px solid #dce7df; border-radius: 7px; background: #fff; color: #27744d; font: inherit; font-size: 11px; cursor: pointer; }
+.yc-rowActions button:disabled { opacity: .45; cursor: not-allowed; }
+.yc-rowActions .yc-delete { color: #a4463e; }
+.yc-dialog label { margin-top: 12px; }
+.yc-dialog .yc-confirm { display: flex; align-items: center; line-height: 1.7; gap: 9px; }
+.yc-dialog .yc-confirm input { width: 18px; height: 18px; min-height: 0; flex-shrink: 0; }
+@media (max-width: 800px) { .yc-header { align-items: flex-start; flex-direction: column; } .yc-filters { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 500px) { .yc-page { padding: 16px; } .yc-filters, .yc-formGrid { grid-template-columns: 1fr; } .yc-actions { flex-wrap: wrap; } }
+.yc-page.yu-shell { max-width: 1440px; padding: 32px; }
+.yc-page .yc-filters { margin: 0 0 22px; }
+.yc-page .yc-filters label { font-size: 12px; }
+.yc-page .yc-filters input, .yc-page .yc-filters select { min-height: 42px; font-size: 13px; }
+.yc-page .yc-rowActions button { min-height: 36px; font-size: 12px; padding: 7px 9px; }
+.yc-page .yc-rowActions button.yc-delete { border-color: transparent; background: transparent; }
+.yc-dialog .yc-confirm input { min-height: 0; }
+.yc-balanceBreakdown { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: -8px 0 22px; padding: 16px; border: 1px solid #e3ebe5; border-radius: 14px; background: #f8fbf8; }
+.yc-balanceBreakdown > div { display: grid; gap: 5px; }
+.yc-balanceBreakdown span { color: #718077; font-size: 12px; }
+.yc-balanceBreakdown strong { color: #315943; font-size: 19px; }
+.yc-balanceBreakdown p { grid-column: 1 / -1; margin: 0; color: #718077; font-size: 12px; }
+@media (max-width: 650px) { .yc-balanceBreakdown { grid-template-columns: 1fr 1fr; } }
+.yc-ledgerTable { min-width: 900px; }
+@media (max-width: 700px) {
+  .yc-ledgerTable { min-width: 0; }
+  .yc-ledgerTable, .yc-ledgerTable tbody { display: block; width: 100%; }
+  .yc-ledgerTable thead { display: none; }
+  .yc-ledgerTable tr { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; margin: 10px 0; padding: 8px 12px; border: 1px solid #e3ebe5; border-radius: 12px; }
+  .yc-ledgerTable td { display: flex; min-width: 0; align-items: flex-start; justify-content: space-between; gap: 8px; padding: 9px 0; border-bottom: 1px solid #f0f2f0; white-space: normal; }
+  .yc-ledgerTable td::before { flex: 0 0 82px; color: #718077; content: attr(data-label); font-size: 11px; }
+  .yc-ledgerTable td:nth-child(2), .yc-ledgerTable td:nth-child(5), .yc-ledgerTable td:nth-child(6) { grid-column: 1 / -1; }
+  .yc-ledgerTable td:nth-child(6) { border-bottom: 0; }
+  .yc-ledgerTable td small { display: block; white-space: normal; }
+}
+@media (max-width: 1000px) { .yc-page.yu-shell { padding: 24px 20px; } }
+@media (max-width: 600px) { .yc-page.yu-shell { padding: 20px 14px; } }

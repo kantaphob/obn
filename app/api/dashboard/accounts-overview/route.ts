@@ -1,6 +1,7 @@
-import { authorizeApiRequest } from "@/lib/authorization";
+import { authorizeApiRequest, getCurrentAccess } from "@/lib/authorization";
 import { prisma } from "@/lib/prisma";
 import { getCompanyLedgerRows } from "@/lib/company-ledger";
+import { canReadLoanFinancials } from "@/lib/loan-access";
 
 function dateFromInput(value: string | null) {
   if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
@@ -17,17 +18,35 @@ function dateFromInput(value: string | null) {
 export async function GET(request: Request) {
   const denied = await authorizeApiRequest("dashboard", "read");
   if (denied) return denied;
+  const access = await getCurrentAccess();
+  if (!access) return Response.json({ error: "กรุณาเข้าสู่ระบบ" }, { status: 401 });
 
   const params = new URL(request.url).searchParams;
   const from = dateFromInput(params.get("from"));
   const to = dateFromInput(params.get("to"));
-  const [entries, companies] = await Promise.all([
+  const companyScope = access.accessConfigured ? access.companyCodes : null;
+  const canReadLoan = canReadLoanFinancials(access);
+  const [entries, companies, branches] = await Promise.all([
     getCompanyLedgerRows(from, to),
     prisma.companySequence.findMany({
+      where: { type: "COMPANY", ...(companyScope ? { companycode: { in: companyScope } } : {}) },
       select: { companycode: true, nameTH: true, nameEN: true, status: true },
       orderBy: { companycode: "asc" },
     }),
+    prisma.branchCodeSequence.findMany({
+      where: { type: "BRANCH", status: "ACTIVE", ...(companyScope ? { companycode: { in: companyScope } } : {}) },
+      select: { companycode: true, branchcode: true, nameTH: true, nameEN: true },
+      orderBy: [{ companycode: "asc" }, { branchcode: "asc" }],
+    }),
   ]);
 
-  return Response.json({ entries, companies }, { headers: { "Cache-Control": "no-store" } });
+  // Ledger sources include legacy records whose company code is stored in linked
+  // contract metadata. Apply the user's allowed company scope before serializing
+  // any data to the browser. Configured users cannot see unassigned legacy rows.
+  const scopedEntries = companyScope
+    ? entries.filter((entry) => Boolean(entry.companyCode && companyScope.includes(entry.companyCode)))
+    : entries;
+  const visibleEntries = canReadLoan ? scopedEntries : scopedEntries.filter((entry) => entry.source !== "LOAN");
+
+  return Response.json({ entries: visibleEntries, companies, branches }, { headers: { "Cache-Control": "no-store" } });
 }

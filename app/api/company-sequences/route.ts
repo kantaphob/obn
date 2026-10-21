@@ -7,17 +7,30 @@ import {
   parseCompanyRecord,
   validateFiveDigitCode,
 } from "@/lib/company-sequence-api";
+import { resolveBusinessSystemScope, type BusinessSystem } from "@/lib/company-system";
 
-export async function GET() {
+const BUSINESS_SYSTEMS: BusinessSystem[] = ["LOAN", "CONSTRUCTION", "BUILDIN", "AGRICULTURE", "YOUTUBE", "NETFLIX"];
+
+export async function GET(request: Request) {
   const denied = await authorizeApiRequest("companies", "read");
   if (denied) return denied;
   const access = await getCurrentAccess();
   try {
-    return Response.json(await prisma.companySequence.findMany({
+    const params = new URL(request.url).searchParams;
+    const system = params.get("system");
+    if (system && !BUSINESS_SYSTEMS.includes(system as BusinessSystem)) return Response.json({ error: "ระบบบริษัทไม่ถูกต้อง" }, { status: 400 });
+    const companies = await prisma.companySequence.findMany({
       where: access?.accessConfigured ? { companycode: { in: access.companyCodes } } : undefined,
       include: { owner: true, _count: { select: { branches: true } } },
       orderBy: { companycode: "asc" },
-    }), { headers: { "Cache-Control": "no-store" } });
+    });
+    if (!system) return Response.json(companies, { headers: { "Cache-Control": "no-store" } });
+    const branches = await prisma.branchCodeSequence.findMany({
+      where: { type: "BRANCH", status: "ACTIVE", ...(access?.accessConfigured ? { companycode: { in: access.companyCodes } } : {}) },
+      select: { companycode: true, branchcode: true, nameTH: true, nameEN: true },
+    });
+    const scope = resolveBusinessSystemScope(system as BusinessSystem, companies, branches);
+    return Response.json(companies.filter((company) => company.status === "ACTIVE" && scope.companyCodes.has(company.companycode)), { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     return companySequenceError(error);
   }

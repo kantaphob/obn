@@ -1,0 +1,6 @@
+ALTER TABLE "WealthLiability"
+ADD COLUMN "term" TEXT NOT NULL DEFAULT 'SHORT_TERM';
+
+UPDATE "WealthLiability"
+SET "term" = 'LONG_TERM'
+WHERE "category" IN ('LOAN', 'MORTGAGE', 'VEHICLE_FINANCE');

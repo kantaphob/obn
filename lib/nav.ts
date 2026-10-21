@@ -1,4 +1,7 @@
 import {
+  ArrowDownLeft,
+  ArrowUpRight,
+  BookOpen,
   SquarePlay,
   Clapperboard,
   BarChart3,
@@ -11,6 +14,7 @@ import {
   FileText,
   HandCoins,
   HardHat,
+  History,
   House,
   LayoutDashboard,
   Landmark,
@@ -28,6 +32,7 @@ import {
   Users,
   Wallet,
   AlarmClock,
+  Archive,
   KeyRound,
   Calculator,
   Store,
@@ -35,6 +40,7 @@ import {
   Building2Icon,
   CreditCard,
   Trash2,
+  ChartNoAxesCombined,
 } from "lucide-react";
 
 export type NavItem = { label: string; href: string; icon: LucideIcon; children?: NavItem[] };
@@ -101,6 +107,8 @@ export const SYSTEMS: Record<SystemKey, System> = {
           {
             label: "งานบัญชีประจำวัน", href: "/dashboard/accounts/daily", icon: CalendarDays,
             children: [
+              { label: "รายการรับเงิน", href: "/dashboard/accounts/receipts", icon: ArrowDownLeft },
+              { label: "รายการจ่ายเงิน", href: "/dashboard/accounts/payments", icon: ArrowUpRight },
               {
                 label: "บัญชีลูกหนี้ (AR)", href: "/dashboard/accounts/ar", icon: HandCoins,
                 children: [
@@ -142,6 +150,12 @@ export const SYSTEMS: Record<SystemKey, System> = {
           { label: "ปล่อยสินเชื่อ", href: "/dashboard/loan", icon: HandCoins },
         ],
       },
+      {
+        title: "บริหารสินทรัพย์",
+        items: [
+          { label: "ทรัพย์สินและ Net Worth", href: "/dashboard/wealth/assets", icon: ChartNoAxesCombined },
+        ],
+      },
     ],
   },
 
@@ -180,6 +194,7 @@ export const SYSTEMS: Record<SystemKey, System> = {
       {
         title: "การเงิน",
         items: [
+          c("ledger", "สมุดบัญชีรับ–จ่าย", BookOpen),
           c("billing", "เบิกงวดงาน", Receipt),
           c("costs", "ต้นทุนและกำไร", BarChart3),
         ],
@@ -221,6 +236,7 @@ export const SYSTEMS: Record<SystemKey, System> = {
       {
         title: "การเงิน",
         items: [
+          b("ledger", "สมุดบัญชีรับ–จ่าย", BookOpen),
           b("invoices", "ใบแจ้งหนี้", Receipt),
           b("payments", "รับชำระเงิน", Wallet),
         ],
@@ -260,6 +276,7 @@ export const SYSTEMS: Record<SystemKey, System> = {
       {
         title: "การเงิน",
         items: [
+          a("ledger", "สมุดบัญชีรับ–จ่าย", BookOpen),
           a("receivables", "ลูกหนี้", Receipt),
           a("reports", "รายงานยอดขาย", BarChart3),
         ],
@@ -301,7 +318,7 @@ export const SYSTEMS: Record<SystemKey, System> = {
       {
         title: "การเงิน",
         items: [
-          l("ledger", "สมุดบันชี", Receipt),
+          l("ledger", "สมุดบัญชีรับ–จ่าย", BookOpen),
           l("payments", "รับชำระและประวัติ", Receipt),
           l("capital-account", "บัญชีทุน", Receipt),
           l("profit", "ผลดำเนินงาน", BarChart3),
@@ -336,8 +353,14 @@ export const SYSTEMS: Record<SystemKey, System> = {
         title: "YouTube",
         items: [
           yt("", "ภาพรวม", LayoutDashboard),
-          yt("members", "สมาชิก", Users),
-          yt("group", "กลุ่ม", Users),
+          yt("group", "กลุ่มและบัญชี", Users),
+          yt("collections", "เรียกเก็บสมาชิก", HandCoins),
+          yt("invoices", "ใบแจ้งหนี้และกำหนดจ่าย", Receipt),
+          yt("members", "รายชื่อสมาชิก", Users),
+          yt("ledger", "สมุดบัญชีรับ–จ่าย", BookOpen),
+          yt("reports", "รายงานเงินรับล่วงหน้า", BarChart3),
+          yt("logs", "Log การทำงาน", History),
+          yt("archive", "คลังรายการ", Archive),
         ],
       },
     ],
@@ -351,7 +374,14 @@ export const SYSTEMS: Record<SystemKey, System> = {
     color: "#94a3b8",
     icon: Clapperboard,
     stats: [],
-    groups: [{ title: "ภาพรวม", items: [nf("", "ภาพรวม Nf", LayoutDashboard)] }],
+    groups: [{
+      title: "Netflix",
+      items: [
+        nf("", "ภาพรวม", LayoutDashboard),
+        nf("groups", "กลุ่มสมาชิก", Users),
+        nf("ledger", "สมุดรับ–จ่าย", BookOpen),
+      ],
+    }],
   },
   admin: {
     key: "admin",

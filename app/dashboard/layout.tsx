@@ -4,6 +4,7 @@ import WorkspaceLoading from "@/components/ui/WorkspaceLoading";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
+import "./youtube/ledger/central-finance.css";
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   return (

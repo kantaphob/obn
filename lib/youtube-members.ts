@@ -3,7 +3,7 @@ import { getCurrentAccess } from "@/lib/authorization";
 export async function authorizeYoutubeMember(write: boolean) {
   const access = await getCurrentAccess();
   if (!access) return Response.json({ error: "กรุณาเข้าสู่ระบบ" }, { status: 401 });
-  if (access.accessConfigured && !access.appKeys.includes("dashboard")) {
+  if (access.accessConfigured && !access.appKeys.includes("youtube")) {
     return Response.json({ error: "บัญชีนี้ไม่มีสิทธิ์เข้าถึงแอปนี้" }, { status: 403 });
   }
   if (write && !access.permissions.includes("*") && !access.permissions.includes("dashboard:write") && access.roleCode !== "owner") {
@@ -29,7 +29,7 @@ export function parseYoutubeMemberInput(body: unknown) {
   const emails = rawEmails.map((email) => (email as string).trim()).filter(Boolean);
   if (emails.some((email) => email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))) return { error: "มีอีเมลที่รูปแบบไม่ถูกต้อง" };
   if (new Set(emails.map((email) => email.toLocaleLowerCase("en"))).size !== emails.length) return { error: "อีเมลซ้ำกันในสมาชิกคนนี้" };
-  return { name, contactEmail, phone, line, facebook, instagram, emails };
+  return { name, contactEmail, phone, line, facebook, instagram, emails, version: typeof data.version === "string" ? data.version : "" };
 }
 
 export async function readYoutubeMemberBody(request: Request) {

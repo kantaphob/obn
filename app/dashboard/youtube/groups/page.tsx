@@ -1,3 +1,5 @@
-export const instant = false;
+import { redirect } from "next/navigation";
 
-export { default } from "../group/page";
+export default function LegacyYouTubeGroupsPage() {
+  redirect("/dashboard/youtube/group");
+}

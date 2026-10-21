@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowLeft, ArrowUpRight, Sprout } from "lucide-react";
 import { workspaceStyles as styles } from "@/components/ui/workspace-styles";
+import { ProductManager } from "@/components/agriculture/ProductManager";
 
 const base = "/dashboard/agriculture";
 
@@ -113,6 +114,13 @@ export function AgricultureOverview() {
 
 export function AgricultureSection({ page }: { page: AgriculturePageKey }) {
   const config = pages[page];
+  if (page === "products") return <section className={styles.page}>
+    <Link href={base} className="mb-5 inline-flex items-center gap-2 text-xs text-[#626862] hover:text-[#355a4b]"><ArrowLeft size={15} aria-hidden="true" /> กลับภาพรวมการเกษตร</Link>
+    <p className={styles.eyebrow}>AGRICULTURE / {config.section}</p>
+    <div className="flex flex-wrap items-end justify-between gap-4"><div><h1 className="text-[clamp(24px,2.5vw,36px)] font-medium tracking-tight text-[#272b29]">{config.title}</h1><p className="mt-2 max-w-2xl text-[13px] text-[#626862]">จัดการรายการสินค้า บาร์โค้ด สูตร และแบรนด์</p></div><span className="rounded-xl border border-[#d7d9d0] bg-[var(--ws-surface,#faf9f5)] px-3 py-2 text-xs text-[#626862]">รายการสินค้า</span></div>
+    <ProductManager />
+    <section className="mt-7"><h2 className="mb-3 text-sm font-semibold text-[#272b29]">เมนูที่เกี่ยวข้อง</h2><div className="flex flex-wrap gap-2">{config.links.map(([label, href]) => <Link key={href} href={`${base}/${href}`} className="rounded-xl border border-[#d7d9d0] bg-[var(--ws-surface,#faf9f5)] px-3.5 py-2 text-xs text-[#626862] transition hover:bg-[var(--ws-soft,#e9ede3)] hover:text-[#355a4b]">{label}<ArrowUpRight className="ml-1 inline" size={13} aria-hidden="true" /></Link>)}</div></section>
+  </section>;
   return <section className={styles.page}>
     <Link href={base} className="mb-5 inline-flex items-center gap-2 text-xs text-[#626862] hover:text-[#355a4b]"><ArrowLeft size={15} aria-hidden="true" /> กลับภาพรวมการเกษตร</Link>
     <p className={styles.eyebrow}>AGRICULTURE / {config.section}</p>

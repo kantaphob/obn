@@ -5,6 +5,7 @@ import Link from "next/link";
 import {
   ArrowUpRight,
   Building2,
+  ChartNoAxesCombined,
   ChevronRight,
   Layers3,
   Search,
@@ -17,9 +18,12 @@ const companies = [
     label: "OBN Co., Ltd.",
     href: "/dashboard/accounts",
     description: "บริษัทหลัก · ภาพรวมบัญชีและการเงินของกลุ่มบริษัท",
-    groups: SYSTEMS.dashboard.groups
-      .filter((group) => group.title === "Accounts")
-      .map((group) => ({ ...group, title: "บัญชีและการเงิน" })),
+    groups: [
+      ...SYSTEMS.dashboard.groups
+        .filter((group) => group.title === "Accounts")
+        .map((group) => ({ ...group, title: "บัญชีและการเงิน" })),
+      { title: "บริหารทรัพย์สิน", items: [{ label: "ทรัพย์สินถือครอง", href: "/dashboard/wealth/assets", icon: ChartNoAxesCombined }] },
+    ],
   },
   {
     ...SYSTEMS.loan,

@@ -1,0 +1,22 @@
+"use client";
+import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
+type Invoice = { id: number; status: string; updatedAt: Date | string; seatId: string; dueDate: string; amountSatang: number };
+export default function InvoiceActions({ invoice, today, canWrite, canReceive }: { invoice: Invoice; today: string; canWrite: boolean; canReceive: boolean }) {
+  const router = useRouter(); const dialog = useRef<HTMLDialogElement>(null);
+  const [mode, setMode] = useState<"receive" | "cancel" | null>(null); const [busy, setBusy] = useState(false); const [error, setError] = useState("");
+  const [requestKey] = useState(() => crypto.randomUUID());
+  useEffect(() => { if (mode) dialog.current?.showModal(); else dialog.current?.close(); }, [mode]);
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault(); if (busy) return;
+    const fields = Object.fromEntries(new FormData(event.currentTarget));
+    setBusy(true); setError("");
+    try {
+      const response = await fetch(mode === "receive" ? "/api/youtube/payments" : `/api/youtube/invoices/${invoice.id}`, { method: mode === "receive" ? "POST" : "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(mode === "receive" ? { ...fields, invoiceId: invoice.id, seatId: invoice.seatId, dueDate: invoice.dueDate, amountSatang: invoice.amountSatang, requestKey, confirmedReceived: fields.confirmed === "on" } : { action: "cancel", version: new Date(invoice.updatedAt).toISOString(), reason: fields.reason }) });
+      const result = await response.json(); if (!response.ok) throw new Error(result.error || "บันทึกไม่สำเร็จ");
+      setMode(null); router.refresh();
+    } catch (cause) { setError(cause instanceof Error ? cause.message : "เชื่อมต่อไม่สำเร็จ"); }
+    finally { setBusy(false); }
+  }
+  return <><div className="yu-actions yu-printActions" style={{ marginBottom: 20 }}><button type="button" className="yu-button" onClick={() => window.print()}>พิมพ์ / บันทึก PDF</button>{invoice.status === "ISSUED" && <><button type="button" className="yu-button yu-primary" disabled={!canWrite || !canReceive} onClick={() => { setError(""); setMode("receive"); }}>บันทึกรับเงิน</button><button type="button" className="yu-button yu-danger" disabled={!canWrite} onClick={() => { setError(""); setMode("cancel"); }}>ยกเลิกเพื่อออกใบใหม่</button>{!canReceive && <span className="yu-muted">ต้องรับเงินรอบก่อนหน้าก่อน หรือบัญชีมีการเปลี่ยนแปลง</span>}</>}</div><dialog ref={dialog} className="yu-groupDialog" aria-labelledby="yt-invoice-action" onCancel={(event) => { event.preventDefault(); if (!busy) setMode(null); }}><form key={mode} onSubmit={submit}><header className="yu-dialogHeader"><div><h2 id="yt-invoice-action">{mode === "receive" ? "ยืนยันรับเงินตามใบแจ้งหนี้" : "ยกเลิกใบแจ้งหนี้"}</h2><p>YT-INV-{String(invoice.id).padStart(6, "0")} · {(invoice.amountSatang / 100).toFixed(2)} บาท</p></div></header><div className="yu-dialogBody">{mode === "receive" ? <div className="yu-formGrid"><label className="yu-field">วันที่รับเงินจริง<input name="paidOn" type="date" required max={today} min="2000-01-01" defaultValue={today} /></label><label className="yu-field">ช่องทางรับเงิน<select name="paymentMethod"><option value="BANK_TRANSFER">โอนธนาคาร</option><option value="PROMPTPAY">พร้อมเพย์</option><option value="CASH">เงินสด</option><option value="OTHER">อื่น ๆ</option></select></label><label className="yu-field yu-wide">เลขอ้างอิง<input name="reference" maxLength={120} /></label><label className="yu-field yu-wide">หมายเหตุ<textarea name="note" maxLength={500} /></label><label className="yu-field yu-wide"><span><input name="confirmed" type="checkbox" required /> ยืนยันว่าได้รับเงินจริงครบตามใบแจ้งหนี้แล้ว</span></label></div> : <label className="yu-field">เหตุผลที่ยกเลิก<textarea name="reason" required maxLength={500} /><small>เก็บใบเดิมไว้เป็นประวัติ หากรอบนี้ยังต้องเรียกเก็บ ระบบจะออกใบใหม่ตามข้อมูลปัจจุบันเมื่อเปิดหน้ารวม หรือกดสร้าง/อัปเดต</small></label>}{error && <p className="yu-error" role="alert">{error}</p>}</div><footer className="yu-dialogFooter"><button type="button" className="yu-button" disabled={busy} onClick={() => setMode(null)}>ปิด</button><button className="yu-button yu-primary" disabled={busy}>{busy ? "กำลังบันทึก…" : mode === "receive" ? "ยืนยันรับเงินและลงบัญชี" : "ยืนยันยกเลิกใบเดิม"}</button></footer></form></dialog></>;
+}

@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowDownLeft, ArrowDownToLine, ArrowUpRight, CalendarDays, Check, ChevronLeft, ChevronRight, CircleDollarSign, FileText, Paperclip, Plus, Search, Upload, Wallet, X } from 'lucide-react';
 import { summarizeCompanyLedgerRows } from '@/lib/company-ledger-summary';
+import { matchesBusinessSystem } from '@/lib/company-system';
 import './ledger.css';
 
 type LedgerType = 'INCOME' | 'EXPENSE';
@@ -161,7 +162,7 @@ export default function Ledger() {
   const loadNumberingCompanies = useCallback(async () => {
     setNumberingOptionsLoading(true);
     try {
-      const response = await fetch('/api/company-sequences', { cache: 'no-store' });
+      const response = await fetch('/api/company-sequences?system=LOAN', { cache: 'no-store' });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'โหลดสำนักงานใหญ่ไม่สำเร็จ');
       const activeCompanies = (data as LedgerCompany[]).filter(company => company.status === 'ACTIVE');
@@ -188,8 +189,13 @@ export default function Ledger() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'โหลดสาขาไม่สำเร็จ');
       const activeBranches = (data as LedgerBranch[]).filter(branch => branch.status === 'ACTIVE');
-      setBranches(activeBranches);
-      setBranchCode(current => activeBranches.some(branch => branch.branchcode === current) ? current : '');
+      const systemBranches = activeBranches.filter(branch => matchesBusinessSystem('LOAN', branch.nameTH, branch.nameEN));
+      const company = companies.find(item => item.companycode === companyCode);
+      const allowedBranches = systemBranches.length ? systemBranches : company && matchesBusinessSystem('LOAN', company.nameTH, company.nameEN) ? activeBranches : [];
+      setBranches(allowedBranches);
+      setBranchCode(current => allowedBranches.some(branch => branch.branchcode === current)
+        ? current
+        : systemBranches[0]?.branchcode ?? (company && matchesBusinessSystem('LOAN', company.nameTH, company.nameEN) ? companyCode : ''));
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'โหลดสาขาไม่สำเร็จ');
       setBranches([]);
@@ -197,7 +203,7 @@ export default function Ledger() {
     } finally {
       setNumberingOptionsLoading(false);
     }
-  }, [companyCode]);
+  }, [companies, companyCode]);
   useEffect(() => {
     const timer = window.setTimeout(() => { void loadNumberingBranches(); }, 0);
     return () => window.clearTimeout(timer);
@@ -366,7 +372,7 @@ export default function Ledger() {
             </section>}
 
             {!editingEntry && entryTypeChosen && companyCode && <section className="cl-reveal-section">
-              <label className="cl-field cl-branch-select"><span>สถานที่ทำรายการ <b>*</b></span><select required disabled={numberingOptionsLoading} value={branchCode} onChange={(event) => setBranchCode(event.target.value)}><option value="">{numberingOptionsLoading ? 'กำลังโหลดสถานที่…' : 'เลือกสำนักงานใหญ่หรือสาขา'}</option><option value={companyCode}>สำนักงานใหญ่ · {companyCode}</option>{branches.map(branch => <option key={branch.branchcode} value={branch.branchcode}>{branch.nameTH || branch.nameEN || branch.branchcode} · {branch.branchcode}</option>)}</select></label>
+              <label className="cl-field cl-branch-select"><span>สถานที่ทำรายการ <b>*</b></span><select required disabled={numberingOptionsLoading} value={branchCode} onChange={(event) => setBranchCode(event.target.value)}><option value="">{numberingOptionsLoading ? 'กำลังโหลดสถานที่…' : 'เลือกสถานที่ทำรายการ'}</option>{!branches.some(branch => matchesBusinessSystem('LOAN', branch.nameTH, branch.nameEN)) && <option value={companyCode}>สำนักงานใหญ่ · {companyCode}</option>}{branches.map(branch => <option key={branch.branchcode} value={branch.branchcode}>{branch.nameTH || branch.nameEN || branch.branchcode} · {branch.branchcode}</option>)}</select></label>
               {companyCode && !numberingOptionsLoading && branches.length === 0 && <p className="cl-step-error">บริษัทนี้ยังไม่มีสาขาที่เปิดใช้งาน แต่สามารถเลือกทำรายการที่สำนักงานใหญ่ได้</p>}
             </section>}
 

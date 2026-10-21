@@ -1,29 +1,34 @@
+import { Suspense } from "react";
+import { io } from "next/cache";
+import { billingToday } from "@/lib/youtube-billing";
 import GroupManagementPanel from "./GroupManagementPanel";
 import { prisma } from "@/lib/prisma";
+import { getYoutubePageAccess, youtubePageDenied } from "@/lib/youtube-access";
 
-export default async function YouTubeGroupManagementPage() {
+export default function YouTubeGroupManagementPage() {
+  return <Suspense fallback={<main aria-live="polite">กำลังโหลดกลุ่มและรอบเรียกเก็บ…</main>}><GroupManagementContent /></Suspense>;
+}
+
+async function GroupManagementContent() {
+  await io();
+  const { allowed, access } = await getYoutubePageAccess("/dashboard/youtube/group");
+  if (!allowed) return youtubePageDenied();
   const [groups, directory] = await Promise.all([
-    prisma.youtubeBillingGroup.findMany({
+    prisma.youtubeBillingGroup.findMany({ where: { status: { not: "ARCHIVED" } },
       include: { seats: { orderBy: { position: "asc" } } },
       orderBy: [{ createdAt: "desc" }, { name: "asc" }],
     }),
-    prisma.youtubeMember.findMany({ include: { accounts: true }, orderBy: { name: "asc" } }),
+    prisma.youtubeMember.findMany({ where: { archivedAt: null }, orderBy: { name: "asc" } }),
   ]);
-  const allSeats = groups.flatMap((group) => group.seats);
-  const seatByAccountId = new Map(allSeats.filter((seat) => seat.accountId).map((seat) => [seat.accountId!, seat]));
-  const memberOptions = directory.flatMap((member) => member.accounts.map((account) => {
-    const existingSeat = seatByAccountId.get(account.id);
-    return {
-      value: `account:${account.id}`,
-      memberId: member.id,
-      accountId: account.id,
-      name: member.name,
-      email: account.email,
-      billingMonths: existingSeat?.billingMonths ?? null,
-      priceSatang: existingSeat?.priceSatang ?? null,
-    };
-  }).concat([
-    { value: `member:${member.id}`, memberId: member.id, accountId: "", name: member.name, email: "", billingMonths: null, priceSatang: null },
-  ]));
-  return <GroupManagementPanel groups={groups} memberOptions={memberOptions} />;
+  const memberOptions = directory.map((member) => ({
+    value: `member:${member.id}`,
+    memberId: member.id,
+    accountId: "",
+    name: member.name,
+    email: "",
+    billingMonths: null,
+    priceSatang: null,
+  }));
+  const today = billingToday();
+  return <GroupManagementPanel groups={groups} canWrite={Boolean(access && (access.roleCode === "owner" || access.permissions.includes("*") || access.permissions.includes("dashboard:write")))} memberOptions={memberOptions} today={today} />;
 }

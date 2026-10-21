@@ -1,0 +1,116 @@
+.yu-shell { width: min(100%, 1440px); margin: 0 auto; padding: 32px; color: #24382e; font-size: 14px; line-height: 1.55; }
+.yu-shell *, .yu-groupDialog * { box-sizing: border-box; }
+.yu-eyebrow { margin: 0 0 8px; color: #64776c; font-size: 12px; font-weight: 600; letter-spacing: .03em; }
+.yu-heading { display: flex; justify-content: space-between; align-items: center; gap: 20px; margin-bottom: 26px; }
+.yu-heading h1 { margin: 0 0 5px; color: #193e2c; font-size: 28px; font-weight: 750; letter-spacing: -.04em; line-height: 1.3; }
+.yu-heading p { margin: 0; color: #65786b; font-size: 14px; }
+.yu-button, .yu-shell .yu-button { display: inline-flex; justify-content: center; align-items: center; gap: 8px; min-height: 42px; padding: 10px 15px; border: 1px solid #dce5de; border-radius: 10px; background: #fff; color: #385c46; font: inherit; font-size: 13px; font-weight: 600; text-decoration: none; cursor: pointer; }
+.yu-button:hover { background: #f3f8f4; }
+.yu-shell .yu-backToGroups { min-height: 46px; margin-bottom: 22px; border-color: #9dbda9; background: #edf6f0; color: #195c36; font-size: 14px; }
+.yu-shell .yu-backToGroups:hover { border-color: #197344; background: #deeee3; }
+.yu-button.yu-primary, .yu-shell .yu-primary { border-color: #197344; background: #197344; color: #fff; }
+.yu-button.yu-danger { color: #b0443d; }
+.yu-button:disabled { opacity: .5; cursor: not-allowed; }
+.yu-shell :is(button,input,select,a,summary):focus-visible, .yu-groupDialog :is(button,input,select,summary):focus-visible { outline: 3px solid #64ad86; outline-offset: 3px; }
+.yu-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.yu-stats { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 15px; margin-bottom: 24px; }
+.yu-stat { min-width: 0; padding: 20px; border: 1px solid #e3eae5; border-radius: 14px; background: #fff; }
+.yu-stat > span { display: block; color: #63766a; font-size: 12px; }
+.yu-stat > strong { display: block; margin: 9px 0 4px; color: #183e2a; font-size: 26px; font-weight: 700; letter-spacing: -.04em; font-variant-numeric: tabular-nums; }
+.yu-stat > small { display: block; color: #6e7e73; font-size: 12px; }
+.yu-stat.yu-warm > strong { color: #a25c1c; }
+.yu-card { padding: 24px; border: 1px solid #e1e9e3; border-radius: 15px; background: #fff; }
+.yu-card h2 { margin: 0 0 6px; color: #284b35; font-size: 18px; }
+.yu-muted { margin: 0; color: #6b7d70; font-size: 13px; }
+.yu-sectionHeader { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
+.yu-twoColumns { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; }
+.yu-taskRow { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 15px 0; border-bottom: 1px solid #edf1ee; }
+.yu-taskRow:last-child { border: 0; }
+.yu-taskRow strong { font-size: 14px; }
+.yu-taskRow small { display: block; margin-top: 4px; color: #718174; font-size: 12px; }
+.yu-taskRow > span { white-space: nowrap; color: #315b40; font-weight: 650; }
+.yu-badge { display: inline-flex; align-items: center; gap: 5px; width: fit-content; padding: 4px 9px; border-radius: 7px; background: #eef6f0; color: #287349; font-size: 12px; font-weight: 600; white-space: nowrap; }
+.yu-badge.yu-warning { background: #fff4e5; color: #986019; }
+.yu-badge.yu-neutral { background: #f1f4f2; color: #66766c; }
+.yu-banner { display: flex; justify-content: space-between; align-items: center; gap: 18px; padding: 16px 20px; margin-bottom: 24px; border: 1px solid #e9d8b5; border-radius: 12px; background: #fffaf0; color: #805c24; font-size: 13px; }
+.yu-search { display: flex; align-items: center; gap: 9px; min-height: 44px; padding: 0 13px; border: 1px solid #dce5de; border-radius: 10px; background: #fff; color: #6d8072; }
+.yu-search input { width: 100%; min-width: 0; border: 0; outline: 0; background: transparent; color: #24382e; font: inherit; }
+.yu-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 14px; margin-bottom: 20px; flex-wrap: wrap; }
+.yu-toolbar .yu-search { flex: 1 1 260px; max-width: 430px; }
+.yu-tabs { display: flex; flex-wrap: wrap; gap: 5px; padding: 4px; border: 1px solid #e2e9e4; border-radius: 11px; background: #f1f5f2; }
+.yu-tabs button { min-height: 36px; padding: 7px 14px; border: 0; border-radius: 8px; background: transparent; color: #637769; font: inherit; font-size: 13px; cursor: pointer; }
+.yu-tabs button[aria-selected="true"], .yu-tabs button[aria-pressed="true"] { background: #fff; color: #1e6940; box-shadow: 0 1px 4px #18362410; font-weight: 650; }
+.yu-groupGrid { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%, 315px),1fr)); gap: 18px; }
+.yu-groupCard { padding: 22px; border: 1px solid #dfe9e2; border-radius: 15px; background: #fff; }
+.yu-groupCardTop { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; margin-bottom: 18px; }
+.yu-groupCard h2 { margin: 0 0 4px; color: #264e35; font-size: 20px; }
+.yu-groupCard p { margin: 0; color: #718176; font-size: 12px; }
+.yu-groupPrice { padding: 16px 0; border-top: 1px solid #ecf0ed; border-bottom: 1px solid #ecf0ed; }
+.yu-groupPrice span { display: block; color: #748176; font-size: 12px; }
+.yu-groupPrice strong { display: block; margin-top: 3px; color: #234d32; font-size: 25px; }
+.yu-groupPrice strong small { font-size: 12px; font-weight: 400; color: #758277; }
+.yu-groupFacts { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 18px 0; }
+.yu-groupFacts span { display: block; color: #78867b; font-size: 12px; }
+.yu-groupFacts strong { display: block; margin-top: 3px; font-size: 14px; font-weight: 600; }
+.yu-occupancy { display: flex; gap: 5px; margin-bottom: 17px; }
+.yu-occupancy i { height: 5px; flex: 1; border-radius: 5px; background: #e7ede9; }
+.yu-occupancy i[data-filled="true"] { background: #71a88a; }
+.yu-groupFooter { display: flex; gap: 8px; flex-wrap: wrap; }
+.yu-groupFooter > .yu-button { flex: 1; }
+.yu-groupMenu { position: relative; }
+.yu-groupMenu summary { padding: 10px; min-height: 42px; border-radius: 9px; color: #718176; cursor: pointer; list-style: none; }
+.yu-groupMenu[open] > div { position: absolute; right: 0; z-index: 3; min-width: 150px; padding: 6px; border: 1px solid #e5eae6; border-radius: 9px; background: #fff; box-shadow: 0 8px 24px #15302015; }
+.yu-empty { padding: 35px 20px; text-align: center; color: #6a7d6f; }
+.yu-empty strong { display: block; color: #345841; font-size: 16px; margin-bottom: 6px; }
+.yu-field { display: grid; min-width: 0; gap: 7px; color: #4e6657; font-size: 13px; font-weight: 550; }
+.yu-field input, .yu-field select, .yu-field textarea, .yu-filterSelect { width: 100%; min-width: 0; min-height: 42px; padding: 9px 11px; border: 1px solid #dce5de; border-radius: 9px; background: #fff; color: #2c4233; font: inherit; font-size: 14px; }
+.yu-field small { color: #778579; font-size: 12px; font-weight: 400; }
+.yu-field :disabled { color: #859286; background: #f5f7f5; }
+.yu-formGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.yu-formGrid .yu-wide { grid-column: 1 / -1; }
+.yu-formNote { margin: 16px 0; padding: 13px 15px; border-radius: 9px; background: #f4f8f5; color: #5c7463; font-size: 13px; }
+.yu-error { padding: 12px; margin: 12px 0; border-radius: 8px; background: #fff2ef; color: #a13c32; font-size: 13px; }
+.yu-groupDialog { width: min(1120px, 96vw); max-height: 93vh; padding: 0; border: 1px solid #dce6de; border-radius: 18px; background: #fff; color: #24382e; font-size: 14px; box-shadow: 0 25px 100px #10261b30; }
+.yu-groupDialog::backdrop { background: #1d3027a6; backdrop-filter: blur(3px); }
+.yu-dialogHeader { display: flex; justify-content: space-between; align-items: flex-start; gap: 18px; padding: 24px 28px 16px; }
+.yu-dialogHeader h2 { margin: 0 0 5px; font-size: 23px; color: #254f34; }
+.yu-dialogHeader p { margin: 0; color: #758278; font-size: 13px; }
+.yu-close { display: grid; place-items: center; flex-shrink: 0; width: 38px; height: 38px; border: 1px solid #e6ece7; border-radius: 9px; background: #fff; color: #657a6c; cursor: pointer; }
+.yu-steps { display: flex; gap: 10px; padding: 0 28px 20px; border-bottom: 1px solid #e9eeea; }
+.yu-steps button { display: flex; align-items: center; gap: 9px; flex: 1; min-height: 42px; padding: 8px 12px; border: 1px solid #e2e9e4; border-radius: 10px; background: #fff; color: #758579; font: inherit; font-size: 13px; text-align: left; cursor: pointer; }
+.yu-steps button span { display: grid; place-items: center; width: 23px; height: 23px; border-radius: 50%; background: #edf2ee; font-size: 12px; }
+.yu-steps button[aria-current="step"] { border-color: #8fb99e; background: #eff8f1; color: #27613c; font-weight: 650; }
+.yu-steps button[aria-current="step"] span { background: #287447; color: white; }
+.yu-dialogBody { padding: 24px 28px; max-height: 59vh; min-height: 290px; overflow: auto; }
+.yu-dialogFooter { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 17px 28px; border-top: 1px solid #e5ece7; background: #fafcfb; }
+.yu-dialogFooter small { color: #708174; font-size: 12px; }
+.yu-allocationStats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+.yu-allocationStats div { padding: 13px 16px; border: 1px solid #e3eae5; border-radius: 10px; }
+.yu-allocationStats span { display: block; color: #6d8072; font-size: 12px; }
+.yu-allocationStats strong { display: block; margin-top: 4px; color: #28583a; font-size: 19px; }
+.yu-accountRows { display: grid; gap: 10px; }
+.yu-accountRow { display: grid; grid-template-columns: 34px minmax(140px, 1.1fr) minmax(180px, 1.5fr) minmax(105px,.8fr) minmax(110px,.9fr) 110px 36px; align-items: center; gap: 12px; padding: 13px; border: 1px solid #e0e8e2; border-radius: 11px; }
+.yu-accountRow > span:first-child { display: grid; place-items: center; width: 29px; height: 29px; border-radius: 8px; color: #50735c; background: #edf5ef; font-size: 12px; }
+.yu-accountRows .yu-field { font-size: 11px; gap: 5px; }
+.yu-accountRows .yu-field input, .yu-accountRows .yu-field select { min-height: 39px; padding: 7px 8px; font-size: 12px; }
+.yu-roundPrice { text-align: right; }
+.yu-roundPrice strong { display: block; font-size: 15px; color: #285b3d; }
+.yu-roundPrice small { display: block; margin-top: 5px; font-size: 11px; color: #77867b; }
+.yu-accountAdvanced { display: grid; grid-column: 2 / -1; grid-template-columns: 1fr 1fr; gap: 15px; padding: 15px; border-top: 1px solid #e9eeea; background: #f8fbf8; border-radius: 9px; }
+.yu-summaryRows { display: grid; gap: 0; }
+.yu-summaryRow { display: flex; justify-content: space-between; align-items: center; gap: 20px; padding: 14px 0; border-bottom: 1px solid #edf1ed; }
+.yu-summaryRow small { display: block; margin-top: 4px; color: #718376; font-size: 12px; }
+.yu-advanced { margin-top: 20px; border-top: 1px solid #e6ede7; padding-top: 16px; }
+.yu-advanced > summary { color: #526f5b; cursor: pointer; font-size: 13px; }
+.yu-advanced > div { padding-top: 16px; }
+.yu-tableWrap { overflow: auto; }
+.yu-table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; }
+.yu-table th { padding: 12px 14px; background: #f6f9f7; color: #6c7e71; font-size: 12px; font-weight: 600; white-space: nowrap; }
+.yu-table td { padding: 15px 14px; border-bottom: 1px solid #edf1ed; vertical-align: middle; }
+.yu-table td small { display: block; margin-top: 5px; color: #75867a; font-size: 12px; }
+.yu-table td strong { font-weight: 600; }
+@media (max-width: 1000px) { .yu-shell { padding: 24px 20px; } .yu-stats { grid-template-columns: repeat(2, 1fr); } .yu-twoColumns { grid-template-columns: 1fr; } .yu-accountRow { grid-template-columns: 28px minmax(120px, 1fr) minmax(150px, 1.2fr) 1fr 1fr 36px; } .yu-roundPrice { grid-column: 2 / -1; text-align: left; } .yu-roundPrice strong, .yu-roundPrice small { display: inline; margin-right: 8px; } }
+@media (max-width: 600px) { .yu-shell { padding: 20px 14px; } .yu-heading { align-items: flex-start; flex-direction: column; gap: 15px; } .yu-heading h1 { font-size: 25px; } .yu-stats { gap: 9px; } .yu-stat { padding: 15px; } .yu-stat > strong { font-size: 23px; } .yu-card { padding: 18px; } .yu-formGrid { grid-template-columns: 1fr; } .yu-steps, .yu-dialogHeader, .yu-dialogFooter { padding-left: 16px; padding-right: 16px; } .yu-dialogBody { padding: 18px 16px; max-height: 60vh; } .yu-steps { gap: 5px; } .yu-steps button { padding: 7px; font-size: 11px; gap: 5px; } .yu-accountRow { grid-template-columns: 28px 1fr 36px; } .yu-accountRow > .yu-field { grid-column: 2 / -1; } .yu-accountRow > .yu-close { grid-column: 3; grid-row: 1; } .yu-roundPrice { grid-column: 2 / -1; } .yu-accountAdvanced { grid-template-columns: 1fr; } .yu-allocationStats { gap: 6px; } .yu-allocationStats div { padding: 10px; } .yu-allocationStats strong { font-size: 16px; } .yu-dialogFooter > small { display: none; } }
+.yu-groupDialog { margin: auto; }
+.yu-accountRows .yu-field { font-size: 12px; }
+.yu-accountRows .yu-field input, .yu-accountRows .yu-field select { font-size: 13px; }

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ChevronDown, Menu, X, PanelLeft } from "lucide-react";
 import SidebarMenu from "./SidebarMenu";
-import { flattenNavItems, getSystem, SYSTEMS, type NavItem } from "@/lib/nav";
+import { flattenNavItems, getSystem, type NavItem } from "@/lib/nav";
 import { workspaceStyles as styles } from "./ui/workspace-styles";
 import { useUserAccess } from "@/components/UserAccessProvider";
 
@@ -20,7 +20,10 @@ export default function Sidebar() {
   const pathname = usePathname();
   const system = getSystem(pathname);
   const { access, loading: accessLoading } = useUserAccess();
-  const visibleGroups = accessLoading || !access ? [] : system.groups.map((group) => ({ ...group, items: filterMenu(group.items, access.navigationHrefs) })).filter((group) => group.items.length > 0);
+  const navigationHrefs = access?.appKeys.includes("dashboard")
+    ? [...access.navigationHrefs, "/dashboard/wealth/assets"]
+    : access?.navigationHrefs ?? [];
+  const visibleGroups = accessLoading || !access ? [] : system.groups.map((group) => ({ ...group, items: filterMenu(group.items, navigationHrefs) })).filter((group) => group.items.length > 0);
   const [closed, setClosed] = useState<Record<string, { path: string; collapsed: boolean }>>({});
   const [mobileOpen, setMobileOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
